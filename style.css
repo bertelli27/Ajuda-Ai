@@ -305,3 +305,21 @@ body {
 }
 
 
+//----------
+
+.create-account {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #EEEEEE;
+}
+
+.create-account a {
+    color: #00ADB5;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.create-account a:hover {
+    color: #00CED1;
+}

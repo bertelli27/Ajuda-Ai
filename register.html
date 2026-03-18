@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<section class="main-container">
+
+    <div class="login-section">
+        <div class="login-card">
+            <h2>Criar Conta</h2>
+            <form id="registerForm">
+                <input type="text" id="nome" placeholder="Nome completo" required>
+                <input type="email" id="email" placeholder="E-mail" required>
+                <input type="password" id="senha" placeholder="Senha" required>
+                <input type="password" id="confirmSenha" placeholder="Confirmar senha" required>
+                <div class="remember">
+                    <label>
+                        <input type="checkbox" id="lembrarContaRegister">
+                        Lembrar da conta
+                    </label>
+                </div>
+                <button type="submit" class="btn-login">Cadastrar</button>
+            </form>
+
+            <p class="create-account">
+                Já tem uma conta? <a href="index.html">Faça login</a>
+            </p>
+        </div>
+    </div>
+
+</section>
+
+<script src="register.js"></script>
+</body>
+</html>
