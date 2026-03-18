@@ -305,8 +305,6 @@ body {
 }
 
 
-//----------
-
 .create-account {
     margin-top: 12px;
     font-size: 14px;
@@ -322,4 +320,18 @@ body {
 
 .create-account a:hover {
     color: #00CED1;
+}
+
+/* LINKS DENTRO DO LOGIN-CARD */
+.login-card a {
+    color: #00ADB5;          /* cor do site */
+    text-decoration: none;   /* remove sublinhado */
+    font-weight: bold;       /* deixa em negrito */
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.login-card a:hover {
+    color: #00CED1;          /* cor de hover */
+    text-decoration: underline; /* opcional: sublinhado ao passar o mouse */
 }
