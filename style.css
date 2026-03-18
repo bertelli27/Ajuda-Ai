@@ -1,0 +1,307 @@
+/* ===========================
+   RESET GLOBAL
+=========================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+body {
+    background: #222A31;
+    color: #EEEEEE;
+    min-height: 100vh;
+}
+
+/* ===========================
+   LOGIN / FORGOT SHARED STYLES
+=========================== */
+
+/* CONTAINER PRINCIPAL LADO A LADO */
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    gap: 50px;
+    flex-wrap: wrap; /* para responsividade */
+}
+
+/* LADO ESQUERDO: INFO */
+.info-section {
+    max-width: 450px;
+    text-align: left;
+}
+
+.logo-side {
+    width: 120px; /* logo maior */
+    margin-bottom: 15px;
+}
+
+.info-section h1 {
+    color: #00ADB5;
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+
+.site-desc {
+    font-size: 16px;
+    color: #EEEEEE;
+    line-height: 1.6;
+}
+
+/* LADO DIREITO: LOGIN / FORGOT */
+.login-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+}
+
+.login-card {
+    background: #393E46;
+    border-radius: 12px;
+    padding: 30px 25px;
+    text-align: center; /* centraliza o conteúdo */
+    width: 100%;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+/* TITULO LOGIN / FORGOT */
+.login-card h2 {
+    font-size: 26px;
+    color: #00ADB5;
+    margin-bottom: 20px;
+}
+
+/* INPUTS */
+.login-card input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 14px;
+    border: 1px solid #00ADB5;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    background: #222A31;
+    color: #EEEEEE;
+}
+
+.login-card input::placeholder {
+    color: #AAAAAA;
+}
+
+.login-card input:focus {
+    border-color: #00CED1;
+}
+
+/* BOTÃO ENTRAR EM NEGRITO */
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background: #00ADB5;
+    color: #222A31;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-login:hover {
+    background: #00CED1;
+}
+
+/* REMEMBER CHECKBOX TOTALMENTE ALINHADO */
+.remember {
+    margin-bottom: 14px;
+    font-size: 14px;
+    color: #EEEEEE;
+}
+
+.remember label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.remember input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+/* BOTÃO ESQUECI SENHA DISCRETO */
+.btn-forgot {
+    margin-top: 12px;
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #00ADB5;
+    border-radius: 8px;
+    background: transparent;
+    color: #00ADB5;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-forgot:hover {
+    background: rgba(0, 173, 181, 0.1);
+}
+
+/* ===========================
+   HOME PAGE STYLES
+=========================== */
+
+/* CABEÇALHO */
+.header {
+    background: #393E46;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    flex-wrap: wrap;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header h1 {
+    color: #00ADB5;
+    font-size: 24px;
+}
+
+.menu a {
+    color: #EEEEEE;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.menu a:hover {
+    color: #00ADB5;
+}
+
+/* BARRA DE PESQUISA */
+.search-section {
+    display: flex;
+    justify-content: center;
+    margin: 25px 0;
+    gap: 10px;
+}
+
+.search-section input {
+    width: 60%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #00ADB5;
+    outline: none;
+    background: #222A31;
+    color: #EEEEEE;
+}
+
+.search-section button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #00ADB5;
+    color: #222A31;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.search-section button:hover {
+    background: #00CED1;
+}
+
+/* SEÇÃO DE SERVIÇOS */
+.services-section {
+    max-width: 1100px;
+    margin: 0 auto 50px auto;
+    padding: 0 20px;
+}
+
+.services-section h2 {
+    color: #00ADB5;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.service-card {
+    background: #393E46;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+}
+
+.service-card h3 {
+    color: #00ADB5;
+    margin-bottom: 10px;
+}
+
+.service-card p {
+    margin-bottom: 8px;
+}
+
+.btn-service {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    background: #00ADB5;
+    color: #222A31;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-service:hover {
+    background: #00CED1;
+}
+
+/* ===========================
+   RESPONSIVIDADE
+=========================== */
+@media (max-width: 900px) {
+    /* LOGIN / FORGOT */
+    .main-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .info-section {
+        text-align: center;
+    }
+
+    /* HOME */
+    .menu {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+        gap: 15px;
+    }
+
+    .search-section input {
+        width: 70%;
+    }
+}
+
+
