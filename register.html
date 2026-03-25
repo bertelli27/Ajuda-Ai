@@ -11,14 +11,43 @@
 
 <section class="main-container">
 
-    <div class="login-section">
+    <div class="login-section register-section">
         <div class="login-card">
             <h2>Criar Conta</h2>
             <form id="registerForm">
-                <input type="text" id="nome" placeholder="Nome completo" required>
-                <input type="email" id="email" placeholder="E-mail" required>
-                <input type="password" id="senha" placeholder="Senha" required>
-                <input type="password" id="confirmSenha" placeholder="Confirmar senha" required>
+                <div class="form-grid">
+                    <input type="text" id="nome" placeholder="Nome completo" required class="full-width">
+                    <input type="text" id="cpf" placeholder="CPF" required maxlength="14">
+                    <input type="tel" id="telefone" placeholder="Telefone" required maxlength="15">
+                    <input type="email" id="email" placeholder="E-mail" required class="full-width">
+                    
+                    <!-- Endereço (Preenchimento ViaCEP) -->
+                    <input type="text" id="cep" placeholder="CEP (somente números)" required maxlength="9">
+                    <input type="text" id="rua" placeholder="Rua" readonly required>
+                    <input type="text" id="numero" placeholder="Número (ex: 123, Bloco B)" required>
+                    <input type="text" id="complemento" placeholder="Ponto de Referência (Opcional)">
+                    <input type="text" id="bairro" placeholder="Bairro" readonly required>
+                    <input type="text" id="cidade" placeholder="Cidade" readonly required>
+                    <input type="text" id="estado" placeholder="Estado" readonly required class="full-width">
+
+                    <input type="password" id="senha" placeholder="Senha" required>
+                    <input type="password" id="confirmSenha" placeholder="Confirmar senha" required>
+                </div>
+
+                <!-- Tipo de Usuário -->
+                <div class="remember" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <label><input type="radio" name="tipoUsuario" value="cliente" checked> Cliente</label>
+                    <label><input type="radio" name="tipoUsuario" value="prestador"> Prestador de Serviço</label>
+                </div>
+
+                <!-- Campos Extras para Prestador -->
+                <div id="camposPrestador" style="display: none;" class="form-grid">
+                    <input type="text" id="servico" placeholder="Serviço prestado (ex: Limpeza Residencial)" class="full-width">
+                    <input type="text" id="descricao" placeholder="Descrição rápida" class="full-width">
+                    <input type="number" id="valor" placeholder="Valor médio por serviço (R$)">
+                    <input type="text" id="disponibilidade" placeholder="Disponibilidade (ex: Seg a Sex)">
+                </div>
+
                 <div class="remember">
                     <label>
                         <input type="checkbox" id="lembrarContaRegister">
@@ -36,6 +65,7 @@
 
 </section>
 
+<script src="cep.js"></script>
 <script src="register.js"></script>
 </body>
 </html>

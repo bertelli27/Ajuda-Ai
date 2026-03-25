@@ -61,6 +61,10 @@ body {
     max-width: 380px;
 }
 
+.register-section {
+    max-width: 650px;
+}
+
 .login-card {
     background: #393E46;
     border-radius: 12px;
@@ -96,6 +100,22 @@ body {
 
 .login-card input:focus {
     border-color: #00CED1;
+}
+
+/* GRID PARA FORMULÁRIO (DUAS COLUNAS) */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.login-card .form-grid input {
+    margin-bottom: 0;
+}
+
+.full-width {
+    grid-column: span 2;
 }
 
 /* BOTÃO ENTRAR EM NEGRITO */
@@ -188,6 +208,14 @@ body {
 
 .menu a:hover {
     color: #00ADB5;
+}
+
+/* MENSAGEM DE BOAS-VINDAS NA HOME */
+.welcome-message {
+    font-size: 24px;
+    color: #EEEEEE;
+    text-align: center;
+    margin-top: 25px;
 }
 
 /* BARRA DE PESQUISA */
@@ -304,6 +332,14 @@ body {
     }
 }
 
+@media (max-width: 600px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .full-width {
+        grid-column: span 1;
+    }
+}
 
 .create-account {
     margin-top: 12px;
@@ -335,3 +371,69 @@ body {
     color: #00CED1;          /* cor de hover */
     text-decoration: underline; /* opcional: sublinhado ao passar o mouse */
 }
+
+/* ===========================
+   PÁGINA DE PEDIDOS
+=========================== */
+.pedidos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.pedido-card {
+    background: #393E46;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pedido-card h3 {
+    color: #00ADB5;
+    margin-bottom: 5px;
+}
+
+.aviso-sem-pedidos {
+    color: #AAAAAA;
+    text-align: center;
+    font-size: 18px;
+    padding: 40px 0;
+    grid-column: 1 / -1;
+}
+
+/* STATUS BADGES */
+.status {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-transform: uppercase;
+}
+.status-pendente { background-color: #f0ad4e; }
+.status-aceito { background-color: #5cb85c; }
+.status-concluido { background-color: #007bff; }
+.status-cancelado { background-color: #d9534f; }
+
+/* BOTÕES DE AÇÃO DO PRESTADOR */
+.botoes-acao {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.btn-acao, .btn-avaliar {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-weight: bold;
+    cursor: pointer;
+}
+.aceitar { background-color: #5cb85c; }
+.recusar { background-color: #d9534f; }
+.concluir { background-color: #007bff; }
+.btn-avaliar { background-color: #00ADB5; color: #222A31; }
