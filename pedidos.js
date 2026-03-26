@@ -139,6 +139,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
             const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
             const formatStatus = pedido.status === 'AGUARDANDO_CONFIRMACAO' ? 'Aguardando Confirmação' : pedido.status;
+            const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
             
             return `
                 <div class="pedido-card">
@@ -148,7 +149,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     <p><strong>Valor:</strong> ${valorFormatado}</p>
                     <p><strong>Status:</strong> <span class="status status-${pedido.status.toLowerCase()}">${formatStatus}</span></p>
                     <div class="botoes-acao">
-                        <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">Ver Conversa${badgeHTML}</button>
+                        <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
+                        ${pedido.status === 'PENDENTE' ? `<button class="btn-acao cancelar" data-pedido-id="${pedido.id}">Cancelar Solicitação</button>` : ''}
                         ${pedido.status === 'AGUARDANDO_CONFIRMACAO' ? `<button class="btn-acao confirmar-conclusao" data-pedido-id="${pedido.id}">Confirmar Conclusão</button>` : ''}
                         ${(pedido.status === 'CONCLUIDO' && !pedido.avaliado) ? `<button class="btn-acao btn-avaliar" data-pedido-id="${pedido.id}">Avaliar Serviço</button>` : ''}
                     </div>
@@ -169,6 +171,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
             const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
             const formatStatus = pedido.status === 'AGUARDANDO_CONFIRMACAO' ? 'Aguardando Cliente' : pedido.status;
+            const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
             
             return `
                 <div class="pedido-card">
@@ -180,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <p><strong>Valor:</strong> ${valorFormatado}</p>
                     <p><strong>Status:</strong> <span class="status status-${pedido.status.toLowerCase()}">${formatStatus}</span></p>
                     <div class="botoes-acao">
-                        <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">Ver Conversa${badgeHTML}</button>
+                        <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
                         ${pedido.status === 'PENDENTE' ? `
                             <button class="btn-acao aceitar" data-pedido-id="${pedido.id}">Aceitar</button>
                             <button class="btn-acao recusar" data-pedido-id="${pedido.id}">Recusar</button>
@@ -203,6 +206,7 @@ document.addEventListener("DOMContentLoaded", function() {
         let novoStatus = '';
         if (target.classList.contains('aceitar')) novoStatus = 'ACEITO';
         else if (target.classList.contains('recusar')) novoStatus = 'CANCELADO';
+        else if (target.classList.contains('cancelar')) novoStatus = 'CANCELADO';
         else if (target.classList.contains('concluir')) novoStatus = 'AGUARDANDO_CONFIRMACAO';
         else if (target.classList.contains('confirmar-conclusao')) novoStatus = 'CONCLUIDO';
         
@@ -216,6 +220,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão.");
                 } else if (novoStatus === 'CONCLUIDO') {
                     enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O serviço foi encerrado com sucesso.");
+                } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
+                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada pelo cliente.</strong>");
                 }
 
                 atualizarExibicaoPedidos(); // Recarrega a lista para refletir a mudança
@@ -241,6 +247,14 @@ document.addEventListener("DOMContentLoaded", function() {
         chatHeader.innerText = `Conversa sobre "${pedido.servico}"`;
         
         atualizarAreaNegociacao();
+
+        // Arquivar chat se estiver cancelado ou concluído (esconder área de digitação)
+        const chatInputArea = document.querySelector(".chat-input-area");
+        if (pedido.status === 'CANCELADO' || pedido.status === 'CONCLUIDO') {
+            chatInputArea.style.display = 'none';
+        } else {
+            chatInputArea.style.display = 'flex';
+        }
 
         // Marcar mensagens recebidas neste chat como lidas
         const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
@@ -269,6 +283,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const pedido = solicitacoes.find(s => s.id === currentPedidoId);
         if (!pedido) return;
         
+        // Se estiver cancelado ou concluído, limpa a negociação e mostra aviso de arquivado
+        if (pedido.status === 'CANCELADO') {
+            area.innerHTML = `<div style="width: 100%; text-align: center; color: #d9534f; font-weight: bold;">🚫 Solicitação cancelada. O chat foi arquivado e não pode receber novas mensagens.</div>`;
+            return;
+        } else if (pedido.status === 'CONCLUIDO') {
+            area.innerHTML = `<div style="width: 100%; text-align: center; color: #007bff; font-weight: bold;">✅ Serviço concluído. O chat foi arquivado e não pode receber novas mensagens.</div>`;
+            return;
+        }
+
         let html = '';
         
         // Verifica se o usuário logado é o prestador DESTE pedido específico

@@ -571,7 +571,7 @@ body {
     cursor: pointer;
 }
 .aceitar { background-color: #5cb85c; }
-.recusar { background-color: #d9534f; }
+.recusar, .cancelar { background-color: #d9534f; }
 .concluir { background-color: #007bff; }
 .confirmar-conclusao { background-color: #28a745; }
 .btn-avaliar, .btn-chat { background-color: #00ADB5; color: #222A31; }
