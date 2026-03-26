@@ -27,15 +27,29 @@
         <div class="login-card">
             <h2>Solicitar Serviço</h2>
             
+            <h3 class="section-title">Informações do Profissional</h3>
             <div id="infoPrestador" style="background: #222A31; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid #00ADB5;">
                 <!-- Preenchido via JS -->
             </div>
 
             <form id="formSolicitacao">
+                <h3 class="section-title">Detalhes do Pedido</h3>
                 <div class="form-grid">
-                    <textarea id="descricaoProblema" placeholder="Descreva o que você precisa detalhadamente..." required class="full-width" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #00ADB5; background: #222A31; color: #EEEEEE; outline: none; resize: vertical; min-height: 100px; margin-bottom: 14px; font-family: inherit;"></textarea>
-                    <input type="date" id="dataDesejada" required class="full-width">
-                    <input type="text" id="enderecoLocal" placeholder="Endereço para o serviço" required class="full-width">
+                    <div class="form-group full-width">
+                        <label for="descricaoProblema">O que você precisa?</label>
+                        <!-- Removemos os estilos inline para usar os do CSS (style.css) -->
+                        <textarea id="descricaoProblema" placeholder="Descreva detalhadamente o serviço necessário..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dataDesejada">Data Desejada</label>
+                        <input type="date" id="dataDesejada" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="enderecoLocal">Endereço de Realização</label>
+                        <input type="text" id="enderecoLocal" placeholder="Endereço completo" required>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-login" style="margin-top: 10px;">Confirmar Solicitação</button>

@@ -59,26 +59,48 @@ document.addEventListener("DOMContentLoaded", function() {
         const grid = document.querySelector(".services-grid");
         if (!grid) return;
 
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        let prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
-        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
-
-        // Aplica o filtro de categoria
-        if (categoriaFiltro !== "Todos") {
-            prestadores = prestadores.filter(u => {
-                const cat = u.prestador.categoria || "Outros"; // Usuarios antigos caem em "Outros"
-                return cat === categoriaFiltro;
-            });
+        // 1. Mostrar Skeleton Loaders primeiro
+        grid.innerHTML = '';
+        for (let i = 0; i < 6; i++) { // 6 cards preenchem bem a página inteira de serviços
+            const skeletonCard = document.createElement('div');
+            skeletonCard.className = 'service-card';
+            skeletonCard.innerHTML = `
+                <div class="skeleton skeleton-avatar"></div>
+                <div class="skeleton skeleton-title" style="width: 40%; margin-bottom: 15px;"></div>
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text" style="width: 50%;"></div>
+                <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                <div class="card-botoes" style="margin-top: 20px;">
+                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+                </div>
+            `;
+            grid.appendChild(skeletonCard);
         }
 
-        grid.innerHTML = ''; // Limpa a área
+        // 2. Simular um atraso de rede (1.5 segundos) antes de carregar os dados reais
+        setTimeout(() => {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            let prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
+            const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
 
-        if (prestadores.length === 0) {
-            grid.innerHTML = '<p style="color: #AAAAAA; text-align: center; grid-column: span 4;">Nenhum prestador encontrado para esta categoria.</p>';
-            return;
-        }
+            // Aplica o filtro de categoria
+            if (categoriaFiltro !== "Todos") {
+                prestadores = prestadores.filter(u => {
+                    const cat = u.prestador.categoria || "Outros"; // Usuarios antigos caem em "Outros"
+                    return cat === categoriaFiltro;
+                });
+            }
 
-        prestadores.forEach(prestador => {
+            grid.innerHTML = ''; // Limpa os skeletons
+
+            if (prestadores.length === 0) {
+                grid.innerHTML = '<p style="color: #AAAAAA; text-align: center; grid-column: span 4;">Nenhum prestador encontrado para esta categoria.</p>';
+                return;
+            }
+
+            prestadores.forEach(prestador => {
             const card = document.createElement('div');
             card.className = 'service-card';
 
@@ -110,6 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
             `;
             grid.appendChild(card);
         });
+        }, 1500); // Fim do setTimeout
     }
 
     // ================= CONFIGURAR BOTÕES DE SOLICITAÇÃO =================

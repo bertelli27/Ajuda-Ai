@@ -62,23 +62,49 @@ document.addEventListener("DOMContentLoaded", function() {
         atualizarExibicaoPedidos();
     }
 
-    function atualizarExibicaoPedidos() {
-        // Processa e renderiza as solicitações enviadas por todos os usuários
-        let meusPedidosEnviados = solicitacoes.filter(s => s.clienteEmail === usuarioAtual.email);
-        meusPedidosEnviados = aplicarFiltros(meusPedidosEnviados, filtroStatusEnviados.value, ordenarDataEnviados.value);
-        renderPedidosCliente(meusPedidosEnviados, enviadosContainer);
+    function renderSkeletons(container, quantidade) {
+        container.innerHTML = '';
+        for (let i = 0; i < quantidade; i++) {
+            const skeletonCard = document.createElement('div');
+            skeletonCard.className = 'pedido-card';
+            skeletonCard.innerHTML = `
+                <div class="skeleton skeleton-title" style="width: 70%; margin: 0 0 15px 0; height: 20px;"></div>
+                <div class="skeleton skeleton-text" style="width: 90%; margin: 0 0 10px 0;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%; margin: 0 0 10px 0;"></div>
+                <div class="skeleton skeleton-text" style="width: 40%; margin: 0 0 10px 0;"></div>
+                <div class="skeleton skeleton-text" style="width: 30%; margin: 0 0 15px 0;"></div>
+                <div class="botoes-acao">
+                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+                </div>
+            `;
+            container.appendChild(skeletonCard);
+        }
+    }
 
-        // Se o usuário for um prestador, processa e renderiza as solicitações recebidas
+    function atualizarExibicaoPedidos() {
+        // 1. Mostrar Skeletons de carregamento alinhados à esquerda
+        renderSkeletons(enviadosContainer, 2); // Exibe 2 cards fantasmas como placeholder
         if (usuarioAtual.tipo === 'prestador') {
             recebidosSection.style.display = "block";
             tituloEnviados.innerText = "Minhas Solicitações Enviadas";
-
-            let pedidosRecebidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email);
-            pedidosRecebidos = aplicarFiltros(pedidosRecebidos, filtroStatusRecebidos.value, ordenarDataRecebidos.value);
-            renderPedidosPrestador(pedidosRecebidos, recebidosContainer);
-            
-            atualizarDashboard();
+            renderSkeletons(recebidosContainer, 2);
         }
+
+        // 2. Simular carregamento e renderizar dados reais
+        setTimeout(() => {
+            let meusPedidosEnviados = solicitacoes.filter(s => s.clienteEmail === usuarioAtual.email);
+            meusPedidosEnviados = aplicarFiltros(meusPedidosEnviados, filtroStatusEnviados.value, ordenarDataEnviados.value);
+            renderPedidosCliente(meusPedidosEnviados, enviadosContainer);
+
+            if (usuarioAtual.tipo === 'prestador') {
+                let pedidosRecebidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email);
+                pedidosRecebidos = aplicarFiltros(pedidosRecebidos, filtroStatusRecebidos.value, ordenarDataRecebidos.value);
+                renderPedidosPrestador(pedidosRecebidos, recebidosContainer);
+                
+                atualizarDashboard();
+            }
+        }, 800); // 0.8s para ser rápido e fluido, já que a tela tem muita interação
     }
 
     function atualizarDashboard() {

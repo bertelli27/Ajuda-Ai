@@ -86,6 +86,28 @@ function carregarServicos() {
     const grid = document.querySelector(".services-grid");
     if (!grid) return;
 
+    // 1. Mostrar Skeleton Loaders primeiro
+    grid.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+        const skeletonCard = document.createElement('div');
+        skeletonCard.className = 'service-card';
+        skeletonCard.innerHTML = `
+            <div class="skeleton skeleton-avatar"></div>
+            <div class="skeleton skeleton-title" style="width: 40%; margin-bottom: 15px;"></div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text" style="width: 50%;"></div>
+            <div class="skeleton skeleton-text" style="width: 70%;"></div>
+            <div class="card-botoes" style="margin-top: 20px;">
+                <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+                <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
+            </div>
+        `;
+        grid.appendChild(skeletonCard);
+    }
+
+    // 2. Simular um atraso de rede (1.5 segundos) antes de carregar os dados reais
+    setTimeout(() => {
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     const prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
     const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
@@ -126,6 +148,7 @@ function carregarServicos() {
         `;
         grid.appendChild(card);
     });
+    }, 1500); // Fim do setTimeout
 }
 
 // ================= BOTÕES DOS SERVIÇOS (COM EVENT DELEGATION) =================

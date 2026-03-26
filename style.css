@@ -69,7 +69,7 @@ body {
 }
 
 .register-section {
-    max-width: 800px; /* Expandido para aproveitar melhor o espaço na tela */
+    max-width: 1000px; /* Expandido para aproveitar melhor o espaço na tela */
     width: 100%;
 }
 
@@ -544,6 +544,11 @@ body {
     .search-section input {
         width: 70%;
     }
+
+    .profile-layout {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
 }
 
 @media (max-width: 600px) {
@@ -591,13 +596,48 @@ body {
 }
 
 /* ===========================
+   LAYOUT DE PERFIL (SIDEBAR + MAIN) E SEÇÕES
+=========================== */
+.profile-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.profile-sidebar {
+    background: #2A343D;
+    padding: 30px 20px;
+    border-radius: 16px;
+    border: 2px solid #4F5B66;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.profile-main {
+    flex-grow: 1;
+}
+
+.section-title {
+    font-size: 18px;
+    color: #00ADB5;
+    border-bottom: 1px solid #4F5B66;
+    padding-bottom: 8px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* ===========================
    PÁGINA DE PERFIL - FOTO
 =========================== */
 .profile-pic-container {
     position: relative;
     width: 120px;
     height: 120px;
-    margin: 0 0 30px 0; /* Alinha a foto do perfil à esquerda no formulário e dá respiro */
+    margin: 0 auto 20px auto; /* Centraliza no sidebar */
 }
 
 #profilePicPreview {
@@ -1341,6 +1381,46 @@ body {
 }
 
 /* ===========================
+   SKELETON LOADERS
+=========================== */
+.skeleton {
+    background: #4F5B66; /* Cor base do skeleton */
+    background: linear-gradient(90deg, #393E46 25%, #4F5B66 50%, #393E46 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 15px auto;
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 60%;
+    margin: 0 auto 10px auto;
+}
+
+.skeleton-text {
+    height: 16px;
+    width: 80%;
+    margin: 0 auto 8px auto;
+}
+
+.skeleton-button {
+    height: 40px;
+    border-radius: 10px;
+}
+
+/* ===========================
    TEMA CLARO (LIGHT THEME)
 =========================== */
 [data-theme="light"] body {
@@ -1358,6 +1438,7 @@ body {
 [data-theme="light"] .dashboard-card,
 [data-theme="light"] .avaliacao-card,
 [data-theme="light"] .profile-pic-edit-label,
+[data-theme="light"] .profile-sidebar,
 [data-theme="light"] .negociacao-box,
 [data-theme="light"] .orcamento-highlight,
 [data-theme="light"] .theme-toggle-floating,
@@ -1365,6 +1446,11 @@ body {
     background-color: #FFFFFF !important;
     color: #2D3748 !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme="light"] .profile-sidebar,
+[data-theme="light"] .section-title {
+    border-color: #CBD5E0 !important;
 }
 
 [data-theme="light"] .login-card input,
@@ -1479,4 +1565,9 @@ body {
 
 [data-theme="light"] #dashboard-prestador h2 {
     color: #333333 !important;
+}
+
+[data-theme="light"] .skeleton {
+    background: linear-gradient(90deg, #E2E8F0 25%, #CBD5E0 50%, #E2E8F0 75%) !important;
+    background-size: 200% 100% !important;
 }
