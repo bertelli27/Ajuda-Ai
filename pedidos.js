@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const chatInput = document.getElementById("chat-input");
     const chatMessagesContainer = document.getElementById("chat-messages");
     const chatHeader = document.getElementById("chat-header");
+    const chatImageInput = document.getElementById("chat-image-input");
     let currentPedidoId = null; // Para saber qual chat está aberto
 
     // ================= LÓGICA DE EXIBIÇÃO (CLIENTE vs PRESTADOR) =================
@@ -431,19 +432,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 return `<div class="message system">${msg.mensagem}</div>`;
             }
             const classe = msg.remetenteEmail === emailLogado ? 'sent' : 'received';
-            return `<div class="message ${classe}">${msg.mensagem}</div>`;
+            
+            let conteudo = msg.mensagem ? `<div>${msg.mensagem}</div>` : '';
+            if (msg.imagemBase64) {
+                conteudo += `<img src="${msg.imagemBase64}" alt="Anexo" class="chat-image" onclick="window.open('${msg.imagemBase64}', '_blank')">`;
+            }
+            
+            return `<div class="message ${classe}">${conteudo}</div>`;
         }).join('');
     }
 
-    function enviarMensagem() {
-        const texto = chatInput.value.trim();
-        if (!texto || !currentPedidoId) return;
-
+    function enviarNovaMensagemObjeto(texto, imagemBase64 = null) {
         const novaMensagem = {
             id_mensagem: "MSG-" + Date.now(),
             id_solicitacao: currentPedidoId,
             remetenteEmail: emailLogado,
             mensagem: texto,
+            imagemBase64: imagemBase64,
             data_envio: new Date().toISOString(),
             lida: false
         };
@@ -453,14 +458,40 @@ document.addEventListener("DOMContentLoaded", function() {
         localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
 
         chatInput.value = "";
+        if (chatImageInput) chatImageInput.value = ""; // Limpa o input de arquivo
         renderMensagens(currentPedidoId);
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+
+    function enviarMensagem() {
+        const texto = chatInput.value.trim();
+        if (!texto && !currentPedidoId) return;
+        
+        if (texto) {
+            enviarNovaMensagemObjeto(texto);
+        }
     }
 
     // Event Listeners para o Chat
     closeModalBtn.addEventListener('click', fecharChat);
     chatSendBtn.addEventListener('click', enviarMensagem);
     chatInput.addEventListener('keypress', e => e.key === 'Enter' && enviarMensagem());
+    
+    // Envio de Imagem
+    if (chatImageInput) {
+        chatImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file || !currentPedidoId) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64 = event.target.result;
+                enviarNovaMensagemObjeto(chatInput.value.trim(), base64);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     window.addEventListener('click', e => e.target == modal && fecharChat());
 
     // ================= HEADER E LOGOUT =================

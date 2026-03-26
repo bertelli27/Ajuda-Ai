@@ -716,6 +716,29 @@ body {
     font-size: 14px;
 }
 
+.chat-image {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.chat-input-wrapper {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    background: #222A31;
+    border: 1px solid #00ADB5;
+    border-radius: 8px;
+    padding: 0 10px;
+}
+
+.chat-input-wrapper input {
+    border: none;
+    background: transparent;
+}
+
 .chat-input-area {
     margin-top: 15px;
     display: flex;
@@ -725,8 +748,6 @@ body {
 #chat-input {
     flex-grow: 1;
     padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #00ADB5;
     outline: none;
     background: #222A31;
     color: #EEEEEE;
@@ -740,6 +761,16 @@ body {
     color: #222A31;
     font-weight: bold;
     cursor: pointer;
+}
+
+.btn-attach {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
 }
 
 /* ===========================
