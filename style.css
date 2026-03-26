@@ -251,6 +251,31 @@ body {
     background: #00CED1;
 }
 
+/* CATEGORIAS DE SERVIÇOS */
+.categorias-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.btn-categoria {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #00ADB5;
+    background: transparent;
+    color: #EEEEEE;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-categoria:hover, .btn-categoria.active {
+    background: #00ADB5;
+    color: #222A31;
+    font-weight: bold;
+}
+
 /* SEÇÃO DE SERVIÇOS */
 .services-section {
     max-width: 1100px;
@@ -288,6 +313,29 @@ body {
     margin-bottom: 8px;
 }
 
+.card-botoes {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-ver-perfil {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #00ADB5;
+    background: transparent;
+    color: #00ADB5;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    flex-grow: 1;
+}
+
+.btn-ver-perfil:hover {
+    background: rgba(0, 173, 181, 0.1);
+}
+
 .btn-service {
     padding: 10px 15px;
     border-radius: 8px;
@@ -297,6 +345,10 @@ body {
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
+}
+
+.card-botoes .btn-service {
+    flex-grow: 1;
 }
 
 .btn-service:hover {
@@ -424,7 +476,7 @@ body {
     gap: 10px;
     margin-top: 10px;
 }
-.btn-acao, .btn-avaliar {
+.btn-acao {
     flex-grow: 1;
     padding: 10px;
     border: none;
@@ -436,4 +488,238 @@ body {
 .aceitar { background-color: #5cb85c; }
 .recusar { background-color: #d9534f; }
 .concluir { background-color: #007bff; }
-.btn-avaliar { background-color: #00ADB5; color: #222A31; }
+.btn-avaliar, .btn-chat { background-color: #00ADB5; color: #222A31; }
+
+/* FILTROS NA PÁGINA DE PEDIDOS */
+.filtros-pedidos {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filtros-pedidos select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #00ADB5;
+    background: #222A31;
+    color: #EEEEEE;
+    font-size: 14px;
+    outline: none;
+}
+
+/* ===========================
+   CHAT MODAL
+=========================== */
+.modal {
+    display: none; /* Escondido por padrão */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background-color: #393E46;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #00ADB5;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+}
+
+.close-button {
+    color: #aaaaaa;
+    align-self: flex-end;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#chat-header {
+    color: #00ADB5;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    background-color: #222A31;
+    border-radius: 8px;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    padding: 8px 12px;
+    border-radius: 18px;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.message.sent {
+    background-color: #00ADB5;
+    color: #222A31;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.message.received {
+    background-color: #4F5B66;
+    color: #EEEEEE;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-input-area {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+#chat-input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #00ADB5;
+    outline: none;
+    background: #222A31;
+    color: #EEEEEE;
+}
+
+#chat-send-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #00ADB5;
+    color: #222A31;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ===========================
+   PÁGINA DE AVALIAÇÃO
+=========================== */
+.rating-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.rating-stars {
+    direction: ltr; /* Garante que as estrelas fiquem da esquerda para a direita */
+    display: inline-block;
+}
+
+.star {
+    font-size: 36px;
+    color: #555; /* Cor da estrela vazia */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.star.hover,
+.star.selected,
+.star:hover {
+    color: #ffc107; /* Cor da estrela preenchida/hover */
+}
+
+.rating-display {
+    color: #ffc107;
+    font-size: 16px;
+}
+
+/* AVALIAÇÕES NO PERFIL */
+.avaliacoes-container {
+    margin-top: 30px;
+    text-align: left;
+    border-top: 1px solid #4F5B66;
+    padding-top: 20px;
+}
+
+.avaliacao-card {
+    background: #222A31;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.avaliacao-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.avaliacao-comentario {
+    color: #CCCCCC;
+    font-style: italic;
+}
+
+/* ===========================
+   TOAST NOTIFICATIONS
+=========================== */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: #393E46;
+    color: #EEEEEE;
+    padding: 15px 25px;
+    border-radius: 8px;
+    border-left: 5px solid #00ADB5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast.error { border-left-color: #d9534f; }
+.toast.success { border-left-color: #5cb85c; }
+
+/* ===========================
+   NOTIFICAÇÕES (BADGE)
+=========================== */
+.notificacao-badge {
+    position: absolute;
+    top: -10px;
+    right: -15px;
+    background-color: #d9534f;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    animation: pulse 2s infinite;
+    pointer-events: none; /* Para não atrapalhar o clique no link */
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}

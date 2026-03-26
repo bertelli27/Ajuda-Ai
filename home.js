@@ -23,6 +23,7 @@ function carregarUsuario() {
             `;
             // Adiciona o evento de clique para o botão de logout
             document.getElementById("btnLogout").addEventListener("click", logout);
+            if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
         } else {
             // Caso não encontre o usuário (p.e., localStorage limpo), mostra o menu padrão de não logado
             mostrarMenuDeslogado(areaMenu, mensagemBoasVindas);
@@ -61,6 +62,7 @@ function carregarServicos() {
 
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     const prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
+    const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
 
     grid.innerHTML = ''; // Limpa os cards estáticos
 
@@ -73,12 +75,27 @@ function carregarServicos() {
     prestadores.slice(0, 4).forEach(prestador => {
         const card = document.createElement('div');
         card.className = 'service-card';
+
+        // Calcula a média de avaliações
+        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
+        let mediaEstrelas = 'N/A';
+        if (avaliacoesDoPrestador.length > 0) {
+            const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
+            const notaMedia = somaNotas / avaliacoesDoPrestador.length;
+            mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
+        }
+
         card.innerHTML = `
+            <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
             <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
             <p>Prestador: ${prestador.nome.split(' ')[0]}</p>
             <p>Preço médio: R$${parseFloat(prestador.prestador.valor || 0).toFixed(2).replace('.', ',')}</p>
+            <p>Avaliação: <span class="rating-display">${mediaEstrelas}</span></p>
             <p>Cidade: ${prestador.endereco.cidade}</p>
-            <button class="btn-service" data-email-prestador="${prestador.email}">Solicitar Serviço</button>
+            <div class="card-botoes">
+                <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
+                <button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>
+            </div>
         `;
         grid.appendChild(card);
     });
@@ -95,12 +112,19 @@ function configurarBotoes() {
             const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
 
             if (!emailLogado) {
-                alert("Você precisa fazer login para solicitar um serviço!");
-                window.location.href = "index.html";
+                mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1500);
             } else {
                 const prestadorEmail = e.target.getAttribute('data-email-prestador');
                 window.location.href = `solicitar.html?prestador=${encodeURIComponent(prestadorEmail)}`; 
             }
+        }
+
+        if (e.target && e.target.classList.contains('btn-ver-perfil')) {
+            const prestadorEmail = e.target.getAttribute('data-email-prestador');
+            window.location.href = `perfil.html?usuario=${encodeURIComponent(prestadorEmail)}`;
         }
     });
 }

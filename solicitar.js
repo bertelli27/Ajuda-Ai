@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
     
     if (!emailLogado) {
-        alert("Você precisa fazer login para solicitar um serviço!");
-        window.location.href = "index.html";
+        mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 1500);
         return;
     }
 
@@ -16,16 +18,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const prestadorEmail = params.get("prestador");
 
     if (!prestadorEmail) {
-        alert("Prestador não encontrado.");
-        window.location.href = "servicos.html";
+        mostrarToast("Prestador não encontrado.", "error");
+        setTimeout(() => {
+            window.location.href = "servicos.html";
+        }, 1500);
         return;
     }
 
     const prestador = usuarios.find(u => u.email === prestadorEmail && u.tipo === "prestador");
 
     if (!prestador) {
-        alert("Este usuário não é um prestador válido.");
-        window.location.href = "servicos.html";
+        mostrarToast("Este usuário não é um prestador válido.", "error");
+        setTimeout(() => {
+            window.location.href = "servicos.html";
+        }, 1500);
         return;
     }
 
@@ -70,8 +76,10 @@ document.addEventListener("DOMContentLoaded", function() {
         solicitacoes.push(novaSolicitacao);
         localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
 
-        alert("Solicitação enviada com sucesso! O prestador entrará em contato.");
-        window.location.href = "home.html";
+        mostrarToast("Solicitação bem sucedida! Aguardando resposta do prestador.", "success");
+        setTimeout(() => {
+            window.location.href = "pedidos.html";
+        }, 2000);
     });
 
     // Logout Header

@@ -11,12 +11,12 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     const lembrar = document.getElementById("lembrarConta").checked;
 
     if(!usuario || !senha){
-        alert("Preencha todos os campos!");
+        mostrarToast("Preencha todos os campos!", "error");
         return;
     }
 
     if(!validarEmail(usuario)){
-        alert("Por favor, insira um endereço de e-mail válido!");
+        mostrarToast("Por favor, insira um endereço de e-mail válido!", "error");
         return;
     }
 
@@ -25,7 +25,7 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     const usuarioEncontrado = usuarios.find(u => u.email === usuario && u.senha === senha);
 
     if(!usuarioEncontrado){
-        alert("E-mail ou senha incorretos!");
+        mostrarToast("E-mail ou senha incorretos!", "error");
         return;
     }
 
@@ -36,7 +36,10 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     }
 
     // Redireciona para a home
-    window.location.href = "home.html";
+    mostrarToast("Login bem-sucedido!", "success");
+    setTimeout(() => {
+        window.location.href = "home.html";
+    }, 1000);
 });
 
 // ESQUECI SENHA

@@ -42,6 +42,15 @@
 
                 <!-- Campos Extras para Prestador -->
                 <div id="camposPrestador" style="display: none;" class="form-grid">
+                    <select id="categoria" class="full-width" style="padding: 12px; border-radius: 8px; border: 1px solid #00ADB5; background: #222A31; color: #EEEEEE; outline: none; margin-bottom: 14px;">
+                        <option value="" disabled selected>Selecione uma Categoria...</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Reformas">Reformas</option>
+                        <option value="Tecnologia">Tecnologia</option>
+                        <option value="Saúde e Beleza">Saúde e Beleza</option>
+                        <option value="Outros">Outros</option>
+                    </select>
                     <input type="text" id="servico" placeholder="Serviço prestado (ex: Limpeza Residencial)" class="full-width">
                     <input type="text" id="descricao" placeholder="Descrição rápida" class="full-width">
                     <input type="number" id="valor" placeholder="Valor médio por serviço (R$)">
@@ -65,6 +74,7 @@
 
 </section>
 
+<script src="utils.js"></script>
 <script src="cep.js"></script>
 <script src="register.js"></script>
 </body>

@@ -14,12 +14,12 @@ document.addEventListener("DOMContentLoaded", function() {
                             document.getElementById("cidade").value = data.localidade;
                             document.getElementById("estado").value = data.uf;
                         } else {
-                            alert("CEP não encontrado!");
+                            mostrarToast("CEP não encontrado!", "error");
                         }
                     })
-                    .catch(() => alert("Erro ao buscar o CEP."));
+                    .catch(() => mostrarToast("Erro ao buscar o CEP.", "error"));
             } else if (cep.length > 0) {
-                alert("CEP inválido!");
+                mostrarToast("CEP inválido!", "error");
             }
         });
     }

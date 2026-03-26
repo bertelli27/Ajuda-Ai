@@ -58,6 +58,15 @@
                 <!-- Se for prestador, mostrar os campos dele -->
                 <div id="camposPrestadorPerfil" style="display: none; margin-top: 15px;" class="form-grid">
                     <h3 class="full-width" style="color: #00ADB5; margin-bottom: 0; text-align: left;">Dados de Prestador</h3>
+                    <select id="categoria" class="full-width" disabled style="padding: 12px; border-radius: 8px; border: 1px solid #00ADB5; background: #222A31; color: #EEEEEE; outline: none;">
+                        <option value="" disabled selected>Selecione uma Categoria...</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Reformas">Reformas</option>
+                        <option value="Tecnologia">Tecnologia</option>
+                        <option value="Saúde e Beleza">Saúde e Beleza</option>
+                        <option value="Outros">Outros</option>
+                    </select>
                     <input type="text" id="servico" placeholder="Serviço prestado" class="full-width" disabled>
                     <input type="text" id="descricao" placeholder="Descrição rápida" class="full-width" disabled>
                     <input type="number" id="valor" placeholder="Valor médio por serviço (R$)" disabled>
@@ -67,11 +76,20 @@
                 <button type="submit" id="btnSalvar" class="btn-login" style="display: none; margin-top: 20px;">Salvar Alterações</button>
             </form>
             <button id="btnEditar" class="btn-forgot" style="margin-top: 20px;">Editar Dados</button>
+
+            <!-- Seção de Avaliações Recebidas (para prestadores) -->
+            <div id="avaliacoesRecebidas" class="avaliacoes-container" style="display: none;">
+                <h3 style="color: #00ADB5; text-align: left; margin-bottom: 15px;">Avaliações Recebidas</h3>
+                <div id="listaAvaliacoes">
+                    <!-- As avaliações serão inseridas aqui via JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 
 </section>
 
+<script src="utils.js"></script>
 <script src="perfil.js"></script>
 </body>
 </html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Serviço | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='home.html'">
+        <img src="img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+    <nav class="menu" id="menu">
+        <a href="home.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="pedidos.html">Meus Pedidos</a>
+        <a href="perfil.html">Meu Perfil</a>
+        <a href="#" id="btnLogout">Sair</a>
+    </nav>
+</header>
+
+<section class="main-container" style="min-height: auto; padding-top: 40px;">
+    <div class="login-section register-section">
+        <div class="login-card">
+            <h2>Avaliar Serviço Concluído</h2>
+            <div id="infoServicoAvaliacao" style="background: #222A31; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid #00ADB5;">
+                <!-- Preenchido via JS -->
+            </div>
+            <form id="formAvaliacao">
+                <div class="rating-container">
+                    <label>Sua nota:</label>
+                    <div class="rating-stars">
+                        <span class="star" data-value="1">&#9733;</span>
+                        <span class="star" data-value="2">&#9733;</span>
+                        <span class="star" data-value="3">&#9733;</span>
+                        <span class="star" data-value="4">&#9733;</span>
+                        <span class="star" data-value="5">&#9733;</span>
+                    </div>
+                </div>
+                <textarea id="comentario" placeholder="Deixe um comentário sobre o serviço (opcional)..." class="full-width" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #00ADB5; background: #222A31; color: #EEEEEE; outline: none; resize: vertical; min-height: 100px; margin-top: 20px; font-family: inherit;"></textarea>
+                <button type="submit" class="btn-login" style="margin-top: 20px;">Enviar Avaliação</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script src="utils.js"></script>
+<script src="avaliar.js"></script>
+</body>
+</html>

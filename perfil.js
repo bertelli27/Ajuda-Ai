@@ -1,144 +1,234 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // ================= AUTENTICAÇÃO E CARREGAMENTO DE DADOS =================
+    // ================= VARIÁVEIS GLOBAIS E VERIFICAÇÃO DE CONTEXTO =================
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
-    
-    if (!emailLogado) {
-        alert("Você precisa fazer login para acessar esta página!");
-        window.location.href = "index.html";
-        return;
-    }
-
+    const params = new URLSearchParams(window.location.search);
+    const perfilEmail = params.get("usuario");
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const usuarioAtual = usuarios.find(u => u.email === emailLogado);
+    let usuarioAlvo; // O usuário cujo perfil está sendo exibido
+    let isOwnProfile = false; // Flag para verificar se o usuário está vendo seu próprio perfil
 
-    if (!usuarioAtual) {
-        alert("Erro ao carregar dados do usuário. Faça login novamente.");
-        logout();
-        return;
+    // Elementos do DOM
+    const btnEditar = document.getElementById("btnEditar");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const formInputs = document.querySelectorAll("#perfilForm input, #perfilForm textarea, #perfilForm select");
+
+    // Determina qual perfil carregar (público ou próprio)
+    if (perfilEmail) {
+        // --- MODO PERFIL PÚBLICO ---
+        isOwnProfile = (emailLogado === perfilEmail);
+        if (isOwnProfile) {
+            // Se o usuário logado acessa seu próprio link público, redireciona para a página de edição padrão
+            window.location.href = "perfil.html";
+            return;
+        }
+
+        usuarioAlvo = usuarios.find(u => u.email === perfilEmail);
+
+        if (!usuarioAlvo || usuarioAlvo.tipo !== 'prestador') {
+            mostrarToast("Perfil de prestador não encontrado.", "error");
+            setTimeout(() => { window.location.href = "servicos.html"; }, 1500);
+            return;
+        }
+
+        configurarPerfilPublico();
+
+    } else {
+        // --- MODO MEU PERFIL (EDITÁVEL) ---
+        if (!emailLogado) {
+            mostrarToast("Você precisa fazer login para acessar esta página!", "error");
+            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+            return;
+        }
+        isOwnProfile = true;
+        usuarioAlvo = usuarios.find(u => u.email === emailLogado);
+
+        if (!usuarioAlvo) {
+            mostrarToast("Erro ao carregar dados do usuário. Faça login novamente.", "error");
+            logout();
+            return;
+        }
+
+        configurarMeuPerfil();
     }
 
-    // ================= PREENCHIMENTO DO FORMULÁRIO =================
-    function preencherFormulario() {
-        document.getElementById("nome").value = usuarioAtual.nome;
-        document.getElementById("cpf").value = usuarioAtual.cpf;
-        document.getElementById("email").value = usuarioAtual.email;
-        document.getElementById("telefone").value = usuarioAtual.telefone;
-        document.getElementById("cep").value = usuarioAtual.endereco.cep;
-        document.getElementById("rua").value = usuarioAtual.endereco.rua;
-        document.getElementById("numero").value = usuarioAtual.endereco.numero;
-        document.getElementById("complemento").value = usuarioAtual.endereco.complemento || '';
-        document.getElementById("bairro").value = usuarioAtual.endereco.bairro;
-        document.getElementById("cidade").value = usuarioAtual.endereco.cidade;
-        document.getElementById("estado").value = usuarioAtual.endereco.estado;
+    // Preenche os dados na tela e configura o cabeçalho, seja qual for o modo
+    preencherFormulario(usuarioAlvo);
+    setupHeader();
 
-        // Preenche campos de prestador, se existirem
-        if (usuarioAtual.tipo === "prestador" && usuarioAtual.prestador) {
+    // ================= FUNÇÕES DE CONFIGURAÇÃO DE MODO =================
+
+    function configurarPerfilPublico() {
+        // Esconde todos os controles de edição do card
+        btnEditar.style.display = "none";
+        btnSalvar.style.display = "none";
+        document.getElementById("areaTornarPrestador").style.display = "none";
+
+        // Altera o título da página e do card
+        document.title = `Perfil de ${usuarioAlvo.nome.split(' ')[0]} | AjudaAí`;
+        document.querySelector('.login-card h2').innerText = `Perfil de Prestador`;
+
+        // Desabilita todos os campos do formulário
+        formInputs.forEach(input => { input.disabled = true; });
+    }
+
+    function configurarMeuPerfil() {
+        // Adiciona os event listeners para edição, salvamento, etc.
+        btnEditar.addEventListener("click", () => alternarModoEdicao(true));
+        document.getElementById("perfilForm").addEventListener("submit", salvarAlteracoes);
+        document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
+    }
+
+    // ================= FUNÇÕES PRINCIPAIS =================
+
+    function preencherFormulario(usuario) {
+        document.getElementById("nome").value = usuario.nome;
+        document.getElementById("cpf").value = usuario.cpf;
+        document.getElementById("email").value = usuario.email;
+        document.getElementById("telefone").value = usuario.telefone;
+        document.getElementById("cep").value = usuario.endereco.cep;
+        document.getElementById("rua").value = usuario.endereco.rua;
+        document.getElementById("numero").value = usuario.endereco.numero;
+        document.getElementById("complemento").value = usuario.endereco.complemento || '';
+        document.getElementById("bairro").value = usuario.endereco.bairro;
+        document.getElementById("cidade").value = usuario.endereco.cidade;
+        document.getElementById("estado").value = usuario.endereco.estado;
+
+        if (usuario.tipo === "prestador" && usuario.prestador) {
             document.getElementById("camposPrestadorPerfil").style.display = "grid";
-            document.getElementById("servico").value = usuarioAtual.prestador.servico;
-            document.getElementById("descricao").value = usuarioAtual.prestador.descricao;
-            document.getElementById("valor").value = usuarioAtual.prestador.valor;
-            document.getElementById("disponibilidade").value = usuarioAtual.prestador.disponibilidade;
-        } else {
-            // Se for apenas cliente, exibe a opção de se tornar prestador
+            if (usuario.prestador.categoria) document.getElementById("categoria").value = usuario.prestador.categoria;
+            document.getElementById("servico").value = usuario.prestador.servico;
+            document.getElementById("descricao").value = usuario.prestador.descricao;
+            document.getElementById("valor").value = usuario.prestador.valor;
+            document.getElementById("disponibilidade").value = usuario.prestador.disponibilidade;
+            carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
+        } else if (isOwnProfile) {
+            // Mostra a opção de se tornar prestador apenas no próprio perfil
             document.getElementById("areaTornarPrestador").style.display = "block";
         }
     }
 
-    preencherFormulario();
-
-    // ================= TORNAR-SE PRESTADOR =================
-    document.getElementById("btnTornarPrestador")?.addEventListener("click", () => {
-        document.getElementById("areaTornarPrestador").style.display = "none";
-        document.getElementById("camposPrestadorPerfil").style.display = "grid";
-        
-        // Marca o usuário temporariamente como prestador e ativa a edição obrigatória
-        usuarioAtual.tipo = "prestador";
-        alternarModoEdicao(true);
-    });
-
-    // ================= CONTROLE DE EDIÇÃO =================
-    const btnEditar = document.getElementById("btnEditar");
-    const btnSalvar = document.getElementById("btnSalvar");
-    const formInputs = document.querySelectorAll("#perfilForm input");
-
     function alternarModoEdicao(editar) {
         formInputs.forEach(input => {
-            // CPF e E-mail nunca são editáveis
             if (input.id !== 'cpf' && input.id !== 'email') {
                 input.disabled = !editar;
             }
         });
-
         btnEditar.style.display = editar ? "none" : "block";
         btnSalvar.style.display = editar ? "block" : "none";
     }
 
-    btnEditar.addEventListener("click", () => {
+    function tornarPrestador() {
+        document.getElementById("areaTornarPrestador").style.display = "none";
+        document.getElementById("camposPrestadorPerfil").style.display = "grid";
+        usuarioAlvo.tipo = "prestador"; // Marca temporariamente para salvar
         alternarModoEdicao(true);
-    });
+    }
 
-    // ================= SALVAR ALTERAÇÕES =================
-    document.getElementById("perfilForm").addEventListener("submit", function(e) {
+    function salvarAlteracoes(e) {
         e.preventDefault();
-
-        // Encontrar o índice do usuário no array original
         const userIndex = usuarios.findIndex(u => u.email === emailLogado);
         if (userIndex === -1) {
-            alert("Ocorreu um erro ao salvar. Tente novamente.");
+            mostrarToast("Ocorreu um erro ao salvar. Tente novamente.", "error");
             return;
         }
 
-        // Atualizar os dados do objeto do usuário
-        usuarios[userIndex].nome = document.getElementById("nome").value.trim();
-        usuarios[userIndex].telefone = document.getElementById("telefone").value.trim();
-        usuarios[userIndex].endereco.cep = document.getElementById("cep").value.trim();
-        usuarios[userIndex].endereco.rua = document.getElementById("rua").value.trim();
-        usuarios[userIndex].endereco.numero = document.getElementById("numero").value.trim();
-        usuarios[userIndex].endereco.complemento = document.getElementById("complemento").value.trim();
-        usuarios[userIndex].endereco.bairro = document.getElementById("bairro").value.trim();
-        usuarios[userIndex].endereco.cidade = document.getElementById("cidade").value.trim();
-        usuarios[userIndex].endereco.estado = document.getElementById("estado").value.trim();
+        const usuarioEditado = usuarios[userIndex];
+        usuarioEditado.nome = document.getElementById("nome").value.trim();
+        usuarioEditado.telefone = document.getElementById("telefone").value.trim();
+        usuarioEditado.endereco.cep = document.getElementById("cep").value.trim();
+        usuarioEditado.endereco.rua = document.getElementById("rua").value.trim();
+        usuarioEditado.endereco.numero = document.getElementById("numero").value.trim();
+        usuarioEditado.endereco.complemento = document.getElementById("complemento").value.trim();
+        usuarioEditado.endereco.bairro = document.getElementById("bairro").value.trim();
+        usuarioEditado.endereco.cidade = document.getElementById("cidade").value.trim();
+        usuarioEditado.endereco.estado = document.getElementById("estado").value.trim();
+        usuarioEditado.tipo = usuarioAlvo.tipo;
 
-        // Atualiza o tipo do usuário (pode ter mudado de cliente para prestador nesta sessão)
-        usuarios[userIndex].tipo = usuarioAtual.tipo;
-
-        // Atualiza dados do prestador se for o caso
         if (usuarios[userIndex].tipo === "prestador") {
+            const categoria = document.getElementById("categoria").value;
             const servico = document.getElementById("servico").value.trim();
             const descricao = document.getElementById("descricao").value.trim();
             const valor = document.getElementById("valor").value.trim();
             const disponibilidade = document.getElementById("disponibilidade").value.trim();
 
-            // Validação simples: exigir que os campos sejam preenchidos ao se tornar prestador
-            if (!servico || !descricao || !valor || !disponibilidade) {
-                alert("Por favor, preencha todos os dados de prestador antes de salvar as alterações!");
-                return; // Impede o salvamento se estiver incompleto
+            if (!categoria || !servico || !descricao || !valor || !disponibilidade) {
+                mostrarToast("Por favor, preencha todos os dados de prestador, incluindo a categoria!", "error");
+                return;
             }
 
-            if (!usuarios[userIndex].prestador) usuarios[userIndex].prestador = {};
-            usuarios[userIndex].prestador.servico = servico;
-            usuarios[userIndex].prestador.descricao = descricao;
-            usuarios[userIndex].prestador.valor = valor;
-            usuarios[userIndex].prestador.disponibilidade = disponibilidade;
+            if (!usuarioEditado.prestador) usuarioEditado.prestador = {};
+            usuarioEditado.prestador.categoria = categoria;
+            usuarioEditado.prestador.servico = servico;
+            usuarioEditado.prestador.descricao = descricao;
+            usuarioEditado.prestador.valor = valor;
+            usuarioEditado.prestador.disponibilidade = disponibilidade;
         }
 
-        // Salvar o array de usuários atualizado no LocalStorage
         localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-        alert("Dados atualizados com sucesso!");
-        
-        // Retornar ao modo de visualização
+        mostrarToast("Dados atualizados com sucesso!", "success");
         alternarModoEdicao(false);
-    });
+    }
 
+    function carregarAvaliacoes(usuario) {
+        const containerAvaliacoes = document.getElementById("avaliacoesRecebidas");
+        const listaAvaliacoes = document.getElementById("listaAvaliacoes");
+        const todasAvaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+        const avaliacoesDoPrestador = todasAvaliacoes.filter(a => a.prestadorEmail === usuario.email);
 
-    // ================= LOGOUT =================
+        if (avaliacoesDoPrestador.length > 0) {
+            containerAvaliacoes.style.display = "block";
+            listaAvaliacoes.innerHTML = avaliacoesDoPrestador.map(avaliacao => {
+                const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
+                const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
+                const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
+                return `
+                    <div class="avaliacao-card">
+                        <div class="avaliacao-header">
+                            <span class="rating-display">${estrelas}</span>
+                            <strong>${nomeCliente}</strong>
+                        </div>
+                        ${avaliacao.comentario ? `<p class="avaliacao-comentario">"${avaliacao.comentario}"</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            containerAvaliacoes.style.display = "block";
+            listaAvaliacoes.innerHTML = '<p style="color: #AAAAAA; text-align: center;">Nenhuma avaliação recebida ainda.</p>';
+        }
+    }
+
+    // ================= FUNÇÕES AUXILIARES =================
+
+    function setupHeader() {
+        const menu = document.getElementById("menu");
+        if (!menu) return;
+
+        if (emailLogado) {
+            // Usuário Logado
+            menu.innerHTML = `
+                <a href="home.html">Início</a>
+                <a href="servicos.html">Serviços</a>
+                <a href="pedidos.html">Meus Pedidos</a>
+                <a href="perfil.html">Meu Perfil</a>
+                <a href="#" id="btnLogout">Sair</a>
+            `;
+            document.getElementById("btnLogout").addEventListener("click", logout);
+            if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
+        } else {
+            // Usuário Deslogado (só pode acontecer vendo um perfil público)
+            menu.innerHTML = `
+                <a href="home.html">Início</a>
+                <a href="servicos.html">Serviços</a>
+                <a href="index.html">Entrar</a>
+                <a href="register.html">Cadastrar</a>
+            `;
+        }
+    }
+
     function logout(e) {
         if (e) e.preventDefault();
         localStorage.removeItem("usuarioLogado");
         sessionStorage.removeItem("usuarioLogado");
         window.location.href = "index.html";
     }
-
-    document.getElementById("btnLogout").addEventListener("click", logout);
 });

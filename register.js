@@ -81,8 +81,9 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
     const tipoUsuario = document.querySelector('input[name="tipoUsuario"]:checked').value;
     const lembrar = document.getElementById("lembrarContaRegister").checked;
 
-    let servico = "", descricao = "", valor = "", disponibilidade = "";
+    let categoria = "", servico = "", descricao = "", valor = "", disponibilidade = "";
     if (tipoUsuario === "prestador") {
+        categoria = document.getElementById("categoria").value;
         servico = document.getElementById("servico").value.trim();
         descricao = document.getElementById("descricao").value.trim();
         valor = document.getElementById("valor").value.trim();
@@ -91,34 +92,34 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
 
     // Valida campos
     if(!nome || !cpf || !email || !telefone || !cep || !rua || !numero || !bairro || !cidade || !estado || !senha || !confirmSenha){
-        alert("Preencha todos os campos básicos obrigatórios!");
+        mostrarToast("Preencha todos os campos básicos obrigatórios!", "error");
         return;
     }
 
-    if (tipoUsuario === "prestador" && (!servico || !descricao || !valor || !disponibilidade)) {
-        alert("Preencha todos os campos extras para prestador de serviço!");
+    if (tipoUsuario === "prestador" && (!categoria || !servico || !descricao || !valor || !disponibilidade)) {
+        mostrarToast("Preencha todos os campos, incluindo a categoria!", "error");
         return;
     }
 
     if(!validarCPF(cpf)){
-        alert("CPF inválido!");
+        mostrarToast("CPF inválido!", "error");
         return;
     }
 
     if(!validarEmail(email)){
-        alert("E-mail inválido!");
+        mostrarToast("E-mail inválido!", "error");
         return;
     }
 
     if(senha !== confirmSenha){
-        alert("As senhas não conferem!");
+        mostrarToast("As senhas não conferem!", "error");
         return;
     }
 
     // Verifica se o usuário já existe
     const usuarioExistente = usuarios.find(u => u.email === email);
     if(usuarioExistente){
-        alert("Usuário já cadastrado com este e-mail!");
+        mostrarToast("Usuário já cadastrado com este e-mail!", "error");
         return;
     }
 
@@ -130,7 +131,7 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
     };
     
     if (tipoUsuario === "prestador") {
-        novoUsuario.prestador = { servico, descricao, valor, disponibilidade };
+        novoUsuario.prestador = { categoria, servico, descricao, valor, disponibilidade };
     }
 
     usuarios.push(novoUsuario);
@@ -143,6 +144,8 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
         sessionStorage.setItem("usuarioLogado", email);
     }
 
-    alert("Cadastro realizado com sucesso!");
-    window.location.href = "home.html";
+    mostrarToast("Cadastro realizado com sucesso!", "success");
+    setTimeout(() => {
+        window.location.href = "home.html";
+    }, 1500);
 });

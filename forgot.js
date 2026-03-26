@@ -8,15 +8,17 @@ document.getElementById("forgotForm").addEventListener("submit", function(e){
     const email = document.getElementById("emailForgot").value.trim();
 
     if(!email){
-        alert("Digite seu e-mail!");
+        mostrarToast("Digite seu e-mail!", "error");
         return;
     }
 
     if(!validarEmail(email)){
-        alert("E-mail inválido!");
+        mostrarToast("E-mail inválido!", "error");
         return;
     }
 
-    alert(`E-mail de recuperação enviado para ${email} (simulado).`);
-    window.location.href = "index.html";
+    mostrarToast(`E-mail de recuperação enviado para ${email} (simulado).`, "success");
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 2000);
 });

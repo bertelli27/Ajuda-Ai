@@ -25,12 +25,66 @@
 </header>
 
 <section class="services-section">
-    <h2 id="titulo-pedidos">Carregando seus pedidos...</h2>
-    <div id="pedidos-container" class="pedidos-grid">
-        <!-- Cards de pedidos serão inseridos aqui via JavaScript -->
+    <!-- Seção de solicitações recebidas (visível apenas para prestadores) -->
+    <div id="recebidos-section" style="display: none; margin-bottom: 40px;">
+        <h2 id="titulo-pedidos-recebidos">Solicitações Recebidas</h2>
+        <div class="filtros-pedidos">
+            <select id="filtro-status-recebidos">
+                <option value="todos">Filtrar por Status</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="ACEITO">Aceito</option>
+                <option value="CONCLUIDO">Concluído</option>
+                <option value="CANCELADO">Cancelado</option>
+            </select>
+            <select id="ordenar-data-recebidos">
+                <option value="recentes">Mais Recentes</option>
+                <option value="antigos">Mais Antigos</option>
+            </select>
+        </div>
+        <div id="pedidos-recebidos-container" class="pedidos-grid">
+            <!-- Cards de solicitações recebidas -->
+        </div>
+    </div>
+
+    <!-- Seção de solicitações enviadas (visível para todos) -->
+    <div id="enviados-section">
+        <h2 id="titulo-pedidos-enviados">Meus Pedidos Realizados</h2>
+        <div class="filtros-pedidos">
+            <select id="filtro-status-enviados">
+                <option value="todos">Filtrar por Status</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="ACEITO">Aceito</option>
+                <option value="CONCLUIDO">Concluído</option>
+                <option value="CANCELADO">Cancelado</option>
+            </select>
+            <select id="ordenar-data-enviados">
+                <option value="recentes">Mais Recentes</option>
+                <option value="antigos">Mais Antigos</option>
+            </select>
+        </div>
+        <div id="pedidos-enviados-container" class="pedidos-grid">
+            <!-- Cards de solicitações enviadas -->
+        </div>
     </div>
 </section>
 
+<script src="utils.js"></script>
 <script src="pedidos.js"></script>
+
+<!-- MODAL DO CHAT -->
+<div id="chatModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h3 id="chat-header">Conversa</h3>
+        <div id="chat-messages" class="chat-messages">
+            <!-- Mensagens serão carregadas aqui -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem...">
+            <button id="chat-send-btn">Enviar</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
