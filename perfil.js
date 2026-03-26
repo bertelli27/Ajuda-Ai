@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     let usuarioAlvo; // O usuário cujo perfil está sendo exibido
     let isOwnProfile = false; // Flag para verificar se o usuário está vendo seu próprio perfil
+    let novaFotoBase64 = null; // Para armazenar a nova foto antes de salvar
 
     // Elementos do DOM
     const btnEditar = document.getElementById("btnEditar");
@@ -61,11 +62,19 @@ document.addEventListener("DOMContentLoaded", function() {
         // Esconde todos os controles de edição do card
         btnEditar.style.display = "none";
         btnSalvar.style.display = "none";
+        document.getElementById("editPicLabel").style.display = "none";
         document.getElementById("areaTornarPrestador").style.display = "none";
 
         // Altera o título da página e do card
         document.title = `Perfil de ${usuarioAlvo.nome.split(' ')[0]} | AjudaAí`;
         document.querySelector('.login-card h2').innerText = `Perfil de Prestador`;
+
+        // Oculta os campos de dados pessoais para visitantes (mostra apenas nome e serviços)
+        const camposPrivados = ['cpf', 'email', 'telefone', 'cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'estado'];
+        camposPrivados.forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) campo.style.display = "none";
+        });
 
         // Desabilita todos os campos do formulário
         formInputs.forEach(input => { input.disabled = true; });
@@ -76,11 +85,25 @@ document.addEventListener("DOMContentLoaded", function() {
         btnEditar.addEventListener("click", () => alternarModoEdicao(true));
         document.getElementById("perfilForm").addEventListener("submit", salvarAlteracoes);
         document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
+        document.getElementById("profilePicInput").addEventListener("change", préVisualizarFoto);
     }
 
     // ================= FUNÇÕES PRINCIPAIS =================
 
     function preencherFormulario(usuario) {
+        // Preenche a foto de perfil
+        const profilePic = document.getElementById("profilePicPreview");
+        if (usuario.fotoPerfil) {
+            profilePic.src = usuario.fotoPerfil;
+        } else {
+            profilePic.src = "img/avatar_padrao.png";
+        }
+
+        // Se não for o próprio perfil, não mostra o botão de editar foto
+        if (!isOwnProfile) {
+            document.getElementById("editPicLabel").style.display = "none";
+        }
+
         document.getElementById("nome").value = usuario.nome;
         document.getElementById("cpf").value = usuario.cpf;
         document.getElementById("email").value = usuario.email;
@@ -115,6 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         btnEditar.style.display = editar ? "none" : "block";
         btnSalvar.style.display = editar ? "block" : "none";
+        if (isOwnProfile) document.getElementById("editPicLabel").style.display = editar ? "flex" : "none";
     }
 
     function tornarPrestador() {
@@ -122,6 +146,19 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("camposPrestadorPerfil").style.display = "grid";
         usuarioAlvo.tipo = "prestador"; // Marca temporariamente para salvar
         alternarModoEdicao(true);
+    }
+
+    function préVisualizarFoto(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            document.getElementById("profilePicPreview").src = base64;
+            novaFotoBase64 = base64; // Armazena para salvar depois
+        };
+        reader.readAsDataURL(file);
     }
 
     function salvarAlteracoes(e) {
@@ -133,6 +170,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         const usuarioEditado = usuarios[userIndex];
+
+        // Salva a nova foto se houver uma
+        if (novaFotoBase64) {
+            usuarioEditado.fotoPerfil = novaFotoBase64;
+        }
         usuarioEditado.nome = document.getElementById("nome").value.trim();
         usuarioEditado.telefone = document.getElementById("telefone").value.trim();
         usuarioEditado.endereco.cep = document.getElementById("cep").value.trim();
@@ -166,6 +208,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         localStorage.setItem("usuarios", JSON.stringify(usuarios));
         mostrarToast("Dados atualizados com sucesso!", "success");
+        novaFotoBase64 = null; // Limpa a foto temporária
         alternarModoEdicao(false);
     }
 
@@ -179,11 +222,13 @@ document.addEventListener("DOMContentLoaded", function() {
             containerAvaliacoes.style.display = "block";
             listaAvaliacoes.innerHTML = avaliacoesDoPrestador.map(avaliacao => {
                 const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
+                const fotoCliente = cliente?.fotoPerfil || 'img/avatar_padrao.png';
                 const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
                 const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
                 return `
                     <div class="avaliacao-card">
                         <div class="avaliacao-header">
+                            <img src="${fotoCliente}" alt="Foto de ${nomeCliente}" class="menu-avatar">
                             <span class="rating-display">${estrelas}</span>
                             <strong>${nomeCliente}</strong>
                         </div>
@@ -204,15 +249,33 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!menu) return;
 
         if (emailLogado) {
+            const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+            const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
+
             // Usuário Logado
             menu.innerHTML = `
                 <a href="home.html">Início</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
-                <a href="perfil.html">Meu Perfil</a>
-                <a href="#" id="btnLogout">Sair</a>
+                <div class="profile-menu-container">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="perfil.html">Meu Perfil</a>
+                        <a href="#" id="btnLogout">Sair</a>
+                    </div>
+                </div>
             `;
             document.getElementById("btnLogout").addEventListener("click", logout);
+            document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+            });
+            window.addEventListener("click", function() {
+                const dropdown = document.getElementById("profileDropdown");
+                if (dropdown && dropdown.classList.contains("show-dropdown")) {
+                    dropdown.classList.remove("show-dropdown");
+                }
+            });
             if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
         } else {
             // Usuário Deslogado (só pode acontecer vendo um perfil público)

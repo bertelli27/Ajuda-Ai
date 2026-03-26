@@ -8,15 +8,33 @@ document.addEventListener("DOMContentLoaded", function() {
         const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
 
         if (emailLogado) {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+            const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
             // Usuário Logado
             menu.innerHTML = `
                 <a href="home.html">Início</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
-                <a href="perfil.html">Meu Perfil</a>
-                <a href="#" id="btnLogout">Sair</a>
+                <div class="profile-menu-container">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="perfil.html">Meu Perfil</a>
+                        <a href="#" id="btnLogout">Sair</a>
+                    </div>
+                </div>
             `;
             document.getElementById("btnLogout").addEventListener("click", logout);
+            document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+            });
+            window.addEventListener("click", function() {
+                const dropdown = document.getElementById("profileDropdown");
+                if (dropdown && dropdown.classList.contains("show-dropdown")) {
+                    dropdown.classList.remove("show-dropdown");
+                }
+            });
             if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
         } else {
             // Usuário Deslogado
@@ -76,6 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Adicionando mais detalhes ao card
             card.innerHTML = `
+                <img src="${prestador.fotoPerfil || 'img/avatar_padrao.png'}" alt="Foto de ${prestador.nome}" class="card-avatar">
                 <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
                 <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
                 <p><strong>Prestador:</strong> ${prestador.nome}</p>

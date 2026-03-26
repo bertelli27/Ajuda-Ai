@@ -30,6 +30,15 @@
     <div class="login-section register-section">
         <div class="login-card">
             <h2>Meu Perfil</h2>
+
+            <div class="profile-pic-container">
+                <img src="img/avatar_padrao.png" alt="Foto de Perfil" id="profilePicPreview">
+                <label for="profilePicInput" class="profile-pic-edit-label" id="editPicLabel">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25Z" /></svg>
+                </label>
+                <input type="file" id="profilePicInput" accept="image/png, image/jpeg" style="display: none;">
+            </div>
+
             <form id="perfilForm">
                 <div class="form-grid">
                     <input type="text" id="nome" placeholder="Nome completo" required class="full-width" disabled>

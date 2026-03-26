@@ -1,9 +1,9 @@
 // ================= USUÁRIO =================
 
 function carregarUsuario() {
-    const areaMenu = document.getElementById("area-usuario-menu");
+    const menu = document.getElementById("menu");
     const mensagemBoasVindas = document.getElementById("mensagem-boas-vindas");
-    if (!areaMenu || !mensagemBoasVindas) return;
+    if (!menu || !mensagemBoasVindas) return;
 
     // 1. Checar se o usuário está logado (usa a mesma lógica do login)
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
@@ -14,32 +14,58 @@ function carregarUsuario() {
         const usuarioAtual = usuarios.find(u => u.email === emailLogado);
 
         if (usuarioAtual && usuarioAtual.nome) {
+            const fotoPerfil = usuarioAtual.fotoPerfil || 'img/avatar_padrao.png';
+
             // 🔐 LOGADO: Monta a mensagem de boas-vindas e o menu do usuário
-            mensagemBoasVindas.innerText = `Olá, ${usuarioAtual.nome.split(' ')[0]}!`;
-            areaMenu.innerHTML = `
+            mensagemBoasVindas.innerHTML = `<img src="${fotoPerfil}" alt="Avatar" class="header-avatar"> Olá, ${usuarioAtual.nome.split(' ')[0]}!`;
+            menu.innerHTML = `
+                <a href="home.html">Início</a>
+                <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
-                <a href="perfil.html">Meu Perfil</a>
-                <a href="#" id="btnLogout">Sair</a>
+                <div class="profile-menu-container">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="perfil.html">Meu Perfil</a>
+                        <a href="#" id="btnLogout">Sair</a>
+                    </div>
+                </div>
             `;
             // Adiciona o evento de clique para o botão de logout
             document.getElementById("btnLogout").addEventListener("click", logout);
+            
+            // Lógica para abrir/fechar o Dropdown ao clicar na foto
+            document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+            });
+
+            // Fecha o Dropdown se clicar em qualquer outro lugar da tela
+            window.addEventListener("click", function() {
+                const dropdown = document.getElementById("profileDropdown");
+                if (dropdown && dropdown.classList.contains("show-dropdown")) {
+                    dropdown.classList.remove("show-dropdown");
+                }
+            });
+
             if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
         } else {
             // Caso não encontre o usuário (p.e., localStorage limpo), mostra o menu padrão de não logado
-            mostrarMenuDeslogado(areaMenu, mensagemBoasVindas);
+            mostrarMenuDeslogado(menu, mensagemBoasVindas);
         }
     } else {
         // 🔓 NÃO LOGADO
-        mostrarMenuDeslogado(areaMenu, mensagemBoasVindas);
+        mostrarMenuDeslogado(menu, mensagemBoasVindas);
     }
 }
 
-function mostrarMenuDeslogado(areaMenu, mensagemBoasVindas) {
+function mostrarMenuDeslogado(menu, mensagemBoasVindas) {
     // Limpa a mensagem de boas-vindas se não estiver logado
     mensagemBoasVindas.innerText = '';
 
     // Mostra os links de Entrar/Cadastrar no menu
-    areaMenu.innerHTML = `
+    menu.innerHTML = `
+        <a href="home.html">Início</a>
+        <a href="servicos.html">Serviços</a>
         <a href="index.html">Entrar</a>
         <a href="register.html">Cadastrar</a>
     `;
@@ -86,6 +112,7 @@ function carregarServicos() {
         }
 
         card.innerHTML = `
+            <img src="${prestador.fotoPerfil || 'img/avatar_padrao.png'}" alt="Foto de ${prestador.nome}" class="card-avatar">
             <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
             <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
             <p>Prestador: ${prestador.nome.split(' ')[0]}</p>

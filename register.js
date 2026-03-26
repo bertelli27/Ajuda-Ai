@@ -126,7 +126,8 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
     // Adiciona usuário ao array
     const novoUsuario = { 
         nome, cpf, email, telefone, 
-        endereco: { cep, rua, numero, complemento, bairro, cidade, estado }, 
+        endereco: { cep, rua, numero, complemento, bairro, cidade, estado },
+        fotoPerfil: null, 
         senha, tipo: tipoUsuario 
     };
     

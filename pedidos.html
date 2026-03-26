@@ -16,11 +16,7 @@
     </div>
 
     <nav class="menu" id="menu">
-        <a href="home.html">Início</a>
-        <a href="servicos.html">Serviços</a>
-        <a href="pedidos.html">Meus Pedidos</a>
-        <a href="perfil.html">Meu Perfil</a>
-        <a href="#" id="btnLogout">Sair</a>
+        <!-- O menu será preenchido pelo JS -->
     </nav>
 </header>
 
@@ -33,6 +29,7 @@
                 <option value="todos">Filtrar por Status</option>
                 <option value="PENDENTE">Pendente</option>
                 <option value="ACEITO">Aceito</option>
+                <option value="AGUARDANDO_CONFIRMACAO">Aguard. Confirmação</option>
                 <option value="CONCLUIDO">Concluído</option>
                 <option value="CANCELADO">Cancelado</option>
             </select>
@@ -54,6 +51,7 @@
                 <option value="todos">Filtrar por Status</option>
                 <option value="PENDENTE">Pendente</option>
                 <option value="ACEITO">Aceito</option>
+                <option value="AGUARDANDO_CONFIRMACAO">Aguard. Confirmação</option>
                 <option value="CONCLUIDO">Concluído</option>
                 <option value="CANCELADO">Cancelado</option>
             </select>
@@ -73,9 +71,15 @@
 
 <!-- MODAL DO CHAT -->
 <div id="chatModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="height: 80vh;">
         <span class="close-button">&times;</span>
         <h3 id="chat-header">Conversa</h3>
+        
+        <!-- ÁREA DE NEGOCIAÇÃO -->
+        <div id="negociacao-area" style="background: #222A31; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #00ADB5; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <!-- Preenchido via JS -->
+        </div>
+
         <div id="chat-messages" class="chat-messages">
             <!-- Mensagens serão carregadas aqui -->
         </div>

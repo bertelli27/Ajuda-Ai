@@ -68,7 +68,10 @@ document.addEventListener("DOMContentLoaded", function() {
             dataSelecionada: data,
             enderecoRealizacao: endereco,
             status: "PENDENTE", // Exatamente como na sua documentação de BD
-            dataSolicitacao: new Date().toISOString()
+            dataSolicitacao: new Date().toISOString(),
+            valorCombinado: null,
+            valorStatus: 'INICIAL', // 'INICIAL', 'PROPOSTO', 'ACEITO'
+            descricaoProposta: ''
         };
 
         // Salva na "Tabela" de solicitações no LocalStorage
@@ -82,8 +85,43 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 2000);
     });
 
-    // Logout Header
-    document.getElementById("btnLogout")?.addEventListener("click", function() {
-        // Use a lógica padrão de logout
-    });
+    // ================= HEADER E LOGOUT =================
+    function logout(e) {
+        if (e) e.preventDefault();
+        localStorage.removeItem("usuarioLogado");
+        sessionStorage.removeItem("usuarioLogado");
+        window.location.href = "index.html";
+    }
+
+    function setupHeader() {
+        const menu = document.getElementById("menu");
+        if (!menu) return;
+        const fotoPerfil = clienteAtual?.fotoPerfil || 'img/avatar_padrao.png';
+        menu.innerHTML = `
+            <a href="home.html">Início</a>
+            <a href="servicos.html">Serviços</a>
+            <a href="pedidos.html">Meus Pedidos</a>
+            <div class="profile-menu-container">
+                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                <div class="profile-dropdown" id="profileDropdown">
+                    <a href="perfil.html">Meu Perfil</a>
+                    <a href="#" id="btnLogout">Sair</a>
+                </div>
+            </div>
+        `;
+        document.getElementById("btnLogout").addEventListener("click", logout);
+        document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
+            e.stopPropagation();
+            document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+        });
+        window.addEventListener("click", function() {
+            const dropdown = document.getElementById("profileDropdown");
+            if (dropdown && dropdown.classList.contains("show-dropdown")) {
+                dropdown.classList.remove("show-dropdown");
+            }
+        });
+        if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
+    }
+
+    setupHeader();
 });
