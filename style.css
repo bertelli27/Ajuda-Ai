@@ -1493,6 +1493,226 @@ body {
 }
 
 /* ===========================
+   MINI FOOTER
+=========================== */
+.mini-footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+    border-top: 1px solid #393E46;
+    color: #888888;
+    font-size: 13px;
+}
+
+/* ===========================
+   LANDING PAGE (HOME)
+=========================== */
+.hero-section {
+    text-align: center;
+    padding: 60px 20px;
+    background: radial-gradient(circle at center, #2A343D 0%, #222A31 100%);
+    border-bottom: 1px solid #393E46;
+}
+
+.hero-title {
+    font-size: 42px;
+    color: #EEEEEE;
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    line-height: 1.2;
+}
+
+.hero-title span {
+    color: #00ADB5;
+}
+
+.hero-subtitle {
+    font-size: 18px;
+    color: #CCCCCC;
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+}
+
+.hero-ctas {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.home-section {
+    max-width: 1100px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.section-heading {
+    text-align: center;
+    font-size: 32px;
+    color: #00ADB5;
+    margin-bottom: 40px;
+}
+
+/* Como funciona */
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+}
+
+.step-card {
+    background: #393E46;
+    padding: 30px 20px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.step-card h3 {
+    color: #EEEEEE;
+    margin-bottom: 10px;
+}
+
+.step-card p {
+    color: #AAAAAA;
+    font-size: 14px;
+}
+
+/* Categorias Populares */
+.pop-categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.pop-category-card {
+    background: #2A343D;
+    border: 2px solid #4F5B66;
+    padding: 25px;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pop-category-card:hover {
+    border-color: #00ADB5;
+    background: #393E46;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 173, 181, 0.1);
+}
+
+.pop-cat-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.pop-category-card h3 {
+    color: #EEEEEE;
+    font-size: 16px;
+}
+
+/* Depoimentos */
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.testimonial-card {
+    background: #393E46;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.testimonial-card .stars {
+    color: #ffc107;
+    font-size: 20px;
+}
+
+.testimonial-card p {
+    color: #CCCCCC;
+    font-style: italic;
+    flex-grow: 1;
+}
+
+.testimonial-author {
+    color: #00ADB5;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Footer */
+.footer {
+    background: #2A343D;
+    border-top: 1px solid #393E46;
+    padding: 50px 20px 20px 20px;
+    margin-top: 60px;
+}
+
+.footer-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-col a {
+    color: #AAAAAA;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.footer-col a:hover {
+    color: #00ADB5;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #4F5B66;
+    color: #888888;
+    font-size: 14px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .footer-col {
+        align-items: center;
+    }
+    .hero-title {
+        font-size: 32px;
+    }
+}
+
+/* ===========================
    SKELETON LOADERS
 =========================== */
 .skeleton {
@@ -1555,6 +1775,8 @@ body {
 [data-theme="light"] .orcamento-highlight,
 [data-theme="light"] .activity-card,
 [data-theme="light"] .achievements-section,
+[data-theme="light"] .step-card,
+[data-theme="light"] .testimonial-card,
 [data-theme="light"] .theme-toggle-floating,
 [data-theme="light"] .search-section {
     background-color: #FFFFFF !important;
@@ -1571,6 +1793,17 @@ body {
 [data-theme="light"] .achievement-card {
     background-color: #F4F6F8 !important;
 }
+
+[data-theme="light"] .pop-category-card {
+    background-color: #FFFFFF !important;
+    border-color: #CBD5E0 !important;
+}
+
+[data-theme="light"] .pop-category-card:hover {
+    border-color: #00ADB5 !important;
+    background-color: #F4F6F8 !important;
+}
+
 
 [data-theme="light"] .login-card input,
 [data-theme="light"] .login-card textarea,
@@ -1632,6 +1865,9 @@ body {
 [data-theme="light"] .dashboard-header-title,
 [data-theme="light"] .activity-title,
 [data-theme="light"] .achievement-details h4,
+[data-theme="light"] .hero-title,
+[data-theme="light"] .step-card h3,
+[data-theme="light"] .pop-category-card h3,
 [data-theme="light"] .orcamento-form .form-group label {
     color: #4A5568 !important;
 }
@@ -1686,8 +1922,35 @@ body {
 }
 
 [data-theme="light"] .activity-meta,
+[data-theme="light"] .hero-subtitle,
+[data-theme="light"] .step-card p,
+[data-theme="light"] .testimonial-card p,
 [data-theme="light"] .achievement-details p {
     color: #718096 !important;
+}
+
+[data-theme="light"] .hero-section {
+    background: radial-gradient(circle at center, #F4F6F8 0%, #E2E8F0 100%) !important;
+    border-bottom-color: #CBD5E0 !important;
+}
+
+[data-theme="light"] .footer {
+    background-color: #FFFFFF !important;
+    border-top-color: #CBD5E0 !important;
+}
+[data-theme="light"] .footer-col h4 {
+    color: #2D3748 !important;
+}
+[data-theme="light"] .footer-col p {
+    color: #4A5568 !important;
+}
+[data-theme="light"] .footer-bottom {
+    border-top-color: #CBD5E0 !important;
+}
+
+[data-theme="light"] .mini-footer {
+    border-top-color: #CBD5E0 !important;
+    color: #A0AEC0 !important;
 }
 
 [data-theme="light"] #dashboard-prestador h2 {

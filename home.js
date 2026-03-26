@@ -20,6 +20,7 @@ function carregarUsuario() {
             mensagemBoasVindas.innerHTML = `<img src="${fotoPerfil}" alt="Avatar" class="header-avatar"> Olá, ${usuarioAtual.nome.split(' ')[0]}!`;
             menu.innerHTML = `
                 <a href="dashboard.html">Dashboard</a>
+                <a href="home.html">Início</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
                 <div class="profile-menu-container">
