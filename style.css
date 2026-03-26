@@ -746,7 +746,7 @@ body {
 .status {
     padding: 4px 10px;
     border-radius: 15px;
-    font-size: 12px;
+    font-size: 11px; /* Reduzido para mais delicadeza */
     font-weight: bold;
     color: #FFFFFF;
     text-transform: uppercase;
@@ -872,14 +872,14 @@ body {
     display: flex;
     justify-content: space-between;
     position: relative;
-    margin: 25px 0;
+    margin: 20px 0;
     padding: 0 10px;
 }
 
 .status-timeline::before {
     content: '';
     position: absolute;
-    top: 15px; /* Alinha com o centro do ícone */
+    top: 12px; /* Ajustado para o novo tamanho do ícone */
     left: 10px;
     right: 10px;
     height: 2px;
@@ -894,12 +894,12 @@ body {
     text-align: center;
     position: relative;
     z-index: 2;
-    width: 60px; /* Largura para cada passo */
+    width: 55px; /* Reduzido */
 }
 
 .step-icon {
-    width: 30px;
-    height: 30px;
+    width: 24px; /* Reduzido */
+    height: 24px; /* Reduzido */
     border-radius: 50%;
     background-color: #4F5B66; /* Cor futura */
     border: 2px solid #4F5B66;
@@ -909,14 +909,27 @@ body {
     color: #222A31;
     font-weight: bold;
     transition: all 0.3s ease;
-    font-size: 14px;
+    font-size: 12px; /* Reduzido */
 }
 
 .step-label {
-    font-size: 11px;
+    font-size: 12px; /* Aumenta um pouco para o tooltip */
     color: #AAAAAA; /* Cor futura */
-    margin-top: 8px;
     font-weight: 500;
+    white-space: nowrap; /* Garante que o texto não quebre a linha */
+    
+    /* Estilo de Tooltip */
+    position: absolute;
+    top: calc(100% + 8px); /* Posição abaixo do ícone com um respiro */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #222A31;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #00ADB5;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 /* Step States */
@@ -939,6 +952,12 @@ body {
 .timeline-step.current .step-label {
     color: #00ADB5;
     font-weight: bold;
+}
+
+/* Exibe o label (tooltip) ao passar o mouse sobre o passo */
+.timeline-step:hover .step-label {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Cancelado */
@@ -968,7 +987,7 @@ body {
         padding: 0;
     }
     .status-timeline::before { /* Linha vertical */
-        left: 15px;
+        left: 12px; /* Ajustado */
         top: 10px;
         bottom: 10px;
         width: 2px;
@@ -2125,6 +2144,11 @@ body {
 }
 [data-theme="light"] .step-label {
     color: #A0AEC0;
+}
+[data-theme="light"] .step-label {
+    background-color: #FFFFFF !important;
+    border-color: #CBD5E0 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 [data-theme="light"] .timeline-step.completed .step-label {
     color: #2D3748;
