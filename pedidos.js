@@ -214,16 +214,22 @@ document.addEventListener("DOMContentLoaded", function() {
             const naoLidas = mensagens.filter(m => m.id_solicitacao === pedido.id && m.remetenteEmail !== emailLogado && !m.lida).length;
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
             const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
-            const formatStatus = pedido.status === 'AGUARDANDO_CONFIRMACAO' ? 'Aguardando Confirmação' : pedido.status;
+            const statusBadgeHTML = formatarStatusBadge(pedido);
+            const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
             
             return `
                 <div class="pedido-card">
-                    <h3>${pedido.servico}</h3>
+                    <div class="card-header">
+                        <h3>${pedido.servico}</h3>
+                        ${statusBadgeHTML}
+                    </div>
                     <p><strong>Prestador:</strong> ${prestador ? prestador.nome : 'Não encontrado'}</p>
-                    <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
-                    <p><strong>Valor:</strong> ${valorFormatado}</p>
-                    <p><strong>Status:</strong> <span class="status status-${pedido.status.toLowerCase()}">${formatStatus}</span></p>
+                    ${timelineHTML}
+                    <div class="card-details">
+                        <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                        <p><strong>Valor:</strong> ${valorFormatado}</p>
+                    </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
                         ${pedido.status === 'PENDENTE' ? `<button class="btn-acao cancelar" data-pedido-id="${pedido.id}">Cancelar Solicitação</button>` : ''}
@@ -246,18 +252,24 @@ document.addEventListener("DOMContentLoaded", function() {
             const naoLidas = mensagens.filter(m => m.id_solicitacao === pedido.id && m.remetenteEmail !== emailLogado && !m.lida).length;
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
             const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
-            const formatStatus = pedido.status === 'AGUARDANDO_CONFIRMACAO' ? 'Aguardando Cliente' : pedido.status;
+            const statusBadgeHTML = formatarStatusBadge(pedido);
+            const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
             
             return `
                 <div class="pedido-card">
-                    <h3>Solicitação de ${cliente ? cliente.nome.split(' ')[0] : 'Cliente'}</h3>
+                    <div class="card-header">
+                        <h3>Solicitação de ${cliente ? cliente.nome.split(' ')[0] : 'Cliente'}</h3>
+                        ${statusBadgeHTML}
+                    </div>
                     <p><strong>Serviço:</strong> ${pedido.servico}</p>
-                    <p><strong>Descrição:</strong> ${pedido.descricao}</p>
-                    <p><strong>Endereço:</strong> ${pedido.enderecoRealizacao}</p>
-                    <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
-                    <p><strong>Valor:</strong> ${valorFormatado}</p>
-                    <p><strong>Status:</strong> <span class="status status-${pedido.status.toLowerCase()}">${formatStatus}</span></p>
+                    ${timelineHTML}
+                    <div class="card-details">
+                        <p><strong>Descrição:</strong> ${pedido.descricao}</p>
+                        <p><strong>Endereço:</strong> ${pedido.enderecoRealizacao}</p>
+                        <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                        <p><strong>Valor:</strong> ${valorFormatado}</p>
+                    </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
                         ${pedido.status === 'PENDENTE' ? `
@@ -703,3 +715,67 @@ document.addEventListener("DOMContentLoaded", function() {
     setupHeader();
     carregarPedidos();
 });
+
+function formatarStatusBadge(pedido) {
+    const { status, valorStatus } = pedido;
+    let texto = status;
+    let classe = `status-${status.toLowerCase()}`;
+
+    if (status === 'PENDENTE') {
+        if (valorStatus === 'PROPOSTO') {
+            texto = 'Orçamento Enviado';
+            classe = 'status-aguardando_confirmacao'; // Reusing a blueish color
+        } else {
+            texto = 'Aguardando Orçamento';
+            classe = 'status-pendente'; // Orange
+        }
+    } else if (status === 'ACEITO') {
+        texto = 'Em Andamento';
+        classe = 'status-aceito'; // Green
+    } else if (status === 'AGUARDANDO_CONFIRMACAO') {
+        texto = 'Aguardando Confirmação';
+        classe = 'status-aguardando_confirmacao'; // Blueish
+    } else if (status === 'CONCLUIDO') {
+        texto = 'Finalizado';
+        classe = 'status-concluido'; // Blue
+    } else if (status === 'CANCELADO') {
+        texto = 'Cancelado';
+        classe = 'status-cancelado'; // Red
+    }
+    
+    return `<span class="status ${classe}">${texto}</span>`;
+}
+
+function gerarTimelineHTML(pedido) {
+    const { status } = pedido;
+
+    if (status === 'CANCELADO') {
+        return `<div class="timeline-cancelled">Serviço Cancelado</div>`;
+    }
+
+    const steps = [
+        { id: 'solicitado', icon: '📝', label: 'Solicitado' },
+        { id: 'orcamento', icon: '💲', label: 'Orçamento' },
+        { id: 'pagamento', icon: '💳', label: 'Pagamento' },
+        { id: 'andamento', icon: '🛠️', label: 'Em Andamento' },
+        { id: 'finalizado', icon: '✅', label: 'Finalizado' }
+    ];
+
+    let currentStepIndex = 0;
+
+    if (status === 'PENDENTE') currentStepIndex = 1; // Orçamento
+    else if (status === 'ACEITO') currentStepIndex = 3; // Em Andamento
+    else if (status === 'AGUARDANDO_CONFIRMACAO') currentStepIndex = 4; // Finalizado
+    else if (status === 'CONCLUIDO') currentStepIndex = 5; // Todos completos
+    
+    return `<div class="status-timeline">${steps.map((step, index) => {
+        let stepClass = index < currentStepIndex ? 'completed' : (index === currentStepIndex ? 'current' : 'future');
+        if (currentStepIndex > steps.length - 1) stepClass = 'completed';
+        return `
+            <div class="timeline-step ${stepClass}">
+                <div class="step-icon">${step.icon}</div>
+                <span class="step-label">${step.label}</span>
+            </div>
+        `;
+    }).join('')}</div>`;
+}
