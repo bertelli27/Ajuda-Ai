@@ -956,3 +956,156 @@ body {
     color: #00ADB5;
     font-weight: bold;
 }
+
+/* ===========================
+   FLOATING THEME TOGGLE
+=========================== */
+.theme-toggle-floating {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #393E46;
+    border: 1px solid #00ADB5;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    gap: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+}
+
+.theme-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    color: #AAAAAA;
+    opacity: 0.5;
+}
+
+.theme-btn:hover {
+    opacity: 0.8;
+}
+
+.theme-btn.active {
+    background: #00ADB5;
+    color: #FFFFFF;
+    opacity: 1;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* ===========================
+   TEMA CLARO (LIGHT THEME)
+=========================== */
+[data-theme="light"] body {
+    background-color: #F4F6F8 !important;
+    color: #333333 !important;
+}
+
+[data-theme="light"] .header,
+[data-theme="light"] .login-card,
+[data-theme="light"] .service-card,
+[data-theme="light"] .pedido-card,
+[data-theme="light"] .modal-content,
+[data-theme="light"] .toast,
+[data-theme="light"] .profile-dropdown,
+[data-theme="light"] .dashboard-card,
+[data-theme="light"] .avaliacao-card,
+[data-theme="light"] .profile-pic-edit-label,
+[data-theme="light"] .theme-toggle-floating {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+}
+
+[data-theme="light"] .login-card input,
+[data-theme="light"] .login-card textarea,
+[data-theme="light"] .login-card select,
+[data-theme="light"] .search-section input,
+[data-theme="light"] .filtros-pedidos select,
+[data-theme="light"] #chat-input,
+[data-theme="light"] .chat-input-wrapper,
+[data-theme="light"] #negociacao-area textarea,
+[data-theme="light"] #negociacao-area input {
+    background-color: #F4F6F8 !important;
+    color: #333333 !important;
+    border-color: #00ADB5 !important;
+}
+
+[data-theme="light"] .login-card input::placeholder,
+[data-theme="light"] .login-card textarea::placeholder,
+[data-theme="light"] .search-section input::placeholder,
+[data-theme="light"] #chat-input::placeholder {
+    color: #888888 !important;
+}
+
+[data-theme="light"] .menu a,
+[data-theme="light"] .site-desc,
+[data-theme="light"] .create-account,
+[data-theme="light"] .remember,
+[data-theme="light"] .welcome-message,
+[data-theme="light"] .btn-categoria,
+[data-theme="light"] .negociacao-descricao-proposta {
+    color: #333333 !important;
+}
+
+[data-theme="light"] .btn-login,
+[data-theme="light"] .btn-service,
+[data-theme="light"] .search-section button,
+[data-theme="light"] #chat-send-btn,
+[data-theme="light"] .btn-categoria.active {
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .btn-categoria:hover {
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .chat-messages,
+[data-theme="light"] .card-avatar,
+[data-theme="light"] #profilePicPreview,
+[data-theme="light"] #negociacao-area {
+    background-color: #F4F6F8 !important;
+}
+
+[data-theme="light"] .message.received {
+    background-color: #E1E8ED !important;
+    color: #333333 !important;
+}
+
+[data-theme="light"] .message.sent {
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .avaliacoes-container {
+    border-top-color: #DDDDDD !important;
+}
+
+[data-theme="light"] .profile-dropdown a {
+    color: #333333 !important;
+}
+[data-theme="light"] .profile-dropdown a:hover {
+    background-color: rgba(0, 173, 181, 0.1) !important;
+}
+
+[data-theme="light"] #infoPrestador,
+[data-theme="light"] #infoServicoAvaliacao {
+    background: #FFFFFF !important;
+    color: #333333 !important;
+}
+
+[data-theme="light"] .negociacao-descricao-proposta {
+    background: #FFFFFF !important;
+}
+
+[data-theme="light"] #dashboard-prestador h2 {
+    color: #333333 !important;
+}

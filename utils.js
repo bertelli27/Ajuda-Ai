@@ -1,3 +1,12 @@
+// =======================================================
+// MODO CLARO / ESCURO (THEME TOGGLE)
+// =======================================================
+// Aplica o tema imediatamente para evitar que a tela pisque ao carregar
+const temaAtual = localStorage.getItem('theme') || 'dark';
+if (temaAtual === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+}
+
 /**
  * Exibe uma notificação flutuante (toast) na tela.
  * @param {string} mensagem O texto a ser exibido.
@@ -73,3 +82,55 @@ function atualizarBadgeNotificacao() {
 }
 
 document.addEventListener("DOMContentLoaded", () => { setTimeout(atualizarBadgeNotificacao, 200); }); // Delay seguro para garantir que os menus carregaram
+
+// =======================================================
+// MODO CLARO / ESCURO (THEME TOGGLE FLOATING)
+// =======================================================
+function inicializarThemeToggle() {
+    if (document.getElementById('floatingThemeToggle')) return;
+
+    const toggleContainer = document.createElement('div');
+    toggleContainer.id = 'floatingThemeToggle';
+    toggleContainer.className = 'theme-toggle-floating';
+
+    const btnLight = document.createElement('button');
+    btnLight.className = 'theme-btn';
+    btnLight.innerHTML = '☀️';
+    btnLight.title = 'Modo Claro';
+
+    const btnDark = document.createElement('button');
+    btnDark.className = 'theme-btn';
+    btnDark.innerHTML = '🌙';
+    btnDark.title = 'Modo Escuro';
+
+    toggleContainer.appendChild(btnLight);
+    toggleContainer.appendChild(btnDark);
+    document.body.appendChild(toggleContainer);
+
+    function atualizarBotoes() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        if (isLight) {
+            btnLight.classList.add('active');
+            btnDark.classList.remove('active');
+        } else {
+            btnDark.classList.add('active');
+            btnLight.classList.remove('active');
+        }
+    }
+
+    btnLight.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        atualizarBotoes();
+    });
+
+    btnDark.addEventListener('click', () => {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        atualizarBotoes();
+    });
+
+    atualizarBotoes();
+}
+
+document.addEventListener("DOMContentLoaded", inicializarThemeToggle);
