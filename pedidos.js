@@ -70,7 +70,37 @@ document.addEventListener("DOMContentLoaded", function() {
             let pedidosRecebidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email);
             pedidosRecebidos = aplicarFiltros(pedidosRecebidos, filtroStatusRecebidos.value, ordenarDataRecebidos.value);
             renderPedidosPrestador(pedidosRecebidos, recebidosContainer);
+            
+            atualizarDashboard();
         }
+    }
+
+    function atualizarDashboard() {
+        const dashboardSection = document.getElementById("dashboard-prestador");
+        if (!dashboardSection) return;
+        
+        dashboardSection.style.display = "block";
+
+        const meusPedidosConcluidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email && s.status === 'CONCLUIDO');
+        
+        const totalConcluidos = meusPedidosConcluidos.length;
+        const ganhosTotais = meusPedidosConcluidos.reduce((acc, pedido) => {
+            const valor = parseFloat(pedido.valorCombinado) || 0;
+            return acc + valor;
+        }, 0);
+
+        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+        const minhasAvaliacoes = avaliacoes.filter(a => a.prestadorEmail === usuarioAtual.email);
+        
+        let mediaEstrelas = '★ N/A';
+        if (minhasAvaliacoes.length > 0) {
+            const somaNotas = minhasAvaliacoes.reduce((acc, a) => acc + a.nota, 0);
+            mediaEstrelas = '★ ' + (somaNotas / minhasAvaliacoes.length).toFixed(1);
+        }
+
+        document.getElementById("dash-ganhos").innerText = `R$ ${ganhosTotais.toFixed(2).replace('.', ',')}`;
+        document.getElementById("dash-concluidos").innerText = totalConcluidos;
+        document.getElementById("dash-avaliacoes").innerText = mediaEstrelas;
     }
 
     function aplicarFiltros(listaPedidos, status, ordenacao) {
