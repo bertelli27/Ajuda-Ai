@@ -549,6 +549,10 @@ body {
         grid-template-columns: 1fr !important;
         gap: 20px !important;
     }
+
+    .pedidos-grid {
+        grid-template-columns: repeat(2, 1fr); /* Tablet: 2 colunas */
+    }
 }
 
 @media (max-width: 600px) {
@@ -561,6 +565,10 @@ body {
     
     .register-section .login-card {
         padding: 30px 20px; /* Reduz padding em telas pequenas */
+    }
+
+    .pedidos-grid {
+        grid-template-columns: 1fr; /* Celular: 1 coluna */
     }
 }
 
@@ -681,8 +689,10 @@ body {
 =========================== */
 .pedidos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(3, 1fr); /* Força exatamente 3 colunas */
+    gap: 45px; /* Aumentado para dar mais respiro e espaçamento entre os cards */
+    align-content: start;
+    min-height: 520px; /* Garante altura fixa para 2 linhas (3x2) evitando que a tela pule */
 }
 
 .pedido-card {
@@ -777,6 +787,62 @@ body {
     border-color: #00ADB5;
     background: #222A31;
     box-shadow: 0 0 0 4px rgba(0, 173, 181, 0.1);
+}
+
+/* ===========================
+   PAGINAÇÃO (MEUS PEDIDOS)
+=========================== */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.page-btn {
+    background: #393E46;
+    color: #00ADB5;
+    border: 2px solid #00ADB5;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #00ADB5;
+    color: #222A31;
+    transform: scale(1.1);
+}
+
+.page-btn:disabled {
+    border-color: #4F5B66;
+    color: #4F5B66;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+.page-info {
+    color: #EEEEEE;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .page-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
 }
 
 /* ===========================
@@ -1846,6 +1912,25 @@ body {
     background-color: #EDF2F7 !important;
     border-color: transparent !important;
     color: #A0AEC0 !important;
+}
+
+[data-theme="light"] .page-btn {
+    background: #FFFFFF !important;
+    border-color: #00ADB5 !important;
+    color: #00ADB5 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+}
+[data-theme="light"] .page-btn:hover:not(:disabled) {
+    background: #00ADB5 !important;
+    color: #FFFFFF !important;
+}
+[data-theme="light"] .page-btn:disabled {
+    border-color: #CBD5E0 !important;
+    color: #A0AEC0 !important;
+    background: #F4F6F8 !important;
+}
+[data-theme="light"] .page-info {
+    color: #2D3748 !important;
 }
 
 [data-theme="light"] .login-card input::placeholder,

@@ -48,15 +48,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const fecharOrcamentoBtn = document.getElementById("fechar-orcamento-btn");
     let currentPedidoId = null; // Para saber qual chat está aberto
 
+    // Variáveis de Paginação
+    let currentPageEnviados = 1;
+    let currentPageRecebidos = 1;
+    const ITEMS_PER_PAGE = 6;
+
     // ================= LÓGICA DE EXIBIÇÃO (CLIENTE vs PRESTADOR) =================
     function carregarPedidos() {
         // Adiciona listeners de eventos aos controles de filtro e ordenação
         if (usuarioAtual.tipo === 'prestador') {
-            filtroStatusRecebidos.addEventListener('change', atualizarExibicaoPedidos);
-            ordenarDataRecebidos.addEventListener('change', atualizarExibicaoPedidos);
+            filtroStatusRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
+            ordenarDataRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
         }
-        filtroStatusEnviados.addEventListener('change', atualizarExibicaoPedidos);
-        ordenarDataEnviados.addEventListener('change', atualizarExibicaoPedidos);
+        filtroStatusEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
+        ordenarDataEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
 
         // Carga inicial dos pedidos
         atualizarExibicaoPedidos();
@@ -82,29 +87,69 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    // Wrapper para manter compatibilidade global de cliques (Aceitar/Recusar)
     function atualizarExibicaoPedidos() {
-        // 1. Mostrar Skeletons de carregamento alinhados à esquerda
-        renderSkeletons(enviadosContainer, 2); // Exibe 2 cards fantasmas como placeholder
+        atualizarLista('enviados');
         if (usuarioAtual.tipo === 'prestador') {
             recebidosSection.style.display = "block";
             tituloEnviados.innerText = "Minhas Solicitações Enviadas";
-            renderSkeletons(recebidosContainer, 2);
+            atualizarLista('recebidos');
+            atualizarDashboard();
         }
+    }
 
-        // 2. Simular carregamento e renderizar dados reais
+    function atualizarLista(tipo) {
+        const isEnviados = tipo === 'enviados';
+        const container = isEnviados ? enviadosContainer : recebidosContainer;
+        const filtroStatus = isEnviados ? filtroStatusEnviados.value : filtroStatusRecebidos.value;
+        const ordenarData = isEnviados ? ordenarDataEnviados.value : ordenarDataRecebidos.value;
+        const currentPage = isEnviados ? currentPageEnviados : currentPageRecebidos;
+
+        // Filtra e ordena síncrono para calcular paginação
+        let pedidos = solicitacoes.filter(s => isEnviados ? s.clienteEmail === usuarioAtual.email : s.prestadorEmail === usuarioAtual.email);
+        pedidos = aplicarFiltros(pedidos, filtroStatus, ordenarData);
+
+        const totalItems = pedidos.length;
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const paginatedPedidos = pedidos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+        // 1. Mostrar Skeletons na quantidade exata de itens que vão renderizar (evita pulos)
+        const numSkeletons = paginatedPedidos.length > 0 ? paginatedPedidos.length : 1;
+        renderSkeletons(container, numSkeletons);
+
+        // Renderiza a paginação imediatamente
+        renderPaginacao(totalItems, currentPage, ITEMS_PER_PAGE, isEnviados ? 'paginacao-enviados' : 'paginacao-recebidos', (newPage) => {
+            if (isEnviados) currentPageEnviados = newPage;
+            else currentPageRecebidos = newPage;
+            atualizarLista(tipo);
+        });
+
+        // 2. Simular carregamento rápido e renderizar dados reais
         setTimeout(() => {
-            let meusPedidosEnviados = solicitacoes.filter(s => s.clienteEmail === usuarioAtual.email);
-            meusPedidosEnviados = aplicarFiltros(meusPedidosEnviados, filtroStatusEnviados.value, ordenarDataEnviados.value);
-            renderPedidosCliente(meusPedidosEnviados, enviadosContainer);
-
-            if (usuarioAtual.tipo === 'prestador') {
-                let pedidosRecebidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email);
-                pedidosRecebidos = aplicarFiltros(pedidosRecebidos, filtroStatusRecebidos.value, ordenarDataRecebidos.value);
-                renderPedidosPrestador(pedidosRecebidos, recebidosContainer);
-                
-                atualizarDashboard();
+            if (isEnviados) {
+                renderPedidosCliente(paginatedPedidos, container);
+            } else {
+                renderPedidosPrestador(paginatedPedidos, container);
             }
-        }, 800); // 0.8s para ser rápido e fluido, já que a tela tem muita interação
+        }, 500); 
+    }
+
+    function renderPaginacao(totalItems, currentPage, itemsPerPage, containerId, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        if (totalPages <= 1) {
+            container.innerHTML = ''; // Não exibe setas se houver apenas 1 página
+            return;
+        }
+        container.innerHTML = `
+            <button class="page-btn" id="prev-${containerId}" ${currentPage === 1 ? 'disabled' : ''}>&#8592;</button>
+            <span class="page-info">Página ${currentPage} de ${totalPages}</span>
+            <button class="page-btn" id="next-${containerId}" ${currentPage === totalPages ? 'disabled' : ''}>&#8594;</button>
+        `;
+        document.getElementById(`prev-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage - 1));
+        document.getElementById(`next-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage + 1));
     }
 
     function atualizarDashboard() {
