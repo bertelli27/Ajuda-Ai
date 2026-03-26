@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='home.html'">
+        <img src="img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+
+    <nav class="menu" id="menu">
+        <!-- O menu será preenchido pelo JS -->
+    </nav>
+</header>
+
+<section class="services-section" style="padding-top: 40px; max-width: 1200px;">
+    <h2 class="dashboard-header-title" style="text-align: left;">Visão Geral</h2>
+    
+    <!-- 1. CARDS DE RESUMO -->
+    <div class="dashboard-container">
+        <div class="dashboard-card">
+            <span class="dashboard-icon">📋</span>
+            <h3>Serviços Solicitados</h3>
+            <div class="dashboard-value" id="card-solicitados">0</div>
+        </div>
+        <div class="dashboard-card">
+            <span class="dashboard-icon">⏳</span>
+            <h3>Em Andamento</h3>
+            <div class="dashboard-value" id="card-andamento">0</div>
+        </div>
+        <div class="dashboard-card">
+            <span class="dashboard-icon">✅</span>
+            <h3>Concluídos</h3>
+            <div class="dashboard-value" id="card-concluidos">0</div>
+        </div>
+        <div class="dashboard-card" id="wrapper-mensagens">
+            <span class="dashboard-icon">💬</span>
+            <h3>Mensagens não lidas</h3>
+            <div class="dashboard-value" id="card-mensagens">0</div>
+        </div>
+        <!-- Cards exclusivos de Prestador -->
+        <div class="dashboard-card" id="wrapper-avaliacao" style="display: none;">
+            <span class="dashboard-icon">⭐</span>
+            <h3>Avaliação Média</h3>
+            <div class="dashboard-value" id="card-avaliacao">N/A</div>
+        </div>
+    </div>
+
+    <!-- 2. LAYOUT DIVIDIDO: ATIVIDADES & CONQUISTAS -->
+    <div class="dashboard-split">
+        <!-- ATIVIDADES RECENTES -->
+        <div class="recent-activities">
+            <h3>Atividades Recentes</h3>
+            <div id="activity-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- CONQUISTAS (OPCIONAL/REMOVÍVEL) -->
+        <div class="achievements-section" id="achievements-section">
+            <h3>Minhas Conquistas</h3>
+            <div id="achievements-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="utils.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

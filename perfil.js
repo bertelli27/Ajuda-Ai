@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Usuário Logado
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="dashboard.html">Dashboard</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
                 <div class="profile-menu-container">

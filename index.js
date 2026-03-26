@@ -38,7 +38,7 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     // Redireciona para a home
     mostrarToast("Login bem-sucedido!", "success");
     setTimeout(() => {
-        window.location.href = "home.html";
+        window.location.href = "dashboard.html";
     }, 1000);
 });
 

@@ -1381,6 +1381,118 @@ body {
 }
 
 /* ===========================
+   DASHBOARD GERAL (NOVA TELA)
+=========================== */
+.dashboard-header-title {
+    color: #EEEEEE;
+    margin-bottom: 25px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.dashboard-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: inline-block;
+    color: #00ADB5;
+}
+
+.dashboard-split {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+    align-items: start;
+}
+
+.recent-activities h3, .achievements-section h3 {
+    color: #00ADB5;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.activity-card {
+    background: #393E46;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.activity-card:hover {
+    transform: translateY(-3px);
+}
+
+.activity-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #EEEEEE;
+    font-size: 16px;
+}
+
+.activity-meta {
+    font-size: 13px;
+    color: #AAAAAA;
+}
+
+.achievements-section {
+    background: #393E46;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.achievement-card {
+    background: #2A343D;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #4F5B66;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.achievement-icon {
+    font-size: 24px;
+    background: rgba(0, 173, 181, 0.1);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    border: 1px solid #00ADB5;
+    flex-shrink: 0;
+}
+
+.achievement-details h4 {
+    font-size: 14px;
+    color: #EEEEEE;
+    margin-bottom: 2px;
+}
+
+.achievement-details p {
+    font-size: 12px;
+    color: #AAAAAA;
+}
+
+@media (max-width: 900px) {
+    .dashboard-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===========================
    SKELETON LOADERS
 =========================== */
 .skeleton {
@@ -1441,6 +1553,8 @@ body {
 [data-theme="light"] .profile-sidebar,
 [data-theme="light"] .negociacao-box,
 [data-theme="light"] .orcamento-highlight,
+[data-theme="light"] .activity-card,
+[data-theme="light"] .achievements-section,
 [data-theme="light"] .theme-toggle-floating,
 [data-theme="light"] .search-section {
     background-color: #FFFFFF !important;
@@ -1449,8 +1563,13 @@ body {
 }
 
 [data-theme="light"] .profile-sidebar,
-[data-theme="light"] .section-title {
+[data-theme="light"] .section-title,
+[data-theme="light"] .achievement-card {
     border-color: #CBD5E0 !important;
+}
+
+[data-theme="light"] .achievement-card {
+    background-color: #F4F6F8 !important;
 }
 
 [data-theme="light"] .login-card input,
@@ -1510,6 +1629,9 @@ body {
 [data-theme="light"] .welcome-message,
 [data-theme="light"] .btn-categoria,
 [data-theme="light"] .negociacao-descricao-proposta,
+[data-theme="light"] .dashboard-header-title,
+[data-theme="light"] .activity-title,
+[data-theme="light"] .achievement-details h4,
 [data-theme="light"] .orcamento-form .form-group label {
     color: #4A5568 !important;
 }
@@ -1561,6 +1683,11 @@ body {
 
 [data-theme="light"] .negociacao-descricao-proposta {
     background: #FFFFFF !important;
+}
+
+[data-theme="light"] .activity-meta,
+[data-theme="light"] .achievement-details p {
+    color: #718096 !important;
 }
 
 [data-theme="light"] #dashboard-prestador h2 {

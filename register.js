@@ -147,6 +147,6 @@ document.getElementById("registerForm").addEventListener("submit", function(e){
 
     mostrarToast("Cadastro realizado com sucesso!", "success");
     setTimeout(() => {
-        window.location.href = "home.html";
+        window.location.href = "dashboard.html";
     }, 1500);
 });
