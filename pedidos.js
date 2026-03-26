@@ -41,6 +41,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const chatMessagesContainer = document.getElementById("chat-messages");
     const chatHeader = document.getElementById("chat-header");
     const chatImageInput = document.getElementById("chat-image-input");
+    const btnToggleOrcamento = document.getElementById("btnToggleOrcamento");
+    const orcamentoOverlay = document.getElementById("orcamento-overlay");
+    const chatView = document.getElementById("chat-view");
+    const negociacaoArea = document.getElementById("negociacao-area"); // A caixa interna
+    const fecharOrcamentoBtn = document.getElementById("fechar-orcamento-btn");
     let currentPedidoId = null; // Para saber qual chat está aberto
 
     // ================= LÓGICA DE EXIBIÇÃO (CLIENTE vs PRESTADOR) =================
@@ -245,7 +250,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const outraPessoa = usuarios.find(u => u.email === outraPessoaEmail);
         
         chatHeader.innerText = `Conversa sobre "${pedido.servico}"`;
-        
+
+        fecharOrcamento(); // Garante que o orçamento comece fechado
         atualizarAreaNegociacao();
 
         // Arquivar chat se estiver cancelado ou concluído (esconder área de digitação)
@@ -285,10 +291,10 @@ document.addEventListener("DOMContentLoaded", function() {
         
         // Se estiver cancelado ou concluído, limpa a negociação e mostra aviso de arquivado
         if (pedido.status === 'CANCELADO') {
-            area.innerHTML = `<div style="width: 100%; text-align: center; color: #d9534f; font-weight: bold;">🚫 Solicitação cancelada. O chat foi arquivado e não pode receber novas mensagens.</div>`;
+            area.innerHTML = `<div style="text-align: center; color: #d9534f; font-weight: bold; padding: 20px;">🚫 Solicitação cancelada. O chat foi arquivado.</div>`;
             return;
         } else if (pedido.status === 'CONCLUIDO') {
-            area.innerHTML = `<div style="width: 100%; text-align: center; color: #007bff; font-weight: bold;">✅ Serviço concluído. O chat foi arquivado e não pode receber novas mensagens.</div>`;
+            area.innerHTML = `<div style="text-align: center; color: #007bff; font-weight: bold; padding: 20px;">✅ Serviço concluído. O chat foi arquivado.</div>`;
             return;
         }
 
@@ -310,26 +316,43 @@ document.addEventListener("DOMContentLoaded", function() {
         if (isPrestador) {
             if (pedido.valorStatus === 'ACEITO') {
                 html = `
-                    <div><strong>Valor Combinado:</strong> <span style="color: #5cb85c;">${valorFormatado} (Aceito pelo Cliente)</span></div>
-                    ${dataHoraFormatada ? `<div>${dataHoraFormatada}</div>` : ''}
-                    <div class="negociacao-descricao-proposta aceito"><strong>Escopo do Serviço:</strong><br>${descricaoProposta}</div>
+                    <div class="orcamento-details">
+                        <div class="orcamento-highlight" style="border-left-color: #5cb85c; background: rgba(92, 184, 92, 0.1);">
+                            <span>Valor Combinado:</span>
+                            <strong style="color: #5cb85c;">${valorFormatado} (Aceito pelo Cliente)</strong>
+                        </div>
+                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc">
+                            <strong>Escopo do Serviço:</strong>
+                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                        </div>
+                    </div>
                 `;
             } else {
                 html = `
-                    <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <strong style="white-space: nowrap;">Orçamento (R$):</strong>
-                            <input type="number" id="inputValorNegociado" value="${pedido.valorCombinado || ''}" placeholder="Ex: 150.00" style="padding: 8px; border-radius: 8px; border: 1px solid #00ADB5; background: #393E46; color: #EEE; outline: none; width: 120px;">
+                    <div class="orcamento-form">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label>Orçamento (R$)</label>
+                                <input type="number" id="inputValorNegociado" value="${pedido.valorCombinado || ''}" placeholder="Ex: 150.00">
+                            </div>
                         </div>
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <strong style="white-space: nowrap;">Data:</strong>
-                            <input type="date" id="inputDataProposta" value="${pedido.dataProposta || ''}" style="padding: 8px; border-radius: 8px; border: 1px solid #00ADB5; background: #393E46; color: #EEE; outline: none;">
-                            <strong style="white-space: nowrap;">Hora:</strong>
-                            <input type="time" id="inputHoraProposta" value="${pedido.horaProposta || ''}" style="padding: 8px; border-radius: 8px; border: 1px solid #00ADB5; background: #393E46; color: #EEE; outline: none;">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label>Data Sugerida</label>
+                                <input type="date" id="inputDataProposta" value="${pedido.dataProposta || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Horário Sugerido</label>
+                                <input type="time" id="inputHoraProposta" value="${pedido.horaProposta || ''}">
+                            </div>
                         </div>
-                        <textarea id="textareaDescricaoProposta" placeholder="Descreva o que está incluso no valor (ex: material, mão de obra...).">${descricaoProposta}</textarea>
-                        <button id="btnEnviarProposta" class="btn-login" style="padding: 8px 15px; width: 100%;">Enviar Proposta</button>
-                        ${pedido.valorStatus === 'PROPOSTO' ? '<span style="color: #f0ad4e; font-size: 13px; width: 100%;">Aguardando aprovação do cliente...</span>' : ''}
+                        <div class="form-group">
+                            <label>Descrição do Serviço / Inclusões</label>
+                            <textarea id="textareaDescricaoProposta" placeholder="Descreva o que está incluso no valor (ex: material, mão de obra...).">${descricaoProposta}</textarea>
+                        </div>
+                        <button id="btnEnviarProposta" class="btn-service" style="width: 100%;">Enviar Proposta</button>
+                        ${pedido.valorStatus === 'PROPOSTO' ? '<div style="color: #f0ad4e; font-size: 13px; text-align: center; margin-top: 10px;">Aguardando aprovação do cliente...</div>' : ''}
                     </div>
                 `;
             }
@@ -337,25 +360,35 @@ document.addEventListener("DOMContentLoaded", function() {
             // Cliente
             if (pedido.valorStatus === 'ACEITO') {
                 html = `
-                    <div><strong>Valor Combinado:</strong> <span style="color: #5cb85c;">${valorFormatado} (Aceito)</span></div>
-                    ${dataHoraFormatada ? `<div>${dataHoraFormatada}</div>` : ''}
-                    <div class="negociacao-descricao-proposta aceito"><strong>Escopo do Serviço:</strong><br>${descricaoProposta}</div>
+                    <div class="orcamento-details">
+                        <div class="orcamento-highlight" style="border-left-color: #5cb85c; background: rgba(92, 184, 92, 0.1);">
+                            <span>Valor Combinado:</span>
+                            <strong style="color: #5cb85c;">${valorFormatado} (Aceito)</strong>
+                        </div>
+                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc">
+                            <strong>Escopo do Serviço:</strong>
+                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                        </div>
+                    </div>
                 `;
             } else if (pedido.valorStatus === 'PROPOSTO') {
                 html = `
-                    <div style="width: 100%;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 10px;">
-                            <div><strong>Proposta do Prestador:</strong> <span style="color: #f0ad4e; font-size: 18px; font-weight: bold;">${valorFormatado}</span></div>
-                            ${dataHoraFormatada ? `<div style="font-size: 14px;">${dataHoraFormatada}</div>` : ''}
-                            <div>
-                                <button id="btnAceitarProposta" class="btn-login" style="background: #5cb85c; padding: 8px 15px; width: auto; margin: 0;">Aceitar Proposta</button>
-                            </div>
+                    <div class="orcamento-details">
+                        <div class="orcamento-highlight" style="border-left-color: #f0ad4e; background: rgba(240, 173, 78, 0.1);">
+                            <span>Proposta do Prestador:</span>
+                            <strong style="color: #f0ad4e;">${valorFormatado}</strong>
                         </div>
-                        <div class="negociacao-descricao-proposta"><strong>Escopo do Serviço Proposto:</strong><br>${descricaoProposta}</div>
+                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc">
+                            <strong>Escopo do Serviço Proposto:</strong>
+                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                        </div>
+                        <button id="btnAceitarProposta" class="btn-aceitar-orcamento">Aceitar Proposta</button>
                     </div>
                 `;
             } else {
-                html = `<div><strong>Valor:</strong> <span style="color: #AAAAAA;">Aguardando orçamento do prestador...</span></div>`;
+                html = `<div style="text-align: center; color: #AAAAAA; padding: 20px;">Aguardando orçamento do prestador...</div>`;
             }
         }
         
@@ -363,6 +396,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Adicionar eventos aos botões recém renderizados
         if (isPrestador && pedido.valorStatus !== 'ACEITO') {
+
             document.getElementById("btnEnviarProposta")?.addEventListener("click", () => {
                 const novoValor = document.getElementById("inputValorNegociado").value;
                 const novaDescricao = document.getElementById("textareaDescricaoProposta").value.trim();
@@ -398,6 +432,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 `);
                 
                 atualizarAreaNegociacao();
+                setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
             });
         } else if (!isPrestador && pedido.valorStatus === 'PROPOSTO') {
             document.getElementById("btnAceitarProposta")?.addEventListener("click", () => {
@@ -406,6 +441,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 enviarMensagemSistema(pedido.id, `✅ <strong>Orçamento ACEITO</strong> pelo cliente (R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}).`);
                 atualizarAreaNegociacao();
+                setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
             });
         }
     }
@@ -440,10 +476,21 @@ document.addEventListener("DOMContentLoaded", function() {
         if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
     }
 
+    function abrirOrcamento() {
+        if (orcamentoOverlay) orcamentoOverlay.style.display = 'flex';
+        if (chatView) chatView.classList.add('blurred');
+    }
+
     function fecharChat() {
         modal.style.display = "none";
         currentPedidoId = null;
         chatMessagesContainer.innerHTML = "";
+        fecharOrcamento(); // Garante que o overlay do orçamento feche junto com o chat
+    }
+
+    function fecharOrcamento() {
+        if (orcamentoOverlay) orcamentoOverlay.style.display = 'none';
+        if (chatView) chatView.classList.remove('blurred');
     }
 
     function renderMensagens(pedidoId) {
@@ -500,6 +547,31 @@ document.addEventListener("DOMContentLoaded", function() {
     chatSendBtn.addEventListener('click', enviarMensagem);
     chatInput.addEventListener('keypress', e => e.key === 'Enter' && enviarMensagem());
     
+    // Botão para exibir/ocultar a caixa de Orçamento no chat
+    if (btnToggleOrcamento) {
+        btnToggleOrcamento.addEventListener('click', () => {
+            if (orcamentoOverlay.style.display === 'none' || orcamentoOverlay.style.display === '') {
+                abrirOrcamento();
+            } else {
+                fecharOrcamento();
+            }
+        });
+    }
+
+    // Botão X dentro do orçamento
+    if (fecharOrcamentoBtn) {
+        fecharOrcamentoBtn.addEventListener('click', fecharOrcamento);
+    }
+
+    // Fecha o orçamento se clicar no fundo (overlay)
+    if (orcamentoOverlay) {
+        orcamentoOverlay.addEventListener('click', function(e) {
+            if (e.target === orcamentoOverlay) { // Garante que o clique foi no fundo, não na caixa
+                fecharOrcamento();
+            }
+        });
+    }
+
     // Envio de Imagem
     if (chatImageInput) {
         chatImageInput.addEventListener('change', function(e) {
