@@ -55,14 +55,17 @@ document.addEventListener("DOMContentLoaded", function() {
         window.location.href = "index.html";
     }
 
+    // ================= VARIÁVEIS DE PAGINAÇÃO =================
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 6;
+
     // ================= CARREGAR SERVIÇOS =================
-    function carregarServicos(categoriaFiltro = "Todos") {
+    function carregarServicos(categoriaFiltro = "Todos", termoBusca = "") {
         const grid = document.querySelector(".services-grid");
         if (!grid) return;
 
-        // 1. Mostrar Skeleton Loaders primeiro
         grid.innerHTML = '';
-        for (let i = 0; i < 6; i++) { // 6 cards preenchem bem a página inteira de serviços
+        for (let i = 0; i < ITEMS_PER_PAGE; i++) {
             const skeletonCard = document.createElement('div');
             skeletonCard.className = 'service-card';
             skeletonCard.innerHTML = `
@@ -80,43 +83,63 @@ document.addEventListener("DOMContentLoaded", function() {
             grid.appendChild(skeletonCard);
         }
 
-        // 2. Simular um atraso de rede (1.5 segundos) antes de carregar os dados reais
         setTimeout(() => {
             const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
             let prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
             const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
 
-            // Aplica o filtro de categoria
+            // 1. Filtro de categoria
             if (categoriaFiltro !== "Todos") {
                 prestadores = prestadores.filter(u => {
-                    const cat = u.prestador.categoria || "Outros"; // Usuarios antigos caem em "Outros"
+                    const cat = u.prestador.categoria || "Outros";
                     return cat === categoriaFiltro;
                 });
             }
 
-            grid.innerHTML = ''; // Limpa os skeletons
-
-            if (prestadores.length === 0) {
-                grid.innerHTML = '<p style="color: #AAAAAA; text-align: center; grid-column: span 4;">Nenhum prestador encontrado para esta categoria.</p>';
-                return;
+            // 2. Filtro de busca
+            if (termoBusca) {
+                prestadores = prestadores.filter(p => {
+                    const textoCard = `${p.prestador.servico || ''} ${p.nome || ''} ${p.endereco.cidade || ''} ${p.prestador.categoria || ''} ${p.prestador.descricao || ''}`.toLowerCase();
+                    return textoCard.includes(termoBusca);
+                });
             }
 
-            prestadores.forEach(prestador => {
+            // 3. Paginação
+            const totalItems = prestadores.length;
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const paginatedPrestadores = prestadores.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            grid.innerHTML = ''; // Limpa os skeletons
+
+            if (paginatedPrestadores.length === 0) {
+                grid.innerHTML = '<p class="aviso-sem-pedidos" style="grid-column: 1 / -1;">Nenhum prestador encontrado com estes critérios.</p>';
+            } else {
+                paginatedPrestadores.forEach(prestador => {
+                    renderizarCard(prestador, avaliacoes, grid);
+                });
+            }
+
+            renderPaginacao(totalItems, currentPage, ITEMS_PER_PAGE, 'paginacao-servicos', (newPage) => {
+                currentPage = newPage;
+                carregarServicos(categoriaFiltro, termoBusca);
+            });
+
+        }, 1500);
+    }
+
+    function renderizarCard(prestador, avaliacoes, grid) {
             const card = document.createElement('div');
             card.className = 'service-card';
 
-            // Calcula a média de avaliações
-            const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
-            let mediaEstrelas = 'N/A';
-            let notaMedia = 0;
-            if (avaliacoesDoPrestador.length > 0) {
-                const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
-                notaMedia = somaNotas / avaliacoesDoPrestador.length;
-                mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
-            }
+        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
+        let mediaEstrelas = 'N/A';
+        if (avaliacoesDoPrestador.length > 0) {
+            const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
+            const notaMedia = somaNotas / avaliacoesDoPrestador.length;
+            mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
+        }
 
-            // Adicionando mais detalhes ao card
-            card.innerHTML = `
+        card.innerHTML = `
                 <img src="${prestador.fotoPerfil || 'img/avatar_padrao.png'}" alt="Foto de ${prestador.nome}" class="card-avatar">
                 <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
                 <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
@@ -131,9 +154,25 @@ document.addEventListener("DOMContentLoaded", function() {
                     <button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>
                 </div>
             `;
-            grid.appendChild(card);
-        });
-        }, 1500); // Fim do setTimeout
+        grid.appendChild(card);
+    }
+
+    function renderPaginacao(totalItems, currentPage, itemsPerPage, containerId, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        container.innerHTML = `
+            <button class="page-btn" id="prev-${containerId}" ${currentPage === 1 ? 'disabled' : ''}>&#8592;</button>
+            <span class="page-info">Página ${currentPage} de ${totalPages}</span>
+            <button class="page-btn" id="next-${containerId}" ${currentPage === totalPages ? 'disabled' : ''}>&#8594;</button>
+        `;
+        document.getElementById(`prev-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage - 1));
+        document.getElementById(`next-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage + 1));
     }
 
     // ================= CONFIGURAR BOTÕES DE SOLICITAÇÃO =================
@@ -168,17 +207,17 @@ document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.getElementById("searchInput");
         if (!btn || !searchInput) return;
 
-        function filtrar() {
+        function executarBusca() {
+            currentPage = 1; // Reseta a página para a primeira
             const termo = searchInput.value.toLowerCase();
-            const cards = document.querySelectorAll(".service-card");
-            cards.forEach(card => {
-                const texto = card.innerText.toLowerCase();
-                card.style.display = texto.includes(termo) ? "block" : "none";
-            });
+            const categoriaAtiva = document.querySelector('.btn-categoria.active')?.getAttribute('data-cat') || 'Todos';
+            carregarServicos(categoriaAtiva, termo);
         }
 
-        btn.addEventListener("click", filtrar);
-        searchInput.addEventListener("keyup", filtrar);
+        btn.addEventListener("click", executarBusca);
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter') executarBusca();
+        });
     }
 
     // ================= CONFIGURAR FILTROS DE CATEGORIA =================
@@ -186,13 +225,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const botoesCategoria = document.querySelectorAll('.btn-categoria');
         botoesCategoria.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                // Remove active de todos e bota no clicado
                 botoesCategoria.forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                // Recarrega os serviços com o filtro
+                currentPage = 1; // Reseta a página
                 const categoria = e.target.getAttribute('data-cat');
-                carregarServicos(categoria);
+                const termoBusca = document.getElementById("searchInput").value.toLowerCase();
+                carregarServicos(categoria, termoBusca);
             });
         });
     }

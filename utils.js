@@ -133,4 +133,33 @@ function inicializarThemeToggle() {
     atualizarBotoes();
 }
 
-document.addEventListener("DOMContentLoaded", inicializarThemeToggle);
+// =======================================================
+// VOLTAR AO TOPO (BACK TO TOP BUTTON)
+// =======================================================
+function inicializarBackToTopButton() {
+    const backToTopBtn = document.getElementById("backToTopBtn");
+    if (!backToTopBtn) return;
+
+    // Mostra/esconde o botão ao rolar a página
+    window.addEventListener("scroll", () => {
+        if (window.scrollY > 300) { // Mostra o botão após rolar 300px
+            backToTopBtn.style.display = "flex";
+        } else {
+            backToTopBtn.style.display = "none";
+        }
+    });
+
+    // Rola para o topo ao clicar no botão
+    backToTopBtn.addEventListener("click", () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth" // Rolagem suave
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(atualizarBadgeNotificacao, 200);
+    inicializarThemeToggle();
+    inicializarBackToTopButton(); // Chama a nova função
+});
