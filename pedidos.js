@@ -218,6 +218,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const statusBadgeHTML = formatarStatusBadge(pedido);
             const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
+            const statusPagamento = pedido.statusPagamento || 'Pendente';
 
             let avaliacaoInfoHTML = '';
             if (pedido.status === 'CONCLUIDO' && pedido.avaliado) {
@@ -239,6 +240,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <div class="card-details">
                         <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                         <p><strong>Valor:</strong> ${valorFormatado}</p>
+                        <p><strong>Pagamento:</strong> <span style="color: ${statusPagamento === 'RETIDO' ? '#f0ad4e' : statusPagamento === 'LIBERADO' ? '#5cb85c' : '#AAAAAA'};">${statusPagamento.replace('_', ' ')}</span></p>
                         ${avaliacaoInfoHTML}
                     </div>
                     <div class="botoes-acao">
@@ -266,6 +268,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const statusBadgeHTML = formatarStatusBadge(pedido);
             const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
+            const statusPagamento = pedido.statusPagamento || 'Pendente';
             
             return `
                 <div class="pedido-card">
@@ -280,10 +283,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         <p><strong>Endereço:</strong> ${pedido.enderecoRealizacao}</p>
                         <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                         <p><strong>Valor:</strong> ${valorFormatado}</p>
+                        <p><strong>Pagamento:</strong> <span style="color: ${statusPagamento === 'RETIDO' ? '#f0ad4e' : statusPagamento === 'LIBERADO' ? '#5cb85c' : '#AAAAAA'};">${statusPagamento.replace('_', ' ')}</span></p>
                     </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
-                        ${pedido.status === 'PENDENTE' ? `
+                        ${(pedido.status === 'PENDENTE' && pedido.valorStatus !== 'PROPOSTO') ? `
                             <button class="btn-acao aceitar" data-pedido-id="${pedido.id}">Aceitar</button>
                             <button class="btn-acao recusar" data-pedido-id="${pedido.id}">Recusar</button>
                         ` : ''}
@@ -312,15 +316,43 @@ document.addEventListener("DOMContentLoaded", function() {
         if (novoStatus) {
             const index = solicitacoes.findIndex(s => s.id === pedidoId);
             if (index !== -1) {
+                const pedidoModificado = solicitacoes[index];
+                
+                // LOGICA FINANCEIRA
+                const usuariosA = JSON.parse(localStorage.getItem('usuarios')) || [];
+                const transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+                
+                if (novoStatus === 'CANCELADO' && pedidoModificado.statusPagamento === 'RETIDO') {
+                    pedidoModificado.statusPagamento = 'ESTORNADO';
+                    const clientIndex = usuariosA.findIndex(u => u.email === pedidoModificado.clienteEmail);
+                    if (clientIndex !== -1) {
+                        usuariosA[clientIndex].saldo = (usuariosA[clientIndex].saldo || 0) + parseFloat(pedidoModificado.valorCombinado);
+                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.clienteEmail, tipo: 'ENTRADA', descricao: `Estorno (Serviço Cancelado) - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
+                    }
+                }
+                
+                if (novoStatus === 'CONCLUIDO' && pedidoModificado.statusPagamento === 'RETIDO') {
+                    pedidoModificado.statusPagamento = 'LIBERADO';
+                    const prestadorIndex = usuariosA.findIndex(u => u.email === pedidoModificado.prestadorEmail);
+                    if (prestadorIndex !== -1) {
+                        usuariosA[prestadorIndex].saldo = (usuariosA[prestadorIndex].saldo || 0) + parseFloat(pedidoModificado.valorCombinado);
+                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.prestadorEmail, tipo: 'ENTRADA', descricao: `Pagamento Liberado - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
+                    }
+                }
+                
+                localStorage.setItem('usuarios', JSON.stringify(usuariosA));
+                localStorage.setItem('transacoes', JSON.stringify(transacoes));
+                
+                solicitacoes[index] = pedidoModificado;
                 solicitacoes[index].status = novoStatus;
                 localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
 
                 if (novoStatus === 'AGUARDANDO_CONFIRMACAO') {
-                    enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão.");
+                    enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão para liberar o pagamento.");
                 } else if (novoStatus === 'CONCLUIDO') {
-                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O serviço foi encerrado com sucesso.");
+                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para a carteira do prestador.");
                 } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
-                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada pelo cliente.</strong>");
+                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado para a carteira do cliente.");
                 }
 
                 atualizarExibicaoPedidos(); // Recarrega a lista para refletir a mudança
@@ -530,12 +562,8 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         } else if (!isPrestador && pedido.valorStatus === 'PROPOSTO') {
             document.getElementById("btnAceitarProposta")?.addEventListener("click", () => {
-                pedido.valorStatus = 'ACEITO';
-                salvarEAtualizarPedido(pedido);
-                
-                enviarMensagemSistema(pedido.id, `✅ <strong>Orçamento ACEITO</strong> pelo cliente (R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}).`);
-                atualizarAreaNegociacao();
-                setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
+                // Envia para o Checkout (Pagamento)
+                window.location.href = `pagamento.html?pedido=${pedido.id}`;
             });
         }
     }
@@ -700,6 +728,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html">Meus Pedidos</a>
+            <a href="carteira.html">Carteira</a>
             <div class="profile-menu-container">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
                 <div class="profile-dropdown" id="profileDropdown">

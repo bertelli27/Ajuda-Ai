@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Seguro | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<section class="main-container" style="min-height: auto; padding-top: 40px;">
+    <div class="login-section register-section">
+        <div class="login-card">
+            <h2 style="text-align: center;">Pagamento Seguro</h2>
+            <p style="text-align: center; color: #AAAAAA; margin-bottom: 30px;">
+                O valor ficará retido na plataforma e só será liberado ao prestador após a conclusão do serviço.
+            </p>
+            
+            <h3 class="section-title">Resumo do Pedido</h3>
+            <div id="infoPedidoPagamento" style="background: #2A343D; padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: left; border: 1px solid #4F5B66;">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <h3 class="section-title">Forma de Pagamento</h3>
+            <form id="formPagamento">
+                <div class="payment-methods">
+                    <div class="payment-method">
+                        <input type="radio" id="pay_saldo" name="paymentMethod" value="saldo" checked>
+                        <label for="pay_saldo">💰 Saldo Carteira</label>
+                    </div>
+                    <div class="payment-method">
+                        <input type="radio" id="pay_card" name="paymentMethod" value="cartao">
+                        <label for="pay_card">💳 Cartão de Crédito</label>
+                    </div>
+                    <div class="payment-method">
+                        <input type="radio" id="pay_pix" name="paymentMethod" value="pix">
+                        <label for="pay_pix">💠 Pix</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" style="margin-top: 20px;">Confirmar Pagamento</button>
+                <button type="button" class="btn-forgot" onclick="window.history.back()" style="margin-top: 10px;">Cancelar e Voltar</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script src="utils.js"></script>
+<script src="pagamento.js"></script>
+</body>
+</html>

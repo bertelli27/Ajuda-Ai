@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
             dataSelecionada: data,
             enderecoRealizacao: endereco,
             status: "PENDENTE", // Exatamente como na sua documentação de BD
+            statusPagamento: "PENDENTE",
             dataSolicitacao: new Date().toISOString(),
             valorCombinado: null,
             valorStatus: 'INICIAL', // 'INICIAL', 'PROPOSTO', 'ACEITO'
@@ -102,6 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html">Meus Pedidos</a>
+            <a href="carteira.html">Carteira</a>
             <div class="profile-menu-container">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
                 <div class="profile-dropdown" id="profileDropdown">

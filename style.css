@@ -1731,6 +1731,51 @@ body {
 }
 
 /* ===========================
+   CARTEIRA E PAGAMENTO
+=========================== */
+.wallet-card {
+    background: linear-gradient(135deg, #00ADB5 0%, #007bff 100%);
+    padding: 40px 30px;
+    border-radius: 16px;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 173, 181, 0.3);
+    margin-bottom: 30px;
+}
+.wallet-card h3 { color: rgba(255,255,255,0.9); margin-bottom: 10px; font-weight: 500; }
+.wallet-card .balance { font-size: 48px; font-weight: 700; margin-bottom: 20px; }
+
+.transaction-list { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; text-align: left; }
+.transaction-item {
+    background: #393E46; padding: 20px; border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.transaction-item .tx-info h4 { color: #EEEEEE; margin-bottom: 5px; }
+.transaction-item .tx-info p { color: #AAAAAA; font-size: 13px; }
+.transaction-item .tx-valor { font-size: 18px; font-weight: bold; }
+.transaction-item.entrada .tx-valor { color: #5cb85c; }
+.transaction-item.saida .tx-valor { color: #d9534f; }
+
+.payment-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+.payment-method { position: relative; }
+.payment-method input[type="radio"] { display: none; }
+.payment-method label {
+    display: block; background: #2A343D; border: 2px solid #4F5B66; padding: 15px;
+    border-radius: 10px; text-align: center; cursor: pointer; transition: 0.3s;
+    color: #EEEEEE; font-weight: 500;
+}
+.payment-method input[type="radio"]:checked + label {
+    border-color: #00ADB5; background: #393E46; color: #00ADB5;
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.2);
+}
+
+/* ===========================
    BACK TO TOP BUTTON
 =========================== */
 .back-to-top-btn {
@@ -2265,6 +2310,11 @@ body {
     border-top-color: #CBD5E0 !important;
     color: #A0AEC0 !important;
 }
+
+[data-theme="light"] .transaction-item { background-color: #FFFFFF !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important; }
+[data-theme="light"] .transaction-item .tx-info h4 { color: #2D3748 !important; }
+[data-theme="light"] .payment-method label { background-color: #FFFFFF !important; border-color: #CBD5E0 !important; color: #4A5568 !important; }
+[data-theme="light"] .payment-method input[type="radio"]:checked + label { background-color: #F4F6F8 !important; border-color: #00ADB5 !important; color: #00ADB5 !important; }
 
 [data-theme="light"] #dashboard-prestador h2 {
     color: #333333 !important;
