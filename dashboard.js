@@ -34,15 +34,10 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     let emAndamento = todasMinhasSolicitacoes.filter(s => s.status === 'ACEITO').length;
     let concluidos = todasMinhasSolicitacoes.filter(s => s.status === 'CONCLUIDO').length;
 
-    // Mensagens não lidas
-    const meusPedidosIds = todasMinhasSolicitacoes.map(s => s.id);
-    const naoLidas = mensagens.filter(m => meusPedidosIds.includes(m.id_solicitacao) && m.remetenteEmail !== emailLogado && !m.lida).length;
-
     // Preencher cards básicos
     document.getElementById("card-solicitados").innerText = solicitados;
     document.getElementById("card-andamento").innerText = emAndamento;
     document.getElementById("card-concluidos").innerText = concluidos;
-    document.getElementById("card-mensagens").innerText = naoLidas;
 
     // Cards de prestador (Avaliação)
     if (isPrestador) {

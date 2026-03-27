@@ -126,8 +126,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // 2. Simular carregamento rápido e renderizar dados reais
         setTimeout(() => {
+            const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
             if (isEnviados) {
-                renderPedidosCliente(paginatedPedidos, container);
+                renderPedidosCliente(paginatedPedidos, container, avaliacoes);
             } else {
                 renderPedidosPrestador(paginatedPedidos, container);
             }
@@ -203,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return pedidosFiltrados;
     }
 
-    function renderPedidosCliente(pedidos, container) {
+    function renderPedidosCliente(pedidos, container, avaliacoes) {
         if (pedidos.length === 0) {
             container.innerHTML = '<p class="aviso-sem-pedidos">Você ainda não fez nenhuma solicitação.</p>';
             return;
@@ -217,6 +218,15 @@ document.addEventListener("DOMContentLoaded", function() {
             const statusBadgeHTML = formatarStatusBadge(pedido);
             const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
+
+            let avaliacaoInfoHTML = '';
+            if (pedido.status === 'CONCLUIDO' && pedido.avaliado) {
+                const minhaAvaliacao = avaliacoes.find(a => a.id_solicitacao === pedido.id);
+                if (minhaAvaliacao) {
+                    const estrelas = '★'.repeat(minhaAvaliacao.nota) + '☆'.repeat(5 - minhaAvaliacao.nota);
+                    avaliacaoInfoHTML = `<p><strong>Sua Avaliação:</strong> <span class="rating-display">${estrelas}</span></p>`;
+                }
+            }
             
             return `
                 <div class="pedido-card">
@@ -229,6 +239,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <div class="card-details">
                         <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                         <p><strong>Valor:</strong> ${valorFormatado}</p>
+                        ${avaliacaoInfoHTML}
                     </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
