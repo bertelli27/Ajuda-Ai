@@ -38,6 +38,42 @@ function mostrarToast(mensagem, tipo = 'success') {
     }, 3000);
 }
 
+/**
+ * Define um estado de erro em um campo de formulário, mostrando uma mensagem.
+ * @param {HTMLElement} inputElement O elemento input a ser marcado com erro.
+ * @param {string} message A mensagem de erro a ser exibida.
+ */
+function setInputError(inputElement, message) {
+    const formGroup = inputElement.closest('.form-group');
+    if (!formGroup) return;
+
+    // Remove a mensagem de erro antiga, se houver, para evitar duplicatas
+    const oldError = formGroup.querySelector('.error-message');
+    if (oldError) oldError.remove();
+
+    inputElement.classList.add('input-error');
+    
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-message';
+    errorElement.innerText = message;
+    
+    // Insere a mensagem de erro logo após o input
+    inputElement.insertAdjacentElement('afterend', errorElement);
+}
+
+/**
+ * Limpa o estado de erro de um campo de formulário.
+ * @param {HTMLElement} inputElement O elemento input a ser limpo.
+ */
+function clearInputError(inputElement) {
+    const formGroup = inputElement.closest('.form-group');
+    if (!formGroup) return;
+
+    inputElement.classList.remove('input-error');
+    const errorElement = formGroup.querySelector('.error-message');
+    if (errorElement) errorElement.remove();
+}
+
 // =======================================================
 // SISTEMA DE NOTIFICAÇÕES (Bolinha vermelha no menu)
 // =======================================================

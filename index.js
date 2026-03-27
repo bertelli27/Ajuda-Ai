@@ -4,28 +4,53 @@ function validarEmail(email) {
 }
 
 // LOGIN
-document.getElementById("loginForm").addEventListener("submit", function(e){
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("usuario");
+const senhaInput = document.getElementById("senha");
+
+const validateLoginEmail = () => {
+    if (!validarEmail(emailInput.value.trim())) {
+        setInputError(emailInput, "Por favor, insira um e-mail válido.");
+        return false;
+    }
+    clearInputError(emailInput);
+    return true;
+};
+
+const validateLoginSenha = () => {
+    if (senhaInput.value.trim() === '') {
+        setInputError(senhaInput, "A senha é obrigatória.");
+        return false;
+    }
+    clearInputError(senhaInput);
+    return true;
+};
+
+emailInput.addEventListener('blur', validateLoginEmail);
+senhaInput.addEventListener('blur', validateLoginSenha);
+
+loginForm.addEventListener("submit", function(e){
     e.preventDefault();
-    const usuario = document.getElementById("usuario").value.trim();
-    const senha = document.getElementById("senha").value.trim();
+
+    const isEmailValid = validateLoginEmail();
+    const isSenhaValid = validateLoginSenha();
+
+    if (!isEmailValid || !isSenhaValid) {
+        mostrarToast("Por favor, corrija os campos em vermelho.", "error");
+        return;
+    }
+
+    const usuario = emailInput.value.trim();
+    const senha = senhaInput.value.trim();
     const lembrar = document.getElementById("lembrarConta").checked;
 
-    if(!usuario || !senha){
-        mostrarToast("Preencha todos os campos!", "error");
-        return;
-    }
-
-    if(!validarEmail(usuario)){
-        mostrarToast("Por favor, insira um endereço de e-mail válido!", "error");
-        return;
-    }
-
-    // Valida se o usuário existe no LocalStorage e confere a senha
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     const usuarioEncontrado = usuarios.find(u => u.email === usuario && u.senha === senha);
 
     if(!usuarioEncontrado){
         mostrarToast("E-mail ou senha incorretos!", "error");
+        setInputError(emailInput, " "); // Marca os campos para indicar o erro
+        setInputError(senhaInput, "E-mail ou senha incorretos.");
         return;
     }
 

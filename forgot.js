@@ -3,28 +3,35 @@ function validarEmail(email) {
     return re.test(email);
 }
 
-document.getElementById("forgotForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    const email = document.getElementById("emailForgot").value.trim();
+const forgotForm = document.getElementById("forgotForm");
+const emailInput = document.getElementById("emailForgot");
 
-    if(!email){
-        mostrarToast("Digite seu e-mail!", "error");
-        return;
+const validateForgotEmail = () => {
+    const email = emailInput.value.trim();
+    if (!validarEmail(email)) {
+        setInputError(emailInput, "Por favor, insira um e-mail válido.");
+        return false;
     }
-
-    if(!validarEmail(email)){
-        mostrarToast("E-mail inválido!", "error");
-        return;
-    }
-
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const usuarioExistente = usuarios.find(u => u.email === email);
+    if (!usuarios.some(u => u.email === email)) {
+        setInputError(emailInput, "Este e-mail não está cadastrado no sistema.");
+        return false;
+    }
+    clearInputError(emailInput);
+    return true;
+};
 
-    if (!usuarioExistente) {
-        mostrarToast("E-mail não encontrado no sistema.", "error");
+emailInput.addEventListener('blur', validateForgotEmail);
+
+forgotForm.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    if (!validateForgotEmail()) {
+        mostrarToast("Por favor, corrija o campo em vermelho.", "error");
         return;
     }
 
+    const email = emailInput.value.trim();
     // Simular a geração de um Token de Recuperação Seguro (15 minutos de validade)
     const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const resetData = {

@@ -34,6 +34,14 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     let emAndamento = todasMinhasSolicitacoes.filter(s => s.status === 'ACEITO').length;
     let concluidos = todasMinhasSolicitacoes.filter(s => s.status === 'CONCLUIDO').length;
 
+    // Dados para o gráfico
+    const statusCounts = {
+        pendente: todasMinhasSolicitacoes.filter(s => s.status === 'PENDENTE' || s.status === 'AGUARDANDO_CONFIRMACAO').length,
+        andamento: emAndamento,
+        concluido: concluidos,
+        cancelado: todasMinhasSolicitacoes.filter(s => s.status === 'CANCELADO').length,
+    };
+
     // Preencher cards básicos
     document.getElementById("card-solicitados").innerText = solicitados;
     document.getElementById("card-andamento").innerText = emAndamento;
@@ -115,6 +123,49 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
             </div>
         `).join('');
     }
+
+    // ================= 4. RENDERIZAR GRÁFICO =================
+    renderStatusChart(statusCounts);
+}
+
+function renderStatusChart(counts) {
+    const ctx = document.getElementById('statusChart');
+    if (!ctx) return;
+
+    const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
+
+    const data = {
+        labels: ['Pendentes', 'Em Andamento', 'Concluídos', 'Cancelados'],
+        datasets: [{
+            label: 'Serviços',
+            data: [counts.pendente, counts.andamento, counts.concluido, counts.cancelado],
+            backgroundColor: [
+                '#f0ad4e', // Laranja para Pendente
+                '#5cb85c', // Verde para Em Andamento
+                '#007bff', // Azul para Concluído
+                '#d9534f'  // Vermelho para Cancelado
+            ],
+            borderColor: isLightTheme ? '#FFFFFF' : '#393E46',
+            borderWidth: 4
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: isLightTheme ? '#4A5568' : '#EEEEEE',
+                        font: { size: 14, family: "'Poppins', sans-serif" }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function formatarStatus(status, valorStatus) {

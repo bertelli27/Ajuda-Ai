@@ -9,10 +9,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     .then(res => res.json())
                     .then(data => {
                         if(!data.erro) {
-                            document.getElementById("rua").value = data.logradouro;
-                            document.getElementById("bairro").value = data.bairro;
-                            document.getElementById("cidade").value = data.localidade;
-                            document.getElementById("estado").value = data.uf;
+                            const rua = document.getElementById("rua");
+                            const bairro = document.getElementById("bairro");
+                            const cidade = document.getElementById("cidade");
+                            const estado = document.getElementById("estado");
+                            
+                            rua.value = data.logradouro;
+                            bairro.value = data.bairro;
+                            cidade.value = data.localidade;
+                            estado.value = data.uf;
+                            
+                            if (typeof clearInputError === 'function') {
+                                clearInputError(rua);
+                                clearInputError(bairro);
+                                clearInputError(cidade);
+                                clearInputError(estado);
+                            }
                         } else {
                             mostrarToast("CEP não encontrado!", "error");
                         }
