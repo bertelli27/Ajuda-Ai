@@ -326,8 +326,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     pedidoModificado.statusPagamento = 'ESTORNADO';
                     const clientIndex = usuariosA.findIndex(u => u.email === pedidoModificado.clienteEmail);
                     if (clientIndex !== -1) {
-                        usuariosA[clientIndex].saldo = (usuariosA[clientIndex].saldo || 0) + parseFloat(pedidoModificado.valorCombinado);
-                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.clienteEmail, tipo: 'ENTRADA', descricao: `Estorno (Serviço Cancelado) - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
+                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.clienteEmail, tipo: 'ENTRADA', descricao: `Estorno na Conta (Serviço Cancelado) - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
                     }
                 }
                 
@@ -335,12 +334,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     pedidoModificado.statusPagamento = 'LIBERADO';
                     const prestadorIndex = usuariosA.findIndex(u => u.email === pedidoModificado.prestadorEmail);
                     if (prestadorIndex !== -1) {
-                        usuariosA[prestadorIndex].saldo = (usuariosA[prestadorIndex].saldo || 0) + parseFloat(pedidoModificado.valorCombinado);
-                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.prestadorEmail, tipo: 'ENTRADA', descricao: `Pagamento Liberado - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
+                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.prestadorEmail, tipo: 'ENTRADA', descricao: `Repasse para Conta Bancária - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
                     }
                 }
                 
-                localStorage.setItem('usuarios', JSON.stringify(usuariosA));
                 localStorage.setItem('transacoes', JSON.stringify(transacoes));
                 
                 solicitacoes[index] = pedidoModificado;
@@ -350,9 +347,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (novoStatus === 'AGUARDANDO_CONFIRMACAO') {
                     enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão para liberar o pagamento.");
                 } else if (novoStatus === 'CONCLUIDO') {
-                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para a carteira do prestador.");
+                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para a conta bancária do prestador.");
                 } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
-                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado para a carteira do cliente.");
+                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado para a conta do cliente.");
                 }
 
                 atualizarExibicaoPedidos(); // Recarrega a lista para refletir a mudança
@@ -724,14 +721,13 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!menu) return;
         const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
         menu.innerHTML = `
-            <a href="dashboard.html">Dashboard</a>
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html">Meus Pedidos</a>
-            <a href="carteira.html">Carteira</a>
             <div class="profile-menu-container">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
                 <div class="profile-dropdown" id="profileDropdown">
+                    <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
                     <a href="#" id="btnLogout">Sair</a>
                 </div>

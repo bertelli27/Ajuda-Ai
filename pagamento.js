@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", function() {
             <h3 style="color: #EEEEEE; margin:0;">${pedido.servico}</h3>
             <strong style="color: #00ADB5; font-size: 20px;">R$ ${valorFloat.toFixed(2).replace('.', ',')}</strong>
         </div>
-        <p style="color: #AAAAAA; font-size: 14px;"><strong>Seu Saldo Atual:</strong> R$ ${(usuarioAtual.saldo || 0).toFixed(2).replace('.', ',')}</p>
     `;
 
     document.getElementById("formPagamento").addEventListener("submit", function(e) {
@@ -35,27 +34,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const method = document.querySelector('input[name="paymentMethod"]:checked').value;
         let transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
 
-        if (method === 'saldo') {
-            const saldoAtual = usuarioAtual.saldo || 0;
-            if (saldoAtual < valorFloat) {
-                mostrarToast("Saldo insuficiente na carteira. Escolha Cartão ou Pix.", "error");
-                return;
-            }
-            // Desconta o saldo
-            usuarioAtual.saldo = saldoAtual - valorFloat;
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-            
-            // Registra a transação de saída
-            transacoes.push({
-                id: 'TX-' + Date.now(),
-                userEmail: emailLogado,
-                tipo: 'SAIDA',
-                descricao: `Pagamento de Serviço (Retido) - ${pedido.servico}`,
-                valor: valorFloat,
-                data: new Date().toISOString()
-            });
-            localStorage.setItem("transacoes", JSON.stringify(transacoes));
-        }
+        // Registra a transação de saída (Simulação de cobrança no Cartão/Pix)
+        transacoes.push({
+            id: 'TX-' + Date.now(),
+            userEmail: emailLogado,
+            tipo: 'SAIDA',
+            descricao: `Pagamento via ${method === 'cartao' ? 'Cartão' : 'Pix'} (Retido) - ${pedido.servico}`,
+            valor: valorFloat,
+            data: new Date().toISOString()
+        });
+        localStorage.setItem("transacoes", JSON.stringify(transacoes));
 
         // Atualiza o pedido
         pedido.status = 'ACEITO';

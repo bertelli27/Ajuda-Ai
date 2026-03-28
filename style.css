@@ -2110,6 +2110,99 @@ body {
 }
 
 /* ===========================
+   AJUSTES FINAIS DE RESPONSIVIDADE (MOBILE)
+=========================== */
+@media (max-width: 768px) {
+    /* Cabeçalho e Menu */
+    .header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+    }
+    .menu a {
+        margin-left: 0 !important;
+        font-size: 14px;
+        padding: 5px;
+    }
+    .profile-dropdown {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    /* Modal e Chat (Transforma em Tela Cheia no Mobile) */
+    .modal-content {
+        width: 100%;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        padding: 20px 15px;
+    }
+    .chat-input-area {
+        flex-direction: column;
+        gap: 10px;
+    }
+    #chat-send-btn, .btn-orcamento {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Botões em Cards e Seções - Empilhamento */
+    .card-botoes, .botoes-acao, .hero-ctas {
+        flex-direction: column;
+    }
+    .card-botoes button, .botoes-acao button, .hero-ctas button, .wallet-card button {
+        width: 100% !important;
+    }
+    .pedido-card .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    /* Formulários e Filtros 100% Largura */
+    .search-section {
+        padding: 20px 15px;
+    }
+    .search-section input, .search-section button, #ia-descricao-problema, #btnSugerirServico, .filtros-pedidos select {
+        width: 100% !important;
+    }
+    
+    /* Carteira */
+    .wallet-card .balance {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Centraliza e ajusta as Notificações de Toast no Celular */
+    #toast-container {
+        right: 50%;
+        transform: translateX(50%);
+        width: 90%;
+        align-items: center;
+    }
+    .toast {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Reduz padding em telas muito pequenas para ganhar espaço vital */
+    .login-card, .service-card, .pedido-card, .dashboard-card, .activity-card, .achievement-card {
+        padding: 20px 15px;
+    }
+    .register-section .login-card {
+        padding: 20px 15px;
+    }
+}
+
+/* ===========================
    TEMA CLARO (LIGHT THEME)
 =========================== */
 [data-theme="light"] body {

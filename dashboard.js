@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setupHeader(usuarioAtual);
     carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios);
+    renderizarHistoricoFinanceiro(emailLogado);
 });
 
 function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios) {
@@ -128,6 +129,39 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     renderStatusChart(statusCounts);
 }
 
+function renderizarHistoricoFinanceiro(emailLogado) {
+    const todasTransacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
+    const minhasTransacoes = todasTransacoes.filter(t => t.userEmail === emailLogado);
+    
+    minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); // Recentes primeiro
+
+    const list = document.getElementById("transactionList");
+    if (!list) return;
+
+    if (minhasTransacoes.length === 0) {
+        list.innerHTML = '<p style="color: #AAAAAA; text-align: center; margin-top: 20px; background: #393E46; padding: 20px; border-radius: 12px;">Nenhuma transação encontrada.</p>';
+    } else {
+        list.innerHTML = minhasTransacoes.map(t => {
+            const isEntrada = t.tipo === 'ENTRADA';
+            const sinal = isEntrada ? '+' : '-';
+            const classe = isEntrada ? 'entrada' : 'saida';
+            const dataFormatada = new Date(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
+            return `
+                <div class="transaction-item ${classe}">
+                    <div class="tx-info">
+                        <h4>${t.descricao}</h4>
+                        <p>${dataFormatada}</p>
+                    </div>
+                    <div class="tx-valor">
+                        ${sinal} R$ ${parseFloat(t.valor).toFixed(2).replace('.', ',')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
 function renderStatusChart(counts) {
     const ctx = document.getElementById('statusChart');
     if (!ctx) return;
@@ -187,14 +221,13 @@ function setupHeader(usuarioAtual) {
     const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
     
     menu.innerHTML = `
-        <a href="dashboard.html" style="color: #00ADB5; font-weight: bold;">Dashboard</a>
         <a href="home.html">Início</a>
         <a href="servicos.html">Serviços</a>
         <a href="pedidos.html">Meus Pedidos</a>
-        <a href="carteira.html">Carteira</a>
         <div class="profile-menu-container">
             <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown')" style="cursor: pointer;" title="Opções da Conta">
             <div class="profile-dropdown" id="profileDropdown">
+                <a href="dashboard.html" style="color: #00ADB5; font-weight: bold;">Dashboard</a>
                 <a href="perfil.html">Meu Perfil</a>
                 <a href="#" onclick="logout(event)">Sair</a>
             </div>

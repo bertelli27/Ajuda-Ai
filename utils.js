@@ -77,6 +77,9 @@ function clearInputError(inputElement) {
 // =======================================================
 // SISTEMA DE NOTIFICAÇÕES (Bolinha vermelha no menu)
 // =======================================================
+
+let lastNotificationCount = 0; // Guarda o último número de notificações
+
 function atualizarBadgeNotificacao() {
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
     if (!emailLogado) return;
@@ -101,23 +104,49 @@ function atualizarBadgeNotificacao() {
     const mensagensNaoLidas = mensagens.filter(m => meusPedidosIds.includes(m.id_solicitacao) && m.remetenteEmail !== emailLogado && m.lida !== true).length;
     numNotificacoes += mensagensNaoLidas;
 
+    // Se o número de notificações aumentou, dispara uma notificação real no sistema operacional!
+    if (numNotificacoes > lastNotificationCount) {
+        if (Notification.permission === "granted") {
+            new Notification("AjudaAí", {
+                body: "Você tem novas mensagens ou atualizações de serviço!",
+                icon: "img/logo.png"
+            });
+        }
+    }
+    
+    lastNotificationCount = numNotificacoes;
+
     // Procurar o link de "Meus Pedidos" em todas as páginas para renderizar o badge
     const links = document.querySelectorAll('a[href="pedidos.html"]');
     links.forEach(link => {
         const existingBadge = link.querySelector('.notificacao-badge');
-        if (existingBadge) existingBadge.remove(); // Limpa o badge antigo, se houver
 
         if (numNotificacoes > 0) {
-            link.style.position = 'relative'; // Necessário para posicionar a bolinha de forma correta
-            const badge = document.createElement('span');
-            badge.className = 'notificacao-badge';
-            badge.innerText = numNotificacoes;
-            link.appendChild(badge);
+            if (existingBadge) {
+                // Atualiza o texto apenas se o número mudar, evitando que a animação pisque
+                if (existingBadge.innerText !== numNotificacoes.toString()) {
+                    existingBadge.innerText = numNotificacoes;
+                }
+            } else {
+                link.style.position = 'relative'; // Necessário para posicionar a bolinha de forma correta
+                const badge = document.createElement('span');
+                badge.className = 'notificacao-badge';
+                badge.innerText = numNotificacoes;
+                link.appendChild(badge);
+            }
+        } else if (existingBadge) {
+            existingBadge.remove(); // Remove a bolinha se as notificações zerarem
         }
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => { setTimeout(atualizarBadgeNotificacao, 200); }); // Delay seguro para garantir que os menus carregaram
+document.addEventListener("DOMContentLoaded", () => { 
+    setTimeout(atualizarBadgeNotificacao, 200); 
+    // Pede permissão para o usuário exibir notificações reais ao carregar a página
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+}); // Delay seguro para garantir que os menus carregaram
 
 // =======================================================
 // MODO CLARO / ESCURO (THEME TOGGLE FLOATING)
@@ -196,6 +225,7 @@ function inicializarBackToTopButton() {
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(atualizarBadgeNotificacao, 200);
+    setInterval(atualizarBadgeNotificacao, 3000); // Verifica notificações a cada 3 segundos
     inicializarThemeToggle();
     inicializarBackToTopButton(); // Chama a nova função
 });

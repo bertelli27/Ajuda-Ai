@@ -19,14 +19,13 @@ function carregarUsuario() {
             // 🔐 LOGADO: Monta a mensagem de boas-vindas e o menu do usuário
             mensagemBoasVindas.innerHTML = `<img src="${fotoPerfil}" alt="Avatar" class="header-avatar"> Olá, ${usuarioAtual.nome.split(' ')[0]}!`;
             menu.innerHTML = `
-                <a href="dashboard.html">Dashboard</a>
                 <a href="home.html">Início</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">Meus Pedidos</a>
-                <a href="carteira.html">Carteira</a>
                 <div class="profile-menu-container">
                     <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
                     <div class="profile-dropdown" id="profileDropdown">
+                        <a href="dashboard.html">Dashboard</a>
                         <a href="perfil.html">Meu Perfil</a>
                         <a href="#" id="btnLogout">Sair</a>
                     </div>
