@@ -25,12 +25,17 @@ document.addEventListener("DOMContentLoaded", function() {
 function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios) {
     // ================= 1. CÁLCULO DOS CARDS =================
     const emailLogado = usuarioAtual.email;
-    const isPrestador = usuarioAtual.tipo === 'prestador';
+    const isPrestador = usuarioAtual.tipo === 'prestador'; // Check if user has a provider profile
+    
+    if (isPrestador) {
+        document.getElementById("dashboard-prestador-area").style.display = "block";
+    }
 
     const meusPedidosComoCliente = solicitacoes.filter(s => s.clienteEmail === emailLogado);
     const meusPedidosComoPrestador = solicitacoes.filter(s => s.prestadorEmail === emailLogado);
     const todasMinhasSolicitacoes = [...meusPedidosComoCliente, ...meusPedidosComoPrestador];
 
+    // Cálculos Gerais para Gráfico e Conquistas
     let solicitados = meusPedidosComoCliente.length;
     let emAndamento = todasMinhasSolicitacoes.filter(s => s.status === 'ACEITO').length;
     let concluidos = todasMinhasSolicitacoes.filter(s => s.status === 'CONCLUIDO').length;
@@ -43,21 +48,21 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
         cancelado: todasMinhasSolicitacoes.filter(s => s.status === 'CANCELADO').length,
     };
 
-    // Preencher cards básicos
+    // Métricas de Cliente
     document.getElementById("card-solicitados").innerText = solicitados;
-    document.getElementById("card-andamento").innerText = emAndamento;
-    document.getElementById("card-concluidos").innerText = concluidos;
+    document.getElementById("card-andamento-cliente").innerText = meusPedidosComoCliente.filter(s => s.status === 'ACEITO').length;
+    document.getElementById("card-concluidos-cliente").innerText = meusPedidosComoCliente.filter(s => s.status === 'CONCLUIDO').length;
 
-    // Cards de prestador (Avaliação)
+    // Métricas de Prestador
     if (isPrestador) {
-        const wrapperAvaliacao = document.getElementById("wrapper-avaliacao");
-        wrapperAvaliacao.style.display = 'block';
+        document.getElementById("card-andamento-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'ACEITO').length;
+        document.getElementById("card-concluidos-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'CONCLUIDO').length;
 
         const minhasAvaliacoes = avaliacoes.filter(a => a.prestadorEmail === emailLogado);
         let mediaEstrelas = 'N/A';
         if (minhasAvaliacoes.length > 0) {
             const soma = minhasAvaliacoes.reduce((acc, a) => acc + a.nota, 0);
-            mediaEstrelas = (soma / minhasAvaliacoes.length).toFixed(1);
+            mediaEstrelas = `★ ${(soma / minhasAvaliacoes.length).toFixed(1)}`;
         }
         document.getElementById("card-avaliacao").innerText = mediaEstrelas;
     }
@@ -131,7 +136,8 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
 
 function renderizarHistoricoFinanceiro(emailLogado) {
     const todasTransacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
-    const minhasTransacoes = todasTransacoes.filter(t => t.userEmail === emailLogado);
+    // Filtra transações onde o usuário logado é cliente OU prestador
+    const minhasTransacoes = todasTransacoes.filter(t => t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado);
     
     minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); // Recentes primeiro
 
@@ -142,19 +148,34 @@ function renderizarHistoricoFinanceiro(emailLogado) {
         list.innerHTML = '<p style="color: #AAAAAA; text-align: center; margin-top: 20px; background: #393E46; padding: 20px; border-radius: 12px;">Nenhuma transação encontrada.</p>';
     } else {
         list.innerHTML = minhasTransacoes.map(t => {
-            const isEntrada = t.tipo === 'ENTRADA';
+            const isClienteNestaTx = t.clienteEmail === emailLogado;
+            const isEntrada = !isClienteNestaTx;
             const sinal = isEntrada ? '+' : '-';
             const classe = isEntrada ? 'entrada' : 'saida';
             const dataFormatada = new Date(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
             
+            let statusTag = '';
+            if (t.status === 'RETIDO') statusTag = '<span style="background: #f0ad4e; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Retido</span>';
+            else if (t.status === 'CONCLUIDO') statusTag = '<span style="background: #5cb85c; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Concluído</span>';
+            else if (t.status === 'CANCELADO') statusTag = '<span style="background: #d9534f; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Estornado</span>';
+
+            const valorExibicao = isClienteNestaTx ? t.valorServico : t.valorPrestador;
+            const descricao = isClienteNestaTx ? `Pagamento de Serviço (${t.tipo})` : `Recebimento de Serviço`;
+
+            let detalhesHtml = '';
+            if (isEntrada && t.status !== 'CANCELADO') {
+                detalhesHtml = `<div class="tx-details">Valor do Serviço: R$ ${t.valorServico.toFixed(2).replace('.', ',')} | Taxa da Plataforma: R$ ${t.taxaPlataforma.toFixed(2).replace('.', ',')}</div>`;
+            }
+
             return `
                 <div class="transaction-item ${classe}">
                     <div class="tx-info">
-                        <h4>${t.descricao}</h4>
+                        <h4>${descricao} ${statusTag}</h4>
                         <p>${dataFormatada}</p>
+                        ${detalhesHtml}
                     </div>
                     <div class="tx-valor">
-                        ${sinal} R$ ${parseFloat(t.valor).toFixed(2).replace('.', ',')}
+                        ${sinal} R$ ${valorExibicao.toFixed(2).replace('.', ',')}
                     </div>
                 </div>
             `;

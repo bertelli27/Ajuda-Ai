@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // ================= CARREGAR SERVIÇOS =================
     function carregarServicos(categoriaFiltro = "Todos", termoBusca = "") {
         const grid = document.querySelector(".services-grid");
+        const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
         if (!grid) return;
 
         grid.innerHTML = '';
@@ -115,7 +116,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 grid.innerHTML = '<p class="aviso-sem-pedidos" style="grid-column: 1 / -1;">Nenhum prestador encontrado com estes critérios.</p>';
             } else {
                 paginatedPrestadores.forEach(prestador => {
-                    renderizarCard(prestador, avaliacoes, grid);
+                    const isSelf = prestador.email === emailLogado;
+                    renderizarCard(prestador, avaliacoes, grid, isSelf);
                 });
             }
 
@@ -127,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1500);
     }
 
-    function renderizarCard(prestador, avaliacoes, grid) {
+    function renderizarCard(prestador, avaliacoes, grid, isSelf) {
             const card = document.createElement('div');
             card.className = 'service-card';
 
@@ -151,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <p><strong>Local:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
                 <div class="card-botoes">
                     <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
-                    <button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>
+                    ${!isSelf ? `<button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>` : ''}
                 </div>
             `;
         grid.appendChild(card);

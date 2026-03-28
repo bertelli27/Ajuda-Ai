@@ -34,13 +34,20 @@ document.addEventListener("DOMContentLoaded", function() {
         const method = document.querySelector('input[name="paymentMethod"]:checked').value;
         let transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
 
-        // Registra a transação de saída (Simulação de cobrança no Cartão/Pix)
+        // Fluxo Financeiro e Taxa da Plataforma (10%)
+        const taxaPlataforma = valorFloat * 0.10;
+        const valorPrestador = valorFloat - taxaPlataforma;
+
         transacoes.push({
             id: 'TX-' + Date.now(),
-            userEmail: emailLogado,
-            tipo: 'SAIDA',
-            descricao: `Pagamento via ${method === 'cartao' ? 'Cartão' : 'Pix'} (Retido) - ${pedido.servico}`,
-            valor: valorFloat,
+            servicoId: pedido.id,
+            clienteEmail: emailLogado,
+            prestadorEmail: pedido.prestadorEmail,
+            valorServico: valorFloat,
+            taxaPlataforma: taxaPlataforma,
+            valorPrestador: valorPrestador,
+            tipo: method === 'cartao' ? 'CARTAO' : 'PIX',
+            status: 'RETIDO', // Status inicial da transação
             data: new Date().toISOString()
         });
         localStorage.setItem("transacoes", JSON.stringify(transacoes));

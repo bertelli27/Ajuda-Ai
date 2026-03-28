@@ -35,6 +35,15 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
+    // Regra: Usuário não pode contratar a si mesmo
+    if (prestador.email === emailLogado) {
+        mostrarToast("Você não pode solicitar um serviço a si mesmo.", "error");
+        setTimeout(() => {
+            window.location.href = "servicos.html";
+        }, 1500);
+        return;
+    }
+
     // ================= EXIBIR DADOS =================
     const infoDiv = document.getElementById("infoPrestador");
     infoDiv.innerHTML = `

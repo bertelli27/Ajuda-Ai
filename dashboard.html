@@ -23,8 +23,9 @@
 <section class="services-section" style="padding-top: 40px; max-width: 1200px;">
     <h2 class="dashboard-header-title" style="text-align: left;">Visão Geral</h2>
     
-    <!-- 1. CARDS DE RESUMO -->
-    <div class="dashboard-container">
+    <!-- PAINEL DO CLIENTE -->
+    <h3 style="color: #00ADB5; margin-bottom: 15px; font-size: 20px;">Como Cliente</h3>
+    <div class="dashboard-container" style="margin-bottom: 40px;">
         <div class="dashboard-card">
             <span class="dashboard-icon">📋</span>
             <h3>Serviços Solicitados</h3>
@@ -33,18 +34,34 @@
         <div class="dashboard-card">
             <span class="dashboard-icon">⏳</span>
             <h3>Em Andamento</h3>
-            <div class="dashboard-value" id="card-andamento">0</div>
+            <div class="dashboard-value" id="card-andamento-cliente">0</div>
         </div>
         <div class="dashboard-card">
             <span class="dashboard-icon">✅</span>
             <h3>Concluídos</h3>
-            <div class="dashboard-value" id="card-concluidos">0</div>
+            <div class="dashboard-value" id="card-concluidos-cliente">0</div>
         </div>
-        <!-- Cards exclusivos de Prestador -->
-        <div class="dashboard-card" id="wrapper-avaliacao" style="display: none;">
-            <span class="dashboard-icon">⭐</span>
-            <h3>Avaliação Média</h3>
-            <div class="dashboard-value" id="card-avaliacao">N/A</div>
+    </div>
+
+    <!-- PAINEL DO PRESTADOR (visível se for prestador) -->
+    <div id="dashboard-prestador-area" style="display: none;">
+        <h3 style="color: #00ADB5; margin-bottom: 15px; font-size: 20px;">Como Profissional</h3>
+        <div class="dashboard-container">
+            <div class="dashboard-card">
+                <span class="dashboard-icon">⏳</span>
+                <h3>Serviços em Andamento</h3>
+                <div class="dashboard-value" id="card-andamento-prestador">0</div>
+            </div>
+            <div class="dashboard-card">
+                <span class="dashboard-icon">✅</span>
+                <h3>Concluídos</h3>
+                <div class="dashboard-value" id="card-concluidos-prestador">0</div>
+            </div>
+            <div class="dashboard-card">
+                <span class="dashboard-icon">⭐</span>
+                <h3>Avaliação Média</h3>
+                <div class="dashboard-value" id="card-avaliacao">N/A</div>
+            </div>
         </div>
     </div>
 

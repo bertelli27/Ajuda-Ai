@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const recebidosContainer = document.getElementById("pedidos-recebidos-container");
     const enviadosSection = document.getElementById("enviados-section");
     const enviadosContainer = document.getElementById("pedidos-enviados-container");
-    const tituloEnviados = document.getElementById("titulo-pedidos-enviados");
     const mainContainer = document.querySelector('.services-section');
 
     // Elementos dos filtros
@@ -56,12 +55,32 @@ document.addEventListener("DOMContentLoaded", function() {
     // ================= LÓGICA DE EXIBIÇÃO (CLIENTE vs PRESTADOR) =================
     function carregarPedidos() {
         // Adiciona listeners de eventos aos controles de filtro e ordenação
-        if (usuarioAtual.tipo === 'prestador') {
-            filtroStatusRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
-            ordenarDataRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
-        }
+        filtroStatusRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
+        ordenarDataRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
         filtroStatusEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
         ordenarDataEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
+
+        // Configuração das Abas (Contexto de Uso)
+        const btnTabContratados = document.getElementById("btnTabContratados");
+        const btnTabPrestados = document.getElementById("btnTabPrestados");
+
+        if (usuarioAtual.tipo === 'prestador') {
+            btnTabPrestados.style.display = 'block';
+
+            btnTabContratados.addEventListener("click", () => {
+                btnTabContratados.classList.add("active");
+                btnTabPrestados.classList.remove("active");
+                enviadosSection.style.display = "block";
+                recebidosSection.style.display = "none";
+            });
+
+            btnTabPrestados.addEventListener("click", () => {
+                btnTabPrestados.classList.add("active");
+                btnTabContratados.classList.remove("active");
+                recebidosSection.style.display = "block";
+                enviadosSection.style.display = "none";
+            });
+        }
 
         // Carga inicial dos pedidos
         atualizarExibicaoPedidos();
@@ -87,14 +106,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Wrapper para manter compatibilidade global de cliques (Aceitar/Recusar)
     function atualizarExibicaoPedidos() {
         atualizarLista('enviados');
         if (usuarioAtual.tipo === 'prestador') {
-            recebidosSection.style.display = "block";
-            tituloEnviados.innerText = "Minhas Solicitações Enviadas";
             atualizarLista('recebidos');
-            atualizarDashboard();
         }
     }
 
@@ -151,34 +166,6 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
         document.getElementById(`prev-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage - 1));
         document.getElementById(`next-${containerId}`)?.addEventListener('click', () => onPageChange(currentPage + 1));
-    }
-
-    function atualizarDashboard() {
-        const dashboardSection = document.getElementById("dashboard-prestador");
-        if (!dashboardSection) return;
-        
-        dashboardSection.style.display = "block";
-
-        const meusPedidosConcluidos = solicitacoes.filter(s => s.prestadorEmail === usuarioAtual.email && s.status === 'CONCLUIDO');
-        
-        const totalConcluidos = meusPedidosConcluidos.length;
-        const ganhosTotais = meusPedidosConcluidos.reduce((acc, pedido) => {
-            const valor = parseFloat(pedido.valorCombinado) || 0;
-            return acc + valor;
-        }, 0);
-
-        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
-        const minhasAvaliacoes = avaliacoes.filter(a => a.prestadorEmail === usuarioAtual.email);
-        
-        let mediaEstrelas = '★ N/A';
-        if (minhasAvaliacoes.length > 0) {
-            const somaNotas = minhasAvaliacoes.reduce((acc, a) => acc + a.nota, 0);
-            mediaEstrelas = '★ ' + (somaNotas / minhasAvaliacoes.length).toFixed(1);
-        }
-
-        document.getElementById("dash-ganhos").innerText = `R$ ${ganhosTotais.toFixed(2).replace('.', ',')}`;
-        document.getElementById("dash-concluidos").innerText = totalConcluidos;
-        document.getElementById("dash-avaliacoes").innerText = mediaEstrelas;
     }
 
     function aplicarFiltros(listaPedidos, status, ordenacao) {
@@ -319,23 +306,19 @@ document.addEventListener("DOMContentLoaded", function() {
                 const pedidoModificado = solicitacoes[index];
                 
                 // LOGICA FINANCEIRA
-                const usuariosA = JSON.parse(localStorage.getItem('usuarios')) || [];
                 const transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+                const txIndex = transacoes.findIndex(t => t.servicoId === pedidoModificado.id);
                 
                 if (novoStatus === 'CANCELADO' && pedidoModificado.statusPagamento === 'RETIDO') {
                     pedidoModificado.statusPagamento = 'ESTORNADO';
-                    const clientIndex = usuariosA.findIndex(u => u.email === pedidoModificado.clienteEmail);
-                    if (clientIndex !== -1) {
-                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.clienteEmail, tipo: 'ENTRADA', descricao: `Estorno na Conta (Serviço Cancelado) - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
-                    }
+                    // Atualiza o status da transação existente para 'CANCELADO'
+                    if (txIndex !== -1) transacoes[txIndex].status = 'CANCELADO';
                 }
                 
                 if (novoStatus === 'CONCLUIDO' && pedidoModificado.statusPagamento === 'RETIDO') {
                     pedidoModificado.statusPagamento = 'LIBERADO';
-                    const prestadorIndex = usuariosA.findIndex(u => u.email === pedidoModificado.prestadorEmail);
-                    if (prestadorIndex !== -1) {
-                        transacoes.push({ id: 'TX-' + Date.now(), userEmail: pedidoModificado.prestadorEmail, tipo: 'ENTRADA', descricao: `Repasse para Conta Bancária - ${pedidoModificado.servico}`, valor: parseFloat(pedidoModificado.valorCombinado), data: new Date().toISOString() });
-                    }
+                    // Atualiza o status da transação existente para 'CONCLUIDO'
+                    if (txIndex !== -1) transacoes[txIndex].status = 'CONCLUIDO';
                 }
                 
                 localStorage.setItem('transacoes', JSON.stringify(transacoes));
@@ -347,9 +330,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (novoStatus === 'AGUARDANDO_CONFIRMACAO') {
                     enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão para liberar o pagamento.");
                 } else if (novoStatus === 'CONCLUIDO') {
-                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para a conta bancária do prestador.");
+                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para o prestador.");
                 } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
-                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado para a conta do cliente.");
+                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado.");
                 }
 
                 atualizarExibicaoPedidos(); // Recarrega a lista para refletir a mudança
@@ -723,7 +706,7 @@ document.addEventListener("DOMContentLoaded", function() {
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
-            <a href="pedidos.html">Meus Pedidos</a>
+            <a href="pedidos.html" style="color: #00ADB5; font-weight: bold;">Meus Serviços</a>
             <div class="profile-menu-container">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
                 <div class="profile-dropdown" id="profileDropdown">
