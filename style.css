@@ -187,7 +187,8 @@ body {
 }
 
 /* INPUTS BASE */
-.login-card input, .login-card select, .form-grid select, .login-card textarea {
+.login-card input, .login-card select, .form-grid select, .login-card textarea,
+.profile-info-card input, .profile-info-card select, .profile-info-card textarea {
     width: 100%;
     padding: 14px 16px;
     border: 2px solid #4F5B66; /* Borda visível (Outlined) */
@@ -200,7 +201,8 @@ body {
     font-family: inherit;
 }
 
-.login-card input::placeholder, .login-card textarea::placeholder {
+.login-card input::placeholder, .login-card textarea::placeholder,
+.profile-info-card input::placeholder, .profile-info-card textarea::placeholder {
     color: #888888;
 }
 
@@ -208,18 +210,23 @@ body {
 .login-card input:hover:not(:disabled), 
 .login-card select:hover:not(:disabled), 
 .form-grid select:hover:not(:disabled), 
-.login-card textarea:hover:not(:disabled) {
+.login-card textarea:hover:not(:disabled),
+.profile-info-card input:hover:not(:disabled),
+.profile-info-card select:hover:not(:disabled),
+.profile-info-card textarea:hover:not(:disabled) {
     border-color: #6C7A89;
 }
 
-.login-card input:focus, .login-card select:focus, .form-grid select:focus, .login-card textarea:focus {
+.login-card input:focus, .login-card select:focus, .form-grid select:focus, .login-card textarea:focus,
+.profile-info-card input:focus, .profile-info-card select:focus, .profile-info-card textarea:focus {
     border-color: #00ADB5;
     background: #222A31;
     box-shadow: 0 0 0 4px rgba(0, 173, 181, 0.15);
 }
 
 /* DISABLED STATE */
-.login-card input:disabled, .login-card select:disabled, .form-grid select:disabled, .login-card textarea:disabled {
+.login-card input:disabled, .login-card select:disabled, .form-grid select:disabled, .login-card textarea:disabled,
+.profile-info-card input:disabled, .profile-info-card select:disabled, .profile-info-card textarea:disabled {
     background: #2A343D;
     border-color: transparent;
     color: #888888;
@@ -283,7 +290,7 @@ body {
     margin-bottom: 25px;
 }
 
-.login-card .form-grid input {
+.login-card .form-grid input, .profile-info-card .form-grid input {
     margin-bottom: 0;
 }
 
@@ -729,15 +736,16 @@ body {
 .profile-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
-    gap: 40px;
-    align-items: start;
+    gap: 50px; /* Mais espaço entre o menu lateral e o conteúdo */
+    align-items: stretch; /* Estica ambas as colunas para terem exatamente a mesma altura */
 }
 
 .profile-sidebar {
-    background: #2A343D;
-    padding: 30px 20px;
+    background: #393E46;
+    padding: 40px 30px; /* Mais preenchimento interno */
     border-radius: 16px;
-    border: 2px solid #4F5B66;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -746,6 +754,14 @@ body {
 
 .profile-main {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-main > #view-mode, .profile-main > #perfilForm {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .section-title {
@@ -757,6 +773,144 @@ body {
     margin-bottom: 10px;
     font-weight: 600;
 }
+
+/* ===========================
+   SIDEBAR STATS
+=========================== */
+.sidebar-stat-box {
+    width: 100%;
+    margin-top: auto; /* Se a coluna da direita empurrar o layout, mantém as estatísticas ancoradas no fundo */
+    border-top: 1px solid #4F5B66;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+.sidebar-stat-item {
+    background: #2A343D;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #4F5B66;
+}
+.sidebar-stat-label {
+    font-size: 11px;
+    color: #AAAAAA;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+}
+.sidebar-stat-value {
+    color: #EEEEEE;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===========================
+   NOVO LAYOUT DE PERFIL (CARDS)
+=========================== */
+.profile-info-card {
+    background: #393E46;
+    padding: 35px; /* Mais respiro dentro dos cards */
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 30px; /* Mais distância entre um card e outro */
+}
+
+.profile-info-card .form-grid {
+    margin-bottom: 0;
+}
+
+.profile-info-card .form-group {
+    padding: 15px 0; /* Mais espaço entre cada linha de informação */
+    border-bottom: 1px solid #393E46;
+}
+
+.profile-info-card .form-group:last-child {
+    border-bottom: none;
+}
+
+.profile-info-card .form-group label {
+    font-size: 13px;
+    color: #AAAAAA;
+    margin-bottom: 6px;
+}
+
+.profile-info-card .view-mode-text {
+    font-size: 16px; /* Fonte levemente maior para leitura */
+    color: #EEEEEE;
+    font-weight: 400;
+}
+
+/* COMPACTAÇÃO ESPECÍFICA PARA AS CAIXAS DA DIREITA (DADOS PESSOAIS E ENDEREÇO) */
+.profile-main .profile-info-card {
+    padding: 25px 30px; /* Reduz o padding interno do card */
+    margin-bottom: 20px; /* Reduz a distância entre os dois cards */
+}
+
+.profile-main .profile-info-card .section-title {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+}
+
+.profile-main .profile-info-card .form-group {
+    padding: 8px 0; /* Reduz o espaçamento vertical das linhas */
+}
+
+.profile-main .profile-info-card .form-group label {
+    margin-bottom: 2px; /* Aproxima o título do valor */
+}
+
+.profile-main .profile-info-card .view-mode-text {
+    font-size: 15px; /* Reduz levemente para caber melhor */
+    line-height: 1.4;
+}
+.profile-main .profile-info-card .form-grid {
+    gap: 15px; /* Aproxima os campos no modo de edição */
+}
+
+.profile-main .profile-info-card:last-child {
+    margin-bottom: 0; /* Remove a margem do último card da direita */
+    flex-grow: 1; /* Faz o card de Endereço esticar até o fundo, alinhando a base perfeitamente com a foto */
+}
+
+.become-provider-banner {
+    background: linear-gradient(90deg, #00ADB5, #00CED1);
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+    margin-top: 20px;
+}
+.become-provider-banner h3 {
+    color: #222A31;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+.become-provider-banner p {
+    color: #2A343D;
+    margin-bottom: 20px;
+}
+
+.portfolio-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+.portfolio-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.portfolio-item img:hover { transform: scale(1.05); }
 
 /* ===========================
    PÁGINA DE PERFIL - FOTO
@@ -1528,6 +1682,55 @@ body {
 .rating-display {
     color: #ffc107;
     font-size: 16px;
+}
+
+/* ===========================
+   AVALIAÇÕES DASHBOARD (PERFIL)
+=========================== */
+.avaliacoes-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.avaliacoes-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #2A343D;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #4F5B66;
+}
+
+.avaliacoes-summary .average-rating {
+    font-size: 56px;
+    font-weight: 700;
+    color: #EEEEEE;
+    line-height: 1;
+}
+
+.avaliacoes-summary .stars {
+    color: #ffc107;
+    font-size: 26px;
+    margin: 5px 0;
+}
+
+.avaliacoes-summary .total-reviews {
+    color: #AAAAAA;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.rating-bar-container { display: flex; align-items: center; width: 100%; margin-bottom: 8px; gap: 10px; }
+.rating-bar-label { font-size: 13px; color: #EEEEEE; width: 35px; text-align: right; }
+.rating-bar-bg { flex-grow: 1; height: 8px; background: #393E46; border-radius: 4px; overflow: hidden; }
+.rating-bar-fill { height: 100%; background: #ffc107; border-radius: 4px; }
+.rating-bar-count { font-size: 12px; color: #AAAAAA; width: 25px; }
+
+@media (max-width: 768px) {
+    .avaliacoes-dashboard { grid-template-columns: 1fr; }
 }
 
 /* AVALIAÇÕES NO PERFIL */
@@ -2514,7 +2717,9 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .testimonial-card,
 [data-theme="light"] .theme-toggle-floating,
 [data-theme="light"] .search-section,
-[data-theme="light"] .accordion-item {
+[data-theme="light"] .accordion-item,
+[data-theme="light"] .profile-info-card,
+[data-theme="light"] .avaliacoes-summary {
     background-color: #FFFFFF !important;
     color: #2D3748 !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
@@ -2523,11 +2728,18 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .profile-sidebar,
 [data-theme="light"] .section-title,
 [data-theme="light"] .achievement-card,
-[data-theme="light"] .accordion-item {
+[data-theme="light"] .accordion-item,
+[data-theme="light"] .avaliacoes-summary,
+[data-theme="light"] .sidebar-stat-box,
+[data-theme="light"] .sidebar-stat-item {
     border-color: #CBD5E0 !important;
 }
 
 [data-theme="light"] .achievement-card {
+    background-color: #F4F6F8 !important;
+}
+
+[data-theme="light"] .sidebar-stat-item {
     background-color: #F4F6F8 !important;
 }
 
@@ -2545,6 +2757,9 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .login-card input,
 [data-theme="light"] .login-card textarea,
 [data-theme="light"] .login-card select,
+[data-theme="light"] .profile-info-card input,
+[data-theme="light"] .profile-info-card textarea,
+[data-theme="light"] .profile-info-card select,
 [data-theme="light"] .search-section input,
 [data-theme="light"] .filtros-pedidos select,
 [data-theme="light"] .chat-input-wrapper,
@@ -2559,6 +2774,9 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .login-card input:hover:not(:disabled),
 [data-theme="light"] .login-card textarea:hover:not(:disabled),
 [data-theme="light"] .login-card select:hover:not(:disabled),
+[data-theme="light"] .profile-info-card input:hover:not(:disabled),
+[data-theme="light"] .profile-info-card textarea:hover:not(:disabled),
+[data-theme="light"] .profile-info-card select:hover:not(:disabled),
 [data-theme="light"] .form-grid select:hover:not(:disabled),
 [data-theme="light"] #negociacao-area textarea:hover:not(:disabled),
 [data-theme="light"] #negociacao-area input:hover:not(:disabled) {
@@ -2567,6 +2785,9 @@ body.focus-mode-active .back-to-top-btn {
 
 [data-theme="light"] .login-card input:focus,
 [data-theme="light"] .search-section input:focus,
+[data-theme="light"] .profile-info-card input:focus,
+[data-theme="light"] .profile-info-card textarea:focus,
+[data-theme="light"] .profile-info-card select:focus,
 [data-theme="light"] .chat-input-wrapper:focus-within,
 [data-theme="light"] .filtros-pedidos select:focus,
 [data-theme="light"] #negociacao-area textarea:focus,
@@ -2579,6 +2800,9 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .login-card input:disabled,
 [data-theme="light"] .login-card select:disabled,
 [data-theme="light"] .form-grid select:disabled,
+[data-theme="light"] .profile-info-card input:disabled,
+[data-theme="light"] .profile-info-card select:disabled,
+[data-theme="light"] .profile-info-card textarea:disabled,
 [data-theme="light"] .login-card textarea:disabled {
     background-color: #EDF2F7 !important;
     border-color: transparent !important;
@@ -2637,7 +2861,9 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .login-card input::placeholder,
 [data-theme="light"] .login-card textarea::placeholder,
 [data-theme="light"] .search-section input::placeholder,
-[data-theme="light"] #chat-input::placeholder {
+[data-theme="light"] #chat-input::placeholder,
+[data-theme="light"] .profile-info-card input::placeholder,
+[data-theme="light"] .profile-info-card textarea::placeholder {
     color: #A0AEC0 !important;
 }
 
@@ -2715,8 +2941,15 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .step-card p,
 [data-theme="light"] .testimonial-card p,
 [data-theme="light"] .achievement-details p,
-[data-theme="light"] .accordion-content p {
+[data-theme="light"] .accordion-content p,
+[data-theme="light"] .rating-bar-label,
+[data-theme="light"] .average-rating {
     color: #718096 !important;
+}
+
+[data-theme="light"] #sidebar-user-name,
+[data-theme="light"] .sidebar-stat-value {
+    color: #2D3748 !important;
 }
 
 [data-theme="light"] .hero-section {
@@ -2755,6 +2988,9 @@ body.focus-mode-active .back-to-top-btn {
 }
 [data-theme="light"] .chart-container h3 {
     color: #2D3748 !important;
+}
+[data-theme="light"] .rating-bar-bg {
+    background-color: #E2E8F0 !important;
 }
 [data-theme="light"] .accordion-item.active { border-color: #00ADB5 !important; }
 

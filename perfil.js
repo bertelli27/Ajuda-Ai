@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Elementos do DOM
     const btnEditar = document.getElementById("btnEditar");
     const btnSalvar = document.getElementById("btnSalvar");
-    const formInputs = document.querySelectorAll("#perfilForm input, #perfilForm textarea, #perfilForm select");
 
     // Determina qual perfil carregar (público ou próprio)
     if (perfilEmail) {
@@ -53,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Preenche os dados na tela e configura o cabeçalho, seja qual for o modo
-    preencherFormulario(usuarioAlvo);
+    preencherDados(usuarioAlvo);
     setupHeader();
 
     // ================= FUNÇÕES DE CONFIGURAÇÃO DE MODO =================
@@ -67,23 +66,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Altera o título da página e do card
         document.title = `Perfil de ${usuarioAlvo.nome.split(' ')[0]} | AjudaAí`;
-        document.querySelector('.login-card h2').innerText = `Perfil de Prestador`;
+        const pageTitle = document.getElementById("perfil-page-title");
+        if (pageTitle) pageTitle.innerText = `Perfil de Prestador`;
 
-        // Oculta os campos de dados pessoais para visitantes (mostra apenas nome e serviços)
-        const camposPrivados = ['cpf', 'email', 'telefone', 'cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'estado'];
-        camposPrivados.forEach(id => {
-            const campo = document.getElementById(id);
-            if (campo) campo.style.display = "none";
-        });
+        // Esconde dados pessoais sensíveis na visão pública
+        document.getElementById('view-email').style.display = 'none';
+        document.getElementById('view-telefone').style.display = 'none';
+        document.querySelector('#view-email').parentElement.style.display = 'none';
+        document.querySelector('#view-telefone').parentElement.style.display = 'none';
 
-        // Desabilita todos os campos do formulário
-        formInputs.forEach(input => { input.disabled = true; });
+        // Esconde e-mail da sidebar também
+        const sidebarEmail = document.getElementById('sidebar-user-email');
+        if (sidebarEmail) sidebarEmail.style.display = 'none';
     }
 
     function configurarMeuPerfil() {
         // Adiciona os event listeners para edição, salvamento, etc.
         btnEditar.addEventListener("click", () => alternarModoEdicao(true));
-        document.getElementById("perfilForm").addEventListener("submit", salvarAlteracoes);
+        btnSalvar.addEventListener("click", salvarAlteracoes);
         document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
         document.getElementById("profilePicInput").addEventListener("change", préVisualizarFoto);
         
@@ -109,60 +109,137 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // ================= FUNÇÕES PRINCIPAIS =================
 
-    function preencherFormulario(usuario) {
+    function preencherDados(usuario) {
         // Preenche a foto de perfil
         const profilePic = document.getElementById("profilePicPreview");
-        if (usuario.fotoPerfil) {
-            profilePic.src = usuario.fotoPerfil;
-        } else {
-            profilePic.src = "img/avatar_padrao.png";
-        }
+        profilePic.src = usuario.fotoPerfil || "img/avatar_padrao.png";
 
         // Se não for o próprio perfil, não mostra o botão de editar foto
-        if (!isOwnProfile) {
-            document.getElementById("editPicLabel").style.display = "none";
-        }
+        if (!isOwnProfile) document.getElementById("editPicLabel").style.display = "none";
 
+        // Preenche a sidebar com nome e email
+        document.getElementById("sidebar-user-name").innerText = usuario.nome;
+        document.getElementById("sidebar-user-email").innerText = usuario.email;
+
+        // Preenche os campos de visualização
+        document.getElementById("view-nome").innerText = usuario.nome;
+        document.getElementById("view-email").innerText = usuario.email;
+        document.getElementById("view-telefone").innerText = usuario.telefone;
+        const end = usuario.endereco;
+        document.getElementById("view-endereco").innerText = `${end.rua}, ${end.numero} ${end.complemento ? '- ' + end.complemento : ''}`;
+        document.getElementById("view-cidade-estado").innerText = `${end.cidade} - ${end.estado}, CEP: ${end.cep}`;
+
+        // Preenche as estatísticas da Sidebar
+        const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
+        if (usuario.tipo === "prestador") {
+            document.getElementById("sidebar-tipo-perfil").innerText = "Profissional";
+            document.getElementById("sidebar-label-servicos").innerText = "Serviços Concluídos";
+            const concluidos = solicitacoes.filter(s => s.prestadorEmail === usuario.email && s.status === 'CONCLUIDO').length;
+            document.getElementById("sidebar-servicos-count").innerText = concluidos;
+        } else {
+            document.getElementById("sidebar-tipo-perfil").innerText = "Cliente";
+            document.getElementById("sidebar-label-servicos").innerText = "Serviços Solicitados";
+            const solicitados = solicitacoes.filter(s => s.clienteEmail === usuario.email).length;
+            document.getElementById("sidebar-servicos-count").innerText = solicitados;
+        }
+        
+        // Exibe "Ativa e Verificada" apenas para o próprio perfil, se for visitante mostra "Perfil Verificado"
+        const statusConta = document.getElementById("sidebar-status-conta");
+        if (!isOwnProfile && statusConta) statusConta.innerHTML = `<span style="display: inline-block; width: 10px; height: 10px; background-color: #5cb85c; border-radius: 50%;"></span> Perfil Verificado`;
+
+        // Preenche os inputs do formulário de edição (que está escondido)
         document.getElementById("nome").value = usuario.nome;
         document.getElementById("cpf").value = usuario.cpf;
         document.getElementById("email").value = usuario.email;
         document.getElementById("telefone").value = usuario.telefone;
-        document.getElementById("cep").value = usuario.endereco.cep;
-        document.getElementById("rua").value = usuario.endereco.rua;
-        document.getElementById("numero").value = usuario.endereco.numero;
-        document.getElementById("complemento").value = usuario.endereco.complemento || '';
-        document.getElementById("bairro").value = usuario.endereco.bairro;
-        document.getElementById("cidade").value = usuario.endereco.cidade;
-        document.getElementById("estado").value = usuario.endereco.estado;
+        document.getElementById("cep").value = end.cep;
+        document.getElementById("rua").value = end.rua;
+        document.getElementById("numero").value = end.numero;
+        document.getElementById("complemento").value = end.complemento || '';
+        document.getElementById("bairro").value = end.bairro;
+        document.getElementById("cidade").value = end.cidade;
+        document.getElementById("estado").value = end.estado;
 
         if (usuario.tipo === "prestador" && usuario.prestador) {
-            document.getElementById("camposPrestadorPerfil").style.display = "grid";
-            if (usuario.prestador.categoria) document.getElementById("categoria").value = usuario.prestador.categoria;
-            document.getElementById("servico").value = usuario.prestador.servico;
-            document.getElementById("descricao").value = usuario.prestador.descricao;
-            document.getElementById("valor").value = formatarMoedaParaMascara(usuario.prestador.valor);
-            document.getElementById("disponibilidade").value = usuario.prestador.disponibilidade;
+            document.getElementById("secao-prestador").style.display = "block";
+            const p = usuario.prestador;
+            // Preenche visualização
+            document.getElementById("view-categoria").innerText = p.categoria || '-';
+            document.getElementById("view-servico").innerText = p.servico || '-';
+            document.getElementById("view-descricao").innerText = p.descricao || '-';
+            document.getElementById("view-valor").innerText = formatarMoedaParaMascara(p.valor) || '-';
+            document.getElementById("view-disponibilidade").innerText = p.disponibilidade || '-';
+            // Preenche edição
+            if (p.categoria) document.getElementById("categoria").value = p.categoria;
+            document.getElementById("servico").value = p.servico;
+            document.getElementById("descricao").value = p.descricao;
+            document.getElementById("valor").value = formatarMoedaParaMascara(p.valor);
+            document.getElementById("disponibilidade").value = p.disponibilidade;
+            
+            renderizarPortfolio(usuario);
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
         } else if (isOwnProfile) {
             // Mostra a opção de se tornar prestador apenas no próprio perfil
-            document.getElementById("areaTornarPrestador").style.display = "block";
+            document.getElementById("areaTornarPrestador").innerHTML = `
+                <div class="become-provider-banner">
+                    <h3>Quer aumentar sua renda?</h3>
+                    <p>Ofereça seus serviços para milhares de clientes na sua região.</p>
+                    <button type="button" id="btnTornarPrestador" class="btn-login" style="width: auto; padding: 12px 25px;">Seja um Profissional</button>
+                </div>
+            `;
+            document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
+        }
+
+        // Configura o botão de Copiar Link (apenas para prestadores)
+        const btnCopiarLink = document.getElementById("btnCopiarLink");
+        if (usuario.tipo === "prestador" && btnCopiarLink) {
+            btnCopiarLink.style.display = "block";
+            btnCopiarLink.onclick = () => {
+                const baseUrl = window.location.href.split('?')[0]; // Pega a URL pura sem parâmetros
+                const finalUrl = `${baseUrl}?usuario=${encodeURIComponent(usuario.email)}`;
+                
+                navigator.clipboard.writeText(finalUrl).then(() => {
+                    mostrarToast("Link copiado para a área de transferência!", "success");
+                }).catch(err => {
+                    // Fallback caso a API clipboard falhe
+                    prompt("Copie seu link abaixo:", finalUrl);
+                    mostrarToast("Copie o link gerado acima.", "success");
+                });
+            };
+        } else if (btnCopiarLink) {
+            btnCopiarLink.style.display = "none";
         }
     }
 
     function alternarModoEdicao(editar) {
-        formInputs.forEach(input => {
-            if (input.id !== 'cpf' && input.id !== 'email') {
-                input.disabled = !editar;
-            }
-        });
+        // Alterna a visibilidade dos blocos
+        document.getElementById("view-mode").style.display = editar ? "none" : "block";
+        document.getElementById("perfilForm").style.display = editar ? "block" : "none";
+        
+        // Lógica para a seção do prestador
+        const viewPrestador = document.getElementById("view-prestador");
+        const formPrestador = document.getElementById("form-prestador-edit");
+        if (viewPrestador && formPrestador) {
+            viewPrestador.style.display = editar ? "none" : "block";
+            formPrestador.style.display = editar ? "block" : "none";
+        }
+
         btnEditar.style.display = editar ? "none" : "block";
         btnSalvar.style.display = editar ? "block" : "none";
+        
+        // Esconde o botão de copiar link durante a edição para manter a tela limpa
+        const btnCopiarLink = document.getElementById("btnCopiarLink");
+        if (btnCopiarLink && usuarioAlvo.tipo === "prestador") {
+            btnCopiarLink.style.display = editar ? "none" : "block";
+        }
+
         if (isOwnProfile) document.getElementById("editPicLabel").style.display = editar ? "flex" : "none";
+        if (isOwnProfile) document.getElementById("btn-add-portfolio").style.display = editar ? "inline-flex" : "none";
     }
 
     function tornarPrestador() {
         document.getElementById("areaTornarPrestador").style.display = "none";
-        document.getElementById("camposPrestadorPerfil").style.display = "grid";
+        document.getElementById("secao-prestador").style.display = "block";
         usuarioAlvo.tipo = "prestador"; // Marca temporariamente para salvar
         alternarModoEdicao(true);
     }
@@ -181,7 +258,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function salvarAlteracoes(e) {
-        e.preventDefault();
         const userIndex = usuarios.findIndex(u => u.email === emailLogado);
         if (userIndex === -1) {
             mostrarToast("Ocorreu um erro ao salvar. Tente novamente.", "error");
@@ -206,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function() {
         usuarioEditado.tipo = usuarioAlvo.tipo;
 
         if (usuarios[userIndex].tipo === "prestador") {
-            const categoria = document.getElementById("categoria").value;
+            const categoria = document.getElementById("categoria").value.trim();
             const servico = document.getElementById("servico").value.trim();
             const descricao = document.getElementById("descricao").value.trim();
             const valor = document.getElementById("valor").value.trim();
@@ -228,35 +304,89 @@ document.addEventListener("DOMContentLoaded", function() {
         localStorage.setItem("usuarios", JSON.stringify(usuarios));
         mostrarToast("Dados atualizados com sucesso!", "success");
         novaFotoBase64 = null; // Limpa a foto temporária
-        alternarModoEdicao(false);
+        preencherDados(usuarioEditado); // Re-renderiza os dados no modo de visualização
+        alternarModoEdicao(false); // Volta para o modo de visualização
     }
 
     function carregarAvaliacoes(usuario) {
         const containerAvaliacoes = document.getElementById("avaliacoesRecebidas");
+        const dashboard = document.getElementById("avaliacoesDashboard");
         const listaAvaliacoes = document.getElementById("listaAvaliacoes");
+        const summaryContainer = document.getElementById("avaliacoes-summary");
+        const btnVerTodas = document.getElementById("btnVerTodasAvaliacoes");
+        
         const todasAvaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
         const avaliacoesDoPrestador = todasAvaliacoes.filter(a => a.prestadorEmail === usuario.email);
 
         if (avaliacoesDoPrestador.length > 0) {
             containerAvaliacoes.style.display = "block";
-            listaAvaliacoes.innerHTML = avaliacoesDoPrestador.map(avaliacao => {
-                const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
-                const fotoCliente = cliente?.fotoPerfil || 'img/avatar_padrao.png';
-                const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
-                const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
-                return `
-                    <div class="avaliacao-card">
-                        <div class="avaliacao-header">
-                            <img src="${fotoCliente}" alt="Foto de ${nomeCliente}" class="menu-avatar">
-                            <span class="rating-display">${estrelas}</span>
-                            <strong>${nomeCliente}</strong>
-                        </div>
-                        ${avaliacao.comentario ? `<p class="avaliacao-comentario">"${avaliacao.comentario}"</p>` : ''}
+            dashboard.style.display = "grid"; // Volta a grade normal
+            
+            // 1. Cálculos Estatísticos
+            const total = avaliacoesDoPrestador.length;
+            const soma = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
+            const media = (soma / total).toFixed(1);
+            
+            const contagem = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+            avaliacoesDoPrestador.forEach(a => contagem[a.nota]++);
+            
+            // 2. Renderiza Resumo de Barras
+            const estrelasMedia = '★'.repeat(Math.round(media)) + '☆'.repeat(5 - Math.round(media));
+            let barrasHTML = '';
+            for(let i = 5; i >= 1; i--) {
+                const pct = total > 0 ? (contagem[i] / total) * 100 : 0;
+                barrasHTML += `
+                    <div class="rating-bar-container">
+                        <span class="rating-bar-label">${i} ★</span>
+                        <div class="rating-bar-bg"><div class="rating-bar-fill" style="width: ${pct}%"></div></div>
+                        <span class="rating-bar-count">${contagem[i]}</span>
                     </div>
                 `;
-            }).join('');
+            }
+            
+            if (summaryContainer) {
+                summaryContainer.innerHTML = `
+                    <div class="average-rating">${media}</div>
+                    <div class="stars">${estrelasMedia}</div>
+                    <div class="total-reviews">${total} avaliação(ões)</div>
+                    <div style="width: 100%; margin-top: 10px;">${barrasHTML}</div>
+                `;
+            }
+            
+            // 3. Renderização de Cards Reutilizável
+            const renderReview = (avaliacao) => {
+                 const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
+                 const fotoCliente = cliente?.fotoPerfil || 'img/avatar_padrao.png';
+                 const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
+                 const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
+                 const dataAvaliacao = new Date(avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
+                 return `
+                     <div class="avaliacao-card fade-up-animation">
+                         <div class="avaliacao-header" style="justify-content: space-between;">
+                             <div style="display: flex; align-items: center; gap: 10px;">
+                                 <img src="${fotoCliente}" alt="Avatar" class="menu-avatar">
+                                 <strong>${nomeCliente}</strong>
+                             </div>
+                             <span style="font-size: 12px; color: #AAAAAA;">${dataAvaliacao}</span>
+                         </div>
+                         <div style="margin-bottom: 10px;"><span class="rating-display">${estrelas}</span></div>
+                         ${avaliacao.comentario ? `<p class="avaliacao-comentario">"${avaliacao.comentario}"</p>` : ''}
+                     </div>
+                 `;
+            };
+
+            const avaliacoesInvertidas = [...avaliacoesDoPrestador].reverse(); // Mais recentes primeiro
+            const visiveis = avaliacoesInvertidas.slice(0, 3);
+            listaAvaliacoes.innerHTML = visiveis.map(renderReview).join('');
+            
+            if (avaliacoesDoPrestador.length > 3 && btnVerTodas) {
+                btnVerTodas.style.display = 'block';
+                btnVerTodas.innerText = `Ver todas as ${total} avaliações`;
+                btnVerTodas.onclick = () => abrirModalAvaliacoes(avaliacoesInvertidas, renderReview);
+            }
         } else {
             containerAvaliacoes.style.display = "block";
+            dashboard.style.display = "none"; // Esconde a grade se não houver avaliações
             listaAvaliacoes.innerHTML = `
                 <div class="empty-state fade-up-animation avaliacao-card" style="text-align: center;">
                     <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">⭐</div>
@@ -264,6 +394,54 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>`;
         }
     }
+
+    function abrirModalAvaliacoes(avaliacoes, renderFn) {
+        const modal = document.getElementById('avaliacoesModal');
+        const listaModal = document.getElementById('modalListaAvaliacoes');
+        if(!modal || !listaModal) return;
+        
+        listaModal.innerHTML = avaliacoes.map(renderFn).join('');
+        modal.style.display = 'block';
+        
+        const closeBtn = document.getElementById('closeAvaliacoesModal');
+        if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+        window.addEventListener('click', e => { if(e.target === modal) modal.style.display = 'none'; });
+    }
+
+    function renderizarPortfolio(usuario) {
+        const galeria = document.getElementById("portfolio-gallery");
+        if (!galeria) return;
+
+        const portfolio = usuario.prestador?.portfolio || [];
+
+        if (portfolio.length === 0) {
+            galeria.innerHTML = `<p style="color: #AAAAAA; font-style: italic; grid-column: 1 / -1; text-align: center;">Nenhuma foto no portfólio ainda.</p>`;
+        } else {
+            galeria.innerHTML = portfolio.map(imgBase64 => `
+                <div class="portfolio-item">
+                    <img src="${imgBase64}" alt="Foto do portfólio" onclick="window.open('${imgBase64}', '_blank')">
+                </div>
+            `).join('');
+        }
+    }
+
+    document.getElementById('portfolio-upload')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const base64 = event.target.result;
+            const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+            if (userIndex === -1) return;
+
+            if (!usuarios[userIndex].prestador.portfolio) usuarios[userIndex].prestador.portfolio = [];
+            usuarios[userIndex].prestador.portfolio.push(base64);
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            renderizarPortfolio(usuarios[userIndex]);
+        };
+        reader.readAsDataURL(file);
+    });
 
     // ================= FUNÇÕES AUXILIARES =================
 

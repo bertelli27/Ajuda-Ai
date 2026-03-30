@@ -25,13 +25,10 @@
     </nav>
 </header>
 
-<section class="main-container" style="min-height: auto; padding-top: 40px;">
+<section class="services-section" style="padding-top: 40px; max-width: 1200px; width: 100%;">
+    <h2 id="perfil-page-title" class="dashboard-header-title" style="text-align: left; margin-bottom: 30px;">Meu Perfil</h2>
 
-    <div class="login-section register-section">
-        <div class="login-card">
-            <h2>Meu Perfil</h2>
-
-            <div class="profile-layout">
+    <div class="profile-layout">
                 <!-- COLUNA ESQUERDA: SIDEBAR -->
                 <aside class="profile-sidebar">
                     <div class="profile-pic-container">
@@ -42,116 +39,171 @@
                         <input type="file" id="profilePicInput" accept="image/png, image/jpeg" style="display: none;">
                     </div>
                     
+                    <h3 id="sidebar-user-name" style="color: #EEEEEE; font-size: 22px; margin-bottom: 2px;"></h3>
+                    <p id="sidebar-user-email" style="color: #00ADB5; font-size: 14px; margin-bottom: 20px; word-break: break-all;"></p>
+
+                    <button id="btnCopiarLink" class="btn-forgot" style="width: 100%; display: none; margin-bottom: 15px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copiar Link do Perfil
+                    </button>
+
                     <button id="btnEditar" class="btn-forgot" style="width: 100%;">Editar Dados</button>
 
                     <div id="areaTornarPrestador" style="display: none; margin-top: 15px; width: 100%;">
                         <button type="button" id="btnTornarPrestador" class="btn-forgot" style="width: 100%;">Tornar-se Prestador</button>
                     </div>
+
+                    <div class="sidebar-stat-box">
+                        <div class="sidebar-stat-item">
+                            <span class="sidebar-stat-label">Status da Conta</span>
+                            <span class="sidebar-stat-value" id="sidebar-status-conta">
+                                <span style="display: inline-block; width: 10px; height: 10px; background-color: #5cb85c; border-radius: 50%;"></span>
+                                Ativa e Verificada
+                            </span>
+                        </div>
+                        <div class="sidebar-stat-item">
+                            <span class="sidebar-stat-label">Tipo de Perfil</span>
+                            <span class="sidebar-stat-value" id="sidebar-tipo-perfil" style="color: #00ADB5;">Cliente</span>
+                        </div>
+                        <div class="sidebar-stat-item">
+                            <span class="sidebar-stat-label" id="sidebar-label-servicos">Serviços</span>
+                            <span class="sidebar-stat-value" id="sidebar-servicos-count">0</span>
+                        </div>
+                    </div>
                 </aside>
 
                 <!-- COLUNA DIREITA: CONTEÚDO PRINCIPAL -->
                 <div class="profile-main">
-                    <form id="perfilForm">
-                        <div class="form-grid">
-                            <h3 class="section-title full-width">Dados Pessoais</h3>
-                            
-                            <div class="form-group full-width">
-                                <label for="nome">Nome Completo</label>
-                                <input type="text" id="nome" placeholder="Nome completo" required disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="cpf">CPF</label>
-                                <input type="text" id="cpf" placeholder="CPF" required disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">E-mail</label>
-                                <input type="email" id="email" placeholder="E-mail" required disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="telefone">Telefone</label>
-                                <input type="tel" id="telefone" placeholder="Telefone" required maxlength="15" disabled>
-                            </div>
-                            
-                            <h3 class="section-title full-width">Endereço</h3>
-                            
-                            <div class="form-group">
-                                <label for="cep">CEP</label>
-                                <input type="text" id="cep" placeholder="CEP" required maxlength="9" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="rua">Logradouro / Rua</label>
-                                <input type="text" id="rua" placeholder="Rua" required disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="numero">Número</label>
-                                <input type="text" id="numero" placeholder="Número" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="complemento">Complemento (Opcional)</label>
-                                <input type="text" id="complemento" placeholder="Complemento/Referência" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="bairro">Bairro</label>
-                                <input type="text" id="bairro" placeholder="Bairro" required disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="cidade">Cidade</label>
-                                <input type="text" id="cidade" placeholder="Cidade" required disabled>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="estado">Estado</label>
-                                <input type="text" id="estado" placeholder="Estado" required disabled>
+                    <div id="view-mode">
+                        <div class="profile-info-card">
+                            <h3 class="section-title">Dados Pessoais</h3>
+                            <div class="form-group"><label>Nome Completo</label><p class="view-mode-text" id="view-nome"></p></div>
+                            <div class="form-group"><label>Email</label><p class="view-mode-text" id="view-email"></p></div>
+                            <div class="form-group"><label>Telefone</label><p class="view-mode-text" id="view-telefone"></p></div>
+                        </div>
+                        <div class="profile-info-card">
+                            <h3 class="section-title">Endereço</h3>
+                            <div class="form-group"><label>Endereço</label><p class="view-mode-text" id="view-endereco"></p></div>
+                            <div class="form-group"><label>Cidade/Estado</label><p class="view-mode-text" id="view-cidade-estado"></p></div>
+                        </div>
+                    </div>
+
+                    <form id="perfilForm" style="display: none;">
+                         <div class="profile-info-card">
+                            <h3 class="section-title">Dados Pessoais</h3>
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="nome">Nome Completo</label>
+                                    <input type="text" id="nome" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cpf">CPF</label>
+                                    <input type="text" id="cpf" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">E-mail</label>
+                                    <input type="email" id="email" disabled>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="telefone">Telefone</label>
+                                    <input type="tel" id="telefone" required maxlength="15">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Se for prestador, mostrar os campos dele -->
-                        <div id="camposPrestadorPerfil" style="display: none;" class="form-grid">
-                            <h3 class="section-title full-width">Dados Profissionais (Prestador)</h3>
-                            
+                        <div class="profile-info-card">
+                            <h3 class="section-title">Endereço</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="cep">CEP</label>
+                                    <input type="text" id="cep" required maxlength="9">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rua">Logradouro / Rua</label>
+                                    <input type="text" id="rua" readonly required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="numero">Número</label>
+                                    <input type="text" id="numero" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="complemento">Complemento (Opcional)</label>
+                                    <input type="text" id="complemento">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bairro">Bairro</label>
+                                    <input type="text" id="bairro" readonly required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cidade">Cidade</label>
+                                    <input type="text" id="cidade" readonly required>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="estado">Estado</label>
+                                    <input type="text" id="estado" readonly required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div> <!-- Fim profile-main -->
+            </div> <!-- Fim profile-layout -->
+
+            <!-- SEÇÕES DE PONTA A PONTA (FULL WIDTH) -->
+            <div id="secao-prestador" style="display: none; margin-top: 10px;">
+                <div class="profile-info-card">
+                    <h3 class="section-title">Dados Profissionais</h3>
+                    <div id="view-prestador">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Categoria</label><p class="view-mode-text" id="view-categoria"></p></div>
+                            <div class="form-group"><label>Valor Médio</label><p class="view-mode-text" id="view-valor"></p></div>
+                            <div class="form-group full-width"><label>Serviço Principal</label><p class="view-mode-text" id="view-servico"></p></div>
+                            <div class="form-group full-width"><label>Descrição</label><p class="view-mode-text" id="view-descricao"></p></div>
+                            <div class="form-group full-width"><label>Disponibilidade</label><p class="view-mode-text" id="view-disponibilidade"></p></div>
+                        </div>
+                    </div>
+                    <form id="form-prestador-edit" style="display: none;">
+                        <div class="form-grid">
                             <div class="form-group full-width">
                                 <label for="categoria">Categoria de Serviço</label>
-                                <select id="categoria" disabled>
-                                    <option value="" disabled selected>Selecione uma Categoria...</option>
-                                    <option value="Limpeza">Limpeza</option>
-                                    <option value="Manutenção">Manutenção</option>
-                                    <option value="Reformas">Reformas</option>
-                                    <option value="Tecnologia">Tecnologia</option>
-                                    <option value="Saúde e Beleza">Saúde e Beleza</option>
-                                    <option value="Outros">Outros</option>
-                                </select>
+                                <select id="categoria"><option value="" disabled selected>Selecione...</option><option>Limpeza</option><option>Manutenção</option><option>Reformas</option><option>Tecnologia</option><option>Saúde e Beleza</option><option>Outros</option></select>
                             </div>
-                            <div class="form-group full-width">
-                                <label for="servico">Serviço Prestado</label>
-                                <input type="text" id="servico" placeholder="Serviço prestado" disabled>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="descricao">Descrição Rápida</label>
-                                <input type="text" id="descricao" placeholder="Descrição rápida" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="valor">Valor Médio (R$)</label>
-                                <input type="number" id="valor" placeholder="Valor médio por serviço (R$)" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="disponibilidade">Disponibilidade</label>
-                                <input type="text" id="disponibilidade" placeholder="Disponibilidade" disabled>
-                            </div>
+                            <div class="form-group full-width"><label for="servico">Serviço Prestado</label><input type="text" id="servico"></div>
+                            <div class="form-group full-width"><label for="descricao">Descrição Rápida</label><input type="text" id="descricao"></div>
+                            <div class="form-group"><label for="valor">Valor Médio (R$)</label><input type="text" id="valor"></div>
+                            <div class="form-group"><label for="disponibilidade">Disponibilidade</label><input type="text" id="disponibilidade"></div>
                         </div>
-
-                        <button type="submit" id="btnSalvar" class="btn-login" style="display: none; margin-top: 20px;">Salvar Alterações</button>
                     </form>
+                </div>
 
-                    <!-- Seção de Avaliações Recebidas (para prestadores) -->
-                    <div id="avaliacoesRecebidas" class="avaliacoes-container" style="display: none;">
-                        <h3 style="color: #00ADB5; text-align: left; margin-bottom: 15px;">Avaliações Recebidas</h3>
-                        <div id="listaAvaliacoes">
-                            <!-- As avaliações serão inseridas aqui via JavaScript -->
+                        <!-- NOVA SEÇÃO: PORTFÓLIO -->
+                        <div class="profile-info-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 class="section-title" style="margin: 0; border: none;">Portfólio / Galeria</h3>
+                                <label for="portfolio-upload" id="btn-add-portfolio" class="btn-forgot" style="width: auto; padding: 8px 15px; margin: 0; display: none; cursor: pointer;">Adicionar Foto</label>
+                                <input type="file" id="portfolio-upload" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="portfolio-gallery" id="portfolio-gallery">
+                                <!-- Imagens do portfólio serão inseridas aqui -->
+                            </div>
                         </div>
+                    </div>
+
+            <button type="button" id="btnSalvar" class="btn-login" style="display: none; margin: 20px auto 40px auto; max-width: 300px;">Salvar Alterações</button>
+
+            <!-- Seção de Avaliações Recebidas (para prestadores) -->
+            <div id="avaliacoesRecebidas" class="profile-info-card" style="display: none; margin-top: 30px;">
+                <h3 class="section-title" style="margin: 0 0 20px 0; border: none;">Avaliações Recebidas</h3>
+                
+                <div class="avaliacoes-dashboard" id="avaliacoesDashboard">
+                    <!-- Resumo das Estrelas (Média e Barras) -->
+                    <div class="avaliacoes-summary" id="avaliacoes-summary"></div>
+
+                    <!-- Lista de algumas avaliações -->
+                    <div class="avaliacoes-recentes">
+                        <div id="listaAvaliacoes"></div>
+                        <button type="button" id="btnVerTodasAvaliacoes" class="btn-forgot" style="width: 100%; display: none; margin-top: 15px;">Ver todas as avaliações</button>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
 </section>
 
@@ -159,6 +211,15 @@
 <footer class="mini-footer">
     &copy; 2026 AjudaAí. Todos os direitos reservados.
 </footer>
+
+<!-- MODAL DE AVALIAÇÕES -->
+<div id="avaliacoesModal" class="modal">
+    <div class="modal-content" style="max-width: 650px; height: 85vh; padding: 30px;">
+        <span class="close-button" id="closeAvaliacoesModal">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Todas as Avaliações</h3>
+        <div id="modalListaAvaliacoes" style="overflow-y: auto; flex-grow: 1; padding-right: 10px; display: flex; flex-direction: column; gap: 15px;"></div>
+    </div>
+</div>
 
 <script src="utils.js"></script>
 <script src="perfil.js"></script>
