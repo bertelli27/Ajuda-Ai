@@ -457,7 +457,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
                         <div class="orcamento-desc">
                             <strong>Escopo do Serviço:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${pedido.descricaoProposta}</p>
                         </div>
                     </div>
                 `;
@@ -515,7 +515,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
                         <div class="orcamento-desc">
                             <strong>Escopo do Serviço Proposto:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${pedido.descricaoProposta}</p>
                         </div>
                         <button id="btnAceitarProposta" class="btn-aceitar-orcamento">Aceitar Proposta</button>
                     </div>
@@ -777,6 +777,45 @@ document.addEventListener("DOMContentLoaded", function() {
                 mostrarToast("Erro ao processar o anexo.", "error");
             }
         });
+    }
+
+    // --- NOVO: Drag & Drop para Chat ---
+    if (chatView) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            chatView.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            chatView.addEventListener(eventName, () => {
+                const inputArea = document.querySelector(".chat-input-area");
+                if (currentPedidoId && inputArea && inputArea.style.display !== 'none') {
+                    chatView.classList.add('drag-active');
+                }
+            }, false);
+        });
+
+        chatView.addEventListener('dragleave', e => {
+            if (!chatView.contains(e.relatedTarget)) chatView.classList.remove('drag-active');
+        }, false);
+
+        chatView.addEventListener('drop', async (e) => {
+            chatView.classList.remove('drag-active');
+            const inputArea = document.querySelector(".chat-input-area");
+            if (!currentPedidoId || !inputArea || inputArea.style.display === 'none') return;
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    mostrarToast("Anexando imagem...", "success");
+                    const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
+                    enviarNovaMensagemObjeto(chatInput.value.trim(), base64Comprimido);
+                } catch (error) {
+                    mostrarToast("Erro ao processar o anexo.", "error");
+                }
+            } else if (file) {
+                mostrarToast("Por favor, solte apenas arquivos de imagem.", "error");
+            }
+        }, false);
     }
 
     window.addEventListener('click', e => e.target == modal && fecharChat());

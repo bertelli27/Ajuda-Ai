@@ -456,6 +456,51 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+    // --- NOVO: Drag & Drop para Portfólio ---
+    const portfolioContainer = document.getElementById("portfolio-gallery");
+    if (portfolioContainer) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            portfolioContainer.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            portfolioContainer.addEventListener(eventName, () => {
+                const inEditMode = document.getElementById("perfilForm").style.display === "block";
+                if (isOwnProfile && inEditMode) portfolioContainer.classList.add('drag-active');
+            }, false);
+        });
+
+        portfolioContainer.addEventListener('dragleave', e => {
+            if (!portfolioContainer.contains(e.relatedTarget)) portfolioContainer.classList.remove('drag-active');
+        }, false);
+
+        portfolioContainer.addEventListener('drop', async (e) => {
+            portfolioContainer.classList.remove('drag-active');
+            const inEditMode = document.getElementById("perfilForm").style.display === "block";
+            if (!isOwnProfile || !inEditMode) return;
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    mostrarToast("Processando imagem, aguarde...", "success");
+                    const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
+                    
+                    const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+                    if (userIndex === -1) return;
+
+                    if (!usuarios[userIndex].prestador.portfolio) usuarios[userIndex].prestador.portfolio = [];
+                    usuarios[userIndex].prestador.portfolio.push(base64Comprimido);
+                    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+                    renderizarPortfolio(usuarios[userIndex]);
+                } catch (error) {
+                    mostrarToast("Erro ao processar a imagem.", "error");
+                }
+            } else if (file) {
+                mostrarToast("Por favor, solte apenas arquivos de imagem.", "error");
+            }
+        });
+    }
+
     // ================= FUNÇÕES AUXILIARES =================
 
     function setupHeader() {

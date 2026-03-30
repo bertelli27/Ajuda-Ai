@@ -240,7 +240,6 @@ cepInput?.addEventListener('blur', async function() {
     }
 });
 
-
 // Submissão do Formulário
 registerForm?.addEventListener("submit", function(e){
     e.preventDefault();

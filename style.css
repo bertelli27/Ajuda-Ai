@@ -242,19 +242,27 @@ body {
 
 /* BOTÃO MOSTRAR/OCULTAR SENHA */
 .password-wrapper {
-    position: relative;
     width: 100%;
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr;
 }
 .password-wrapper input {
     padding-right: 50px !important; /* Abre espaço para o ícone */
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+}
+.password-wrapper .error-message {
+    grid-column: 1;
+    grid-row: 2;
 }
 .password-toggle-btn {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    margin-right: 16px;
+    z-index: 2;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -3193,4 +3201,34 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .skeleton {
     background: linear-gradient(90deg, #E2E8F0 25%, #CBD5E0 50%, #E2E8F0 75%) !important;
     background-size: 200% 100% !important;
+}
+
+/* ===========================
+   DRAG & DROP (CHAT & PORTFOLIO)
+=========================== */
+#chat-view, .portfolio-gallery {
+    position: relative;
+}
+
+.portfolio-gallery {
+    min-height: 120px;
+    padding: 10px;
+}
+
+.drag-active::after {
+    content: 'Solte a imagem aqui 📥';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(34, 42, 49, 0.95);
+    border: 3px dashed #00ADB5;
+    border-radius: 8px;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #00ADB5;
+    font-size: 20px;
+    font-weight: bold;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
 }
