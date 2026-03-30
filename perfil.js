@@ -430,7 +430,7 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             galeria.innerHTML = portfolio.map(imgBase64 => `
                 <div class="portfolio-item">
-                    <img src="${imgBase64}" alt="Foto do portfólio" onclick="window.open('${imgBase64}', '_blank')">
+                    <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this.src)">
                 </div>
             `).join('');
         }

@@ -449,6 +449,42 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
     });
 }
 
+// =======================================================
+// LIGHTBOX (VISUALIZADOR DE IMAGENS)
+// =======================================================
+function abrirLightbox(imageSrc) {
+    let overlay = document.getElementById('lightbox-overlay');
+    
+    // Cria o lightbox no DOM se for a primeira vez que é chamado
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'lightbox-overlay';
+        overlay.className = 'lightbox-overlay';
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'lightbox-close';
+        closeBtn.innerHTML = '&times;';
+        
+        const img = document.createElement('img');
+        img.className = 'lightbox-content';
+        img.id = 'lightbox-img';
+        
+        overlay.appendChild(closeBtn);
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+        
+        const fecharLightbox = () => { overlay.style.display = 'none'; img.src = ''; };
+        
+        closeBtn.addEventListener('click', fecharLightbox);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) fecharLightbox(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.style.display === 'flex') fecharLightbox(); });
+    }
+    
+    const imgElement = document.getElementById('lightbox-img');
+    imgElement.src = imageSrc;
+    overlay.style.display = 'flex';
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(atualizarBadgeNotificacao, 200);
     setInterval(atualizarBadgeNotificacao, 3000); // Verifica notificações a cada 3 segundos
