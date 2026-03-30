@@ -233,6 +233,31 @@ body {
     box-shadow: 0 0 0 4px rgba(217, 83, 79, 0.15) !important;
 }
 
+/* BOTÃO MOSTRAR/OCULTAR SENHA */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+.password-wrapper input {
+    padding-right: 50px !important; /* Abre espaço para o ícone */
+}
+.password-toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #AAAAAA;
+    padding: 0;
+    display: flex;
+    transition: color 0.3s ease;
+}
+.password-toggle-btn:hover { color: #00ADB5; }
+
 /* Sobrescrevendo estilos inline dos textareas das páginas de solicitação/avaliação */
 .form-grid textarea, #comentario {
     border-radius: 10px !important;
