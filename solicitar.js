@@ -107,12 +107,17 @@ document.addEventListener("DOMContentLoaded", function() {
         const menu = document.getElementById("menu");
         if (!menu) return;
         const fotoPerfil = clienteAtual?.fotoPerfil || 'img/avatar_padrao.png';
+        const primeiroNome = clienteAtual.nome.split(' ')[0];
+        const textoPedidos = clienteAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
             <a href="home.html">Início</a>
-            <a href="servicos.html">Serviços</a>
-            <a href="pedidos.html">Meus Pedidos</a>
+            <a href="servicos.html" class="active-nav">Serviços</a>
+            <a href="pedidos.html">${textoPedidos}</a>
             <div class="profile-menu-container">
-                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                    <span>${primeiroNome}</span>
+                </a>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>

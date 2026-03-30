@@ -196,7 +196,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function renderPedidosCliente(pedidos, container, avaliacoes) {
         if (pedidos.length === 0) {
-            container.innerHTML = '<p class="aviso-sem-pedidos">Você ainda não fez nenhuma solicitação.</p>';
+            container.innerHTML = `
+                <div class="empty-state fade-up-animation">
+                    <div class="empty-state-icon">📝</div>
+                    <p>Você ainda não fez nenhuma solicitação de serviço.</p>
+                    <button class="btn-service" style="margin-top: 20px; width: auto; padding: 10px 25px;" onclick="window.location.href='servicos.html'">Buscar Serviços</button>
+                </div>`;
             return;
         }
         const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
@@ -246,7 +251,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function renderPedidosPrestador(pedidos, container) {
         if (pedidos.length === 0) {
-            container.innerHTML = '<p class="aviso-sem-pedidos">Você ainda não recebeu nenhuma solicitação.</p>';
+            container.innerHTML = `
+                <div class="empty-state fade-up-animation">
+                    <div class="empty-state-icon">📭</div>
+                    <p>Você ainda não recebeu nenhuma solicitação de serviço.</p>
+                </div>`;
             return;
         }
         const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
@@ -388,6 +397,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
         renderMensagens(pedidoId);
         modal.style.display = "block";
+        // Ativa o Modo Foco
+        document.body.classList.add('focus-mode-active');
+
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
         // --- NOVO: Lógica de Acessibilidade (Foco) ---
@@ -604,6 +616,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function fecharChat() {
         modal.style.display = "none";
+        // Desativa o Modo Foco
+        document.body.classList.remove('focus-mode-active');
+
         currentPedidoId = null;
         chatMessagesContainer.innerHTML = "";
         fecharOrcamento(); // Garante que o overlay do orçamento feche junto com o chat
@@ -749,12 +764,17 @@ document.addEventListener("DOMContentLoaded", function() {
         const menu = document.getElementById("menu");
         if (!menu) return;
         const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
+        const primeiroNome = usuarioAtual.nome.split(' ')[0];
+        const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
-            <a href="pedidos.html" style="color: #00ADB5; font-weight: bold;">Meus Serviços</a>
+            <a href="pedidos.html" class="active-nav">${textoPedidos}</a>
             <div class="profile-menu-container">
-                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                    <span>${primeiroNome}</span>
+                </a>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>

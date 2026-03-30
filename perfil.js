@@ -257,7 +257,11 @@ document.addEventListener("DOMContentLoaded", function() {
             }).join('');
         } else {
             containerAvaliacoes.style.display = "block";
-            listaAvaliacoes.innerHTML = '<p style="color: #AAAAAA; text-align: center;">Nenhuma avaliação recebida ainda.</p>';
+            listaAvaliacoes.innerHTML = `
+                <div class="empty-state fade-up-animation avaliacao-card" style="text-align: center;">
+                    <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">⭐</div>
+                    <p style="color: #AAAAAA; font-style: italic;">Nenhuma avaliação recebida ainda.</p>
+                </div>`;
         }
     }
 
@@ -270,17 +274,22 @@ document.addEventListener("DOMContentLoaded", function() {
         if (emailLogado) {
             const usuarioLogado = usuarios.find(u => u.email === emailLogado);
             const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
+            const primeiroNome = usuarioLogado.nome.split(' ')[0];
+            const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
 
             // Usuário Logado
             menu.innerHTML = `
                 <a href="home.html">Início</a>
                 <a href="servicos.html">Serviços</a>
-                <a href="pedidos.html">Meus Pedidos</a>
+                <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
-                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                        <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                        <span>${primeiroNome}</span>
+                    </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         <a href="dashboard.html">Dashboard</a>
-                        <a href="perfil.html">Meu Perfil</a>
+                        <a href="perfil.html" class="active-nav">Meu Perfil</a>
                         <a href="#" id="btnLogout">Sair</a>
                     </div>
                 </div>

@@ -21,75 +21,143 @@
 </header>
 
 <section class="services-section" style="padding-top: 40px; max-width: 1200px;">
-    <h2 class="dashboard-header-title" style="text-align: left;">Visão Geral</h2>
     
-    <!-- PAINEL DO CLIENTE -->
-    <h3 style="color: #00ADB5; margin-bottom: 15px; font-size: 20px;">Como Cliente</h3>
-    <div class="dashboard-container" style="margin-bottom: 40px;">
-        <div class="dashboard-card">
-            <span class="dashboard-icon">📋</span>
-            <h3>Serviços Solicitados</h3>
-            <div class="dashboard-value" id="card-solicitados">0</div>
-        </div>
-        <div class="dashboard-card">
-            <span class="dashboard-icon">⏳</span>
-            <h3>Em Andamento</h3>
-            <div class="dashboard-value" id="card-andamento-cliente">0</div>
-        </div>
-        <div class="dashboard-card">
-            <span class="dashboard-icon">✅</span>
-            <h3>Concluídos</h3>
-            <div class="dashboard-value" id="card-concluidos-cliente">0</div>
-        </div>
+    <!-- 1. CABEÇALHO DO DASHBOARD -->
+    <div class="dashboard-header fade-up-animation" style="margin-bottom: 40px;">
+        <h2 class="dashboard-header-title" style="text-align: left; margin-bottom: 5px;">Olá, <span id="dash-user-name">Usuário</span>! 👋</h2>
+        <p class="site-desc" style="font-size: 16px; margin-bottom: 0;">Bem-vindo ao seu painel. Aqui você pode acompanhar seus serviços, finanças e atividades de forma organizada.</p>
     </div>
 
-    <!-- PAINEL DO PRESTADOR (visível se for prestador) -->
-    <div id="dashboard-prestador-area" style="display: none;">
-        <h3 style="color: #00ADB5; margin-bottom: 15px; font-size: 20px;">Como Profissional</h3>
-        <div class="dashboard-container">
+    <!-- 2. SEÇÃO DE RESUMO (CARDS) -->
+    <div class="dashboard-section fade-up-animation" style="margin-bottom: 50px;">
+        <h3 class="section-title" style="font-size: 22px; margin-bottom: 20px;">Resumo Geral</h3>
+        
+        <h4 style="color: #00ADB5; margin-bottom: 15px; font-size: 18px;">Como Cliente</h4>
+        <div class="dashboard-container" style="margin-bottom: 30px;">
+            <div class="dashboard-card">
+                <span class="dashboard-icon">💸</span>
+                <h3>Total Gasto</h3>
+                <div class="dashboard-value" id="card-total-gasto">R$ 0,00</div>
+            </div>
+            <div class="dashboard-card">
+                <span class="dashboard-icon">📋</span>
+                <h3>Serviços Solicitados</h3>
+                <div class="dashboard-value" id="card-solicitados">0</div>
+            </div>
             <div class="dashboard-card">
                 <span class="dashboard-icon">⏳</span>
-                <h3>Serviços em Andamento</h3>
-                <div class="dashboard-value" id="card-andamento-prestador">0</div>
+                <h3>Em Andamento</h3>
+                <div class="dashboard-value" id="card-andamento-cliente">0</div>
             </div>
             <div class="dashboard-card">
                 <span class="dashboard-icon">✅</span>
                 <h3>Concluídos</h3>
-                <div class="dashboard-value" id="card-concluidos-prestador">0</div>
+                <div class="dashboard-value" id="card-concluidos-cliente">0</div>
             </div>
-            <div class="dashboard-card">
-                <span class="dashboard-icon">⭐</span>
-                <h3>Avaliação Média</h3>
-                <div class="dashboard-value" id="card-avaliacao">N/A</div>
+        </div>
+
+        <!-- PAINEL DO PRESTADOR (visível se for prestador) -->
+        <div id="dashboard-prestador-area" style="display: none;">
+            <h4 style="color: #00ADB5; margin-bottom: 15px; font-size: 18px;">Como Profissional</h4>
+            <div class="dashboard-container">
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">💰</span>
+                    <h3>Total Recebido (Líquido)</h3>
+                    <div class="dashboard-value" id="card-total-recebido">R$ 0,00</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">👥</span>
+                    <h3>Clientes Atendidos</h3>
+                    <div class="dashboard-value" id="card-clientes-atendidos">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">⏳</span>
+                    <h3>Em Andamento</h3>
+                    <div class="dashboard-value" id="card-andamento-prestador">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">✅</span>
+                    <h3>Concluídos</h3>
+                    <div class="dashboard-value" id="card-concluidos-prestador">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">⭐</span>
+                    <h3>Avaliação Média</h3>
+                    <div class="dashboard-value" id="card-avaliacao">N/A</div>
+                </div>
+                <div class="dashboard-card" id="card-taxas-wrapper">
+                    <span class="dashboard-icon">📉</span>
+                    <h3>Taxas Retidas (10%)</h3>
+                    <div class="dashboard-value" id="card-total-taxas">R$ 0,00</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- GRÁFICO DE STATUS -->
-    <div class="chart-container">
-        <h3>Visão Geral dos Serviços</h3>
-        <canvas id="statusChart"></canvas>
+    <!-- 3. SEÇÃO MEUS SERVIÇOS -->
+    <div class="dashboard-section fade-up-animation" style="margin-bottom: 50px;">
+        <h3 class="section-title" style="font-size: 22px; margin-bottom: 20px;">Meus Serviços</h3>
+        <div class="dashboard-split" style="align-items: stretch;">
+            <div class="recent-activities achievements-section" style="margin-bottom: 0; height: auto;">
+                <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 18px; text-align: left;">Últimos Serviços</h3>
+                <div id="activity-list">
+                    <!-- Preenchido via JS -->
+                </div>
+                <button class="btn-forgot" style="width: 100%; margin-top: 15px; padding: 12px;" onclick="window.location.href='pedidos.html'">Ver todos os serviços</button>
+            </div>
+            
+            <div class="chart-container" style="margin: 0; max-width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                <h3 style="margin-bottom: 15px; font-size: 18px; text-align: center;">Status dos Serviços</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <!-- HISTÓRICO FINANCEIRO -->
-    <h2 class="dashboard-header-title" style="text-align: left; font-size: 22px; margin-top: 40px;">Histórico de Transações</h2>
-    <div class="transaction-list" id="transactionList" style="margin-bottom: 40px;">
-        <!-- Preenchido via JS -->
+    <!-- 4. SEÇÃO FINANCEIRA -->
+    <div class="dashboard-section fade-up-animation" style="margin-bottom: 50px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <h3 class="section-title" style="font-size: 22px; margin: 0; flex-grow: 1; border: none; padding: 0;">Resumo Financeiro</h3>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <select id="filtroPeriodoTransacoes" class="filtros-pedidos" style="margin-bottom: 0; padding: 9px 16px;">
+                    <option value="todos">Todo o período</option>
+                    <option value="mes_atual">Este Mês</option>
+                    <option value="ultimos_3_meses">Últimos 3 Meses</option>
+                    <option value="ultimos_6_meses">Últimos 6 Meses</option>
+                    <option value="ano_atual">Este Ano</option>
+                </select>
+                <button id="btnExportarPDF" class="btn-forgot" style="width: auto; padding: 10px 20px; margin: 0;">Exportar PDF</button>
+            </div>
+        </div>
+
+        <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; align-items: stretch;">
+            <div class="transaction-list-wrapper achievements-section" style="margin-bottom: 0; height: auto;">
+                <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 18px; text-align: left;">Últimas Transações</h3>
+                <div class="transaction-list" id="transactionList" style="margin-bottom: 0;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+            
+            <div class="chart-container" style="margin: 0; max-width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                <h3 style="margin-bottom: 15px; font-size: 18px; text-align: center;">Evolução Financeira</h3>
+                <canvas id="evolucaoFinanceiraChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <!-- 2. LAYOUT DIVIDIDO: ATIVIDADES & CONQUISTAS -->
-    <div class="dashboard-split">
-        <!-- ATIVIDADES RECENTES -->
-        <div class="recent-activities">
-            <h3>Atividades Recentes</h3>
-            <div id="activity-list">
+    <!-- 5. AVALIAÇÕES E CONQUISTAS -->
+    <div class="dashboard-section dashboard-split fade-up-animation" style="margin-bottom: 40px; grid-template-columns: 1fr 1fr; align-items: stretch;">
+        
+        <!-- AVALIAÇÕES -->
+        <div class="reviews-section achievements-section" id="dashboard-avaliacoes-area" style="display: none; margin-bottom: 0; height: auto;">
+            <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 18px; text-align: left;">Últimas Avaliações</h3>
+            <div id="avaliacoes-list" style="display: flex; flex-direction: column; gap: 10px;">
                 <!-- Preenchido via JS -->
             </div>
         </div>
 
-        <!-- CONQUISTAS (OPCIONAL/REMOVÍVEL) -->
-        <div class="achievements-section" id="achievements-section">
-            <h3>Minhas Conquistas</h3>
+        <!-- CONQUISTAS -->
+        <div class="achievements-section" id="achievements-section" style="margin: 0; height: 100%;">
+            <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 18px; text-align: left;">Minhas Conquistas</h3>
             <div id="achievements-list">
                 <!-- Preenchido via JS -->
             </div>

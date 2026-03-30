@@ -21,9 +21,21 @@ document.addEventListener("DOMContentLoaded", async function() {
     setupHeader(usuarioAtual);
     carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios);
     await renderizarHistoricoFinanceiro(emailLogado);
+    await renderEvolucaoFinanceiraChart(emailLogado);
+
+    // Adiciona o evento de clique para o novo botão de exportar
+    document.getElementById("btnExportarPDF").addEventListener("click", exportarParaPDF);
+
+    // Adiciona o evento de filtro de período para o histórico financeiro
+    document.getElementById("filtroPeriodoTransacoes").addEventListener("change", () => {
+        renderizarHistoricoFinanceiro(emailLogado);
+    });
 });
 
 function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios) {
+    // ================= 0. CABEÇALHO =================
+    if (usuarioAtual.nome) document.getElementById('dash-user-name').innerText = usuarioAtual.nome.split(' ')[0];
+
     // ================= 1. CÁLCULO DOS CARDS =================
     const emailLogado = usuarioAtual.email;
     const isPrestador = usuarioAtual.tipo === 'prestador'; // Check if user has a provider profile
@@ -73,7 +85,11 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     const activityList = document.getElementById("activity-list");
     
     if (todasMinhasSolicitacoes.length === 0) {
-        activityList.innerHTML = '<p style="color: #AAAAAA;">Nenhuma atividade registrada ainda.</p>';
+        activityList.innerHTML = `
+            <div class="empty-state fade-up-animation" style="padding: 20px;">
+                <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 5px;">📭</div>
+                <p>Nenhuma atividade registrada ainda.</p>
+            </div>`;
     } else {
         activityList.innerHTML = todasMinhasSolicitacoes.slice(0, 5).map(pedido => {
             const euSouCliente = pedido.clienteEmail === emailLogado;
@@ -135,18 +151,45 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     renderStatusChart(statusCounts);
 }
 
-async function renderizarHistoricoFinanceiro(emailLogado) {
+async function getTransacoesFiltradas(emailLogado) {
+    const filtroPeriodo = document.getElementById("filtroPeriodoTransacoes").value;
     const todasTransacoes = await API.getTransacoes();
-    // Filtra transações onde o usuário logado é cliente OU prestador
-    const minhasTransacoes = todasTransacoes.filter(t => t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado);
-    
-    minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); // Recentes primeiro
+    let minhasTransacoes = todasTransacoes.filter(t => t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado);
 
+    const agora = new Date();
+    if (filtroPeriodo === 'mes_atual') {
+        minhasTransacoes = minhasTransacoes.filter(t => {
+            const dataTransacao = new Date(t.data);
+            return dataTransacao.getMonth() === agora.getMonth() && dataTransacao.getFullYear() === agora.getFullYear();
+        });
+    } else if (filtroPeriodo === 'ultimos_3_meses') {
+        const tresMesesAtras = new Date();
+        tresMesesAtras.setMonth(agora.getMonth() - 3);
+        minhasTransacoes = minhasTransacoes.filter(t => new Date(t.data) >= tresMesesAtras);
+    } else if (filtroPeriodo === 'ultimos_6_meses') {
+        const seisMesesAtras = new Date();
+        seisMesesAtras.setMonth(agora.getMonth() - 6);
+        minhasTransacoes = minhasTransacoes.filter(t => new Date(t.data) >= seisMesesAtras);
+    } else if (filtroPeriodo === 'ano_atual') {
+        minhasTransacoes = minhasTransacoes.filter(t => new Date(t.data).getFullYear() === agora.getFullYear());
+    }
+    
+    minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data));
+    return minhasTransacoes;
+}
+
+async function renderizarHistoricoFinanceiro(emailLogado) {
+    const minhasTransacoes = await getTransacoesFiltradas(emailLogado);
+    
     const list = document.getElementById("transactionList");
     if (!list) return;
 
     if (minhasTransacoes.length === 0) {
-        list.innerHTML = '<p style="color: #AAAAAA; text-align: center; margin-top: 20px; background: #393E46; padding: 20px; border-radius: 12px;">Nenhuma transação encontrada.</p>';
+        list.innerHTML = `
+            <div class="empty-state fade-up-animation transaction-item" style="justify-content: center; flex-direction: column;">
+                <div class="empty-state-icon" style="font-size: 48px; margin-bottom: 10px;">💸</div>
+                <p>Nenhuma transação encontrada.</p>
+            </div>`;
     } else {
         list.innerHTML = minhasTransacoes.map(t => {
             const isClienteNestaTx = t.clienteEmail === emailLogado;
@@ -182,6 +225,149 @@ async function renderizarHistoricoFinanceiro(emailLogado) {
             `;
         }).join('');
     }
+}
+
+async function exportarParaPDF() {
+    const emailLogado = API.getSessaoAtual();
+    const usuarios = await API.getUsuarios();
+    const usuarioAtual = usuarios.find(u => u.email === emailLogado);
+    const minhasTransacoes = await getTransacoesFiltradas(emailLogado);
+
+    if (minhasTransacoes.length === 0) {
+        mostrarToast("Não há transações para exportar.", "error");
+        return;
+    }
+
+    // Desestrutura o jsPDF do objeto window, onde ele é carregado pelo CDN
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Adiciona o cabeçalho do documento
+    doc.setFontSize(18);
+    doc.setTextColor('#00ADB5');
+    doc.text("Extrato Financeiro - AjudaAí", 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Usuário: ${usuarioAtual.nome}`, 14, 30);
+    doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, 36);
+
+    // Prepara os dados para a tabela
+    const head = [['Data', 'Descrição', 'Tipo', 'Valor (R$)']];
+    const body = minhasTransacoes.map(t => {
+        const isCliente = t.clienteEmail === emailLogado;
+        const isEntrada = !isCliente;
+        const sinal = isEntrada ? '+' : '-';
+        const valorExibicao = isCliente ? t.valorServico : t.valorPrestador;
+        const valorFormatado = `${sinal} ${valorExibicao.toFixed(2).replace('.', ',')}`;
+        const dataFormatada = new Date(t.data).toLocaleString('pt-BR', { timeZone: 'UTC' });
+        const descricao = isCliente ? `Pagamento de Serviço` : `Recebimento de Serviço`;
+        const tipo = isEntrada ? 'Entrada' : 'Saída';
+
+        return [dataFormatada, descricao, tipo, valorFormatado];
+    });
+
+    // Gera a tabela usando o plugin autoTable
+    doc.autoTable({
+        head: head,
+        body: body,
+        startY: 45,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 173, 181] }, // Cor #00ADB5 em RGB
+        styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
+        columnStyles: { 3: { halign: 'right' } } // Alinha a coluna de valor à direita
+    });
+
+    // Salva o arquivo PDF
+    doc.save(`extrato-ajudaai-${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+async function renderEvolucaoFinanceiraChart(emailLogado) {
+    const todasTransacoes = await API.getTransacoes();
+    const transacoesConcluidas = todasTransacoes.filter(t => 
+        (t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado) && t.status === 'CONCLUIDO'
+    );
+
+    const dataPorMes = {};
+
+    // Agrupa ganhos e gastos por mês
+    transacoesConcluidas.forEach(t => {
+        const mesAno = new Date(t.data).toISOString().slice(0, 7); // Formato "YYYY-MM"
+        if (!dataPorMes[mesAno]) {
+            dataPorMes[mesAno] = { ganhos: 0, gastos: 0 };
+        }
+
+        if (t.prestadorEmail === emailLogado) {
+            dataPorMes[mesAno].ganhos += t.valorPrestador;
+        } else if (t.clienteEmail === emailLogado) {
+            dataPorMes[mesAno].gastos += t.valorServico;
+        }
+    });
+
+    // Ordena os meses e pega os últimos 6
+    const mesesOrdenados = Object.keys(dataPorMes).sort();
+    const ultimos6Meses = mesesOrdenados.slice(-6);
+
+    const labels = ultimos6Meses.map(mes => {
+        const [ano, mesNum] = mes.split('-');
+        return new Date(ano, mesNum - 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    });
+
+    const ganhosData = ultimos6Meses.map(mes => dataPorMes[mes].ganhos);
+    const gastosData = ultimos6Meses.map(mes => dataPorMes[mes].gastos);
+
+    const ctx = document.getElementById('evolucaoFinanceiraChart');
+    if (!ctx) return;
+
+    const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
+    const gridColor = isLightTheme ? '#E2E8F0' : '#4F5B66';
+    const fontColor = isLightTheme ? '#4A5568' : '#EEEEEE';
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Ganhos (Líquido)',
+                    data: ganhosData,
+                    borderColor: '#5cb85c',
+                    backgroundColor: 'rgba(92, 184, 92, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Gastos',
+                    data: gastosData,
+                    borderColor: '#d9534f',
+                    backgroundColor: 'rgba(217, 83, 79, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { color: fontColor, font: { size: 14, family: "'Poppins', sans-serif" } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: fontColor, callback: (value) => 'R$ ' + value }, grid: { color: gridColor } },
+                x: { ticks: { color: fontColor }, grid: { color: gridColor } }
+            }
+        }
+    });
 }
 
 function renderStatusChart(counts) {
@@ -241,15 +427,20 @@ function setupHeader(usuarioAtual) {
     const menu = document.getElementById("menu");
     if (!menu) return;
     const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
+    const primeiroNome = usuarioAtual.nome.split(' ')[0];
+    const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
     
     menu.innerHTML = `
         <a href="home.html">Início</a>
         <a href="servicos.html">Serviços</a>
-        <a href="pedidos.html">Meus Pedidos</a>
+        <a href="pedidos.html">${textoPedidos}</a>
         <div class="profile-menu-container">
-            <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown')" style="cursor: pointer;" title="Opções da Conta">
+            <a href="#" class="menu-avatar-link" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown'); return false;" title="Opções da Conta">
+                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                <span>${primeiroNome}</span>
+            </a>
             <div class="profile-dropdown" id="profileDropdown">
-                <a href="dashboard.html" style="color: #00ADB5; font-weight: bold;">Dashboard</a>
+                <a href="dashboard.html" class="active-nav">Dashboard</a>
                 <a href="perfil.html">Meu Perfil</a>
                 <a href="#" onclick="logout(event)">Sair</a>
             </div>

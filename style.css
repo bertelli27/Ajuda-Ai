@@ -8,6 +8,36 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
+    scrollbar-width: thin; /* Para Firefox */
+    scrollbar-color: #00ADB5 #2A343D; /* Para Firefox */
+}
+
+/* Rolagem suave para links âncora */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===========================
+   SCROLLBAR PERSONALIZADA (Webkit)
+=========================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2A343D; /* Cor de fundo da barra no Modo Escuro */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #00ADB5; /* Cor da barra (Ciano) */
+    border-radius: 10px;
+    border: 2px solid #2A343D; /* Cria um "espaço" falso em volta da barra para ficar elegante */
+    transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #00CED1; /* Fica um pouco mais clara ao passar o mouse */
 }
 
 body {
@@ -335,10 +365,37 @@ body {
     margin-left: 20px;
     font-weight: 500;
     transition: 0.3s;
+    position: relative; /* Necessário para posicionar o marcador ativo */
 }
 
 .menu a:hover {
     color: #00ADB5;
+}
+
+/* ===========================
+   MARCADOR DE PÁGINA ATIVA (NAVBAR)
+=========================== */
+.menu a.active-nav {
+    color: #00ADB5 !important;
+    font-weight: 700;
+}
+
+/* Tracinho inferior animado para a página ativa (apenas links principais) */
+.menu > a.active-nav::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #00ADB5;
+    border-radius: 3px;
+    animation: slideInNav 0.3s ease-out forwards;
+}
+
+@keyframes slideInNav {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: scaleX(1); opacity: 1; }
 }
 
 /* AVATAR NO HEADER (HOME) */
@@ -355,6 +412,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
 }
 .menu-avatar {
     width: 30px;
@@ -1913,6 +1971,7 @@ body {
     max-width: 1100px;
     margin: 60px auto;
     padding: 0 20px;
+    scroll-margin-top: 100px; /* Impede que o header fixo cubra o título ao rolar */
 }
 
 .section-heading {
@@ -2165,6 +2224,102 @@ body {
 }
 
 /* ===========================
+   EMPTY STATES E ERRO 404
+=========================== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    grid-column: 1 / -1; /* Força ocupar toda a linha no Grid */
+    width: 100%;
+}
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+.error-404-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 75vh;
+    text-align: center;
+    padding: 20px;
+}
+.error-code {
+    font-size: 120px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #00ADB5, #00CED1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+/* ===========================
+   MODO FOCO (CHAT)
+=========================== */
+.header, .mini-footer, .footer, .back-to-top-btn {
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+body.focus-mode-active .header,
+body.focus-mode-active .mini-footer,
+body.focus-mode-active .footer,
+body.focus-mode-active .back-to-top-btn {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* ===========================
+   ACCORDION (FAQ)
+=========================== */
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.accordion-item {
+    background: #393E46;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.accordion-item.active {
+    border-color: #00ADB5;
+}
+.accordion-header {
+    width: 100%;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    color: #EEEEEE;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.accordion-header:hover { color: #00ADB5; }
+.accordion-icon {
+    font-size: 26px;
+    font-weight: 400;
+    transition: transform 0.3s ease;
+    color: #00ADB5;
+    line-height: 1;
+}
+.accordion-item.active .accordion-icon { transform: rotate(45deg); }
+.accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 20px; }
+.accordion-content p { padding-bottom: 20px; color: #AAAAAA; font-size: 15px; line-height: 1.6; }
+
+/* ===========================
    TABS PARA MEUS SERVIÇOS
 =========================== */
 .tabs-container {
@@ -2304,6 +2459,17 @@ body {
     color: #2D3748 !important;
 }
 
+/* Scrollbar - Tema Claro */
+[data-theme="light"] * {
+    scrollbar-color: #00ADB5 #E2E8F0;
+}
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: #E2E8F0 !important;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    border: 2px solid #E2E8F0 !important;
+}
+
 [data-theme="light"] .header,
 [data-theme="light"] .login-card,
 [data-theme="light"] .service-card,
@@ -2322,7 +2488,8 @@ body {
 [data-theme="light"] .step-card,
 [data-theme="light"] .testimonial-card,
 [data-theme="light"] .theme-toggle-floating,
-[data-theme="light"] .search-section {
+[data-theme="light"] .search-section,
+[data-theme="light"] .accordion-item {
     background-color: #FFFFFF !important;
     color: #2D3748 !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
@@ -2330,7 +2497,8 @@ body {
 
 [data-theme="light"] .profile-sidebar,
 [data-theme="light"] .section-title,
-[data-theme="light"] .achievement-card {
+[data-theme="light"] .achievement-card,
+[data-theme="light"] .accordion-item {
     border-color: #CBD5E0 !important;
 }
 
@@ -2461,7 +2629,10 @@ body {
 [data-theme="light"] .hero-title,
 [data-theme="light"] .step-card h3,
 [data-theme="light"] .pop-category-card h3,
-[data-theme="light"] .orcamento-form .form-group label {
+[data-theme="light"] .error-msg,
+[data-theme="light"] .empty-state p,
+[data-theme="light"] .orcamento-form .form-group label,
+[data-theme="light"] .accordion-header {
     color: #4A5568 !important;
 }
 
@@ -2518,7 +2689,8 @@ body {
 [data-theme="light"] .hero-subtitle,
 [data-theme="light"] .step-card p,
 [data-theme="light"] .testimonial-card p,
-[data-theme="light"] .achievement-details p {
+[data-theme="light"] .achievement-details p,
+[data-theme="light"] .accordion-content p {
     color: #718096 !important;
 }
 
@@ -2559,6 +2731,7 @@ body {
 [data-theme="light"] .chart-container h3 {
     color: #2D3748 !important;
 }
+[data-theme="light"] .accordion-item.active { border-color: #00ADB5 !important; }
 
 [data-theme="light"] .tabs-container { border-bottom-color: #CBD5E0 !important; }
 [data-theme="light"] .tab-btn { color: #718096 !important; }

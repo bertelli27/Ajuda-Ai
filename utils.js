@@ -267,6 +267,27 @@ function inicializarAnimacoesFade() {
 }
 
 // =======================================================
+// ACCORDION (FAQ)
+// =======================================================
+function inicializarAccordion() {
+    const headers = document.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const item = this.parentElement;
+            const content = item.querySelector('.accordion-content');
+            
+            item.classList.toggle('active');
+            
+            if (item.classList.contains('active')) {
+                content.style.maxHeight = content.scrollHeight + "px";
+            } else {
+                content.style.maxHeight = null;
+            }
+        });
+    });
+}
+
+// =======================================================
 // MÁSCARAS E VALIDAÇÕES GLOBAIS (A11Y & UX)
 // =======================================================
 
@@ -328,4 +349,5 @@ document.addEventListener("DOMContentLoaded", () => {
     inicializarThemeToggle();
     inicializarBackToTopButton(); // Chama a nova função
     inicializarAnimacoesFade(); // Chama as animações fluídas
+    inicializarAccordion(); // Inicia o FAQ Expansível
 });

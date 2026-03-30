@@ -135,12 +135,17 @@ document.addEventListener("DOMContentLoaded", function() {
         const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
         const usuarioLogado = usuarios.find(u => u.email === emailLogado);
         const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
+        const primeiroNome = usuarioLogado.nome.split(' ')[0];
+        const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
-            <a href="pedidos.html">Meus Pedidos</a>
+            <a href="pedidos.html" class="active-nav">${textoPedidos}</a>
             <div class="profile-menu-container">
-                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                    <span>${primeiroNome}</span>
+                </a>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>

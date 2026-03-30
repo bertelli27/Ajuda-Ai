@@ -11,13 +11,18 @@ document.addEventListener("DOMContentLoaded", function() {
             const usuarios = await API.getUsuarios();
             const usuarioLogado = usuarios.find(u => u.email === emailLogado);
             const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
+            const primeiroNome = usuarioLogado.nome.split(' ')[0];
+            const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
             // Usuário Logado
             menu.innerHTML = `
                 <a href="home.html">Início</a>
-                <a href="servicos.html">Serviços</a>
-                <a href="pedidos.html">Meus Pedidos</a>
+                <a href="servicos.html" class="active-nav">Serviços</a>
+                <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
-                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                        <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                        <span>${primeiroNome}</span>
+                    </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         <a href="dashboard.html">Dashboard</a>
                         <a href="perfil.html">Meu Perfil</a>
@@ -41,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // Usuário Deslogado
             menu.innerHTML = `
                 <a href="home.html">Início</a>
-                <a href="servicos.html">Serviços</a>
+                <a href="servicos.html" class="active-nav">Serviços</a>
                 <a href="index.html">Entrar</a>
                 <a href="register.html">Cadastrar</a>
             `;
@@ -112,7 +117,11 @@ document.addEventListener("DOMContentLoaded", function() {
             grid.innerHTML = ''; // Limpa os skeletons
 
             if (paginatedPrestadores.length === 0) {
-                grid.innerHTML = '<p class="aviso-sem-pedidos" style="grid-column: 1 / -1;">Nenhum prestador encontrado com estes critérios.</p>';
+                grid.innerHTML = `
+                    <div class="empty-state fade-up-animation">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>Nenhum prestador encontrado com estes critérios.</p>
+                    </div>`;
             } else {
                 paginatedPrestadores.forEach(prestador => {
                     const isSelf = prestador.email === emailLogado;

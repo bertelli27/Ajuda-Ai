@@ -2,8 +2,7 @@
 
 function carregarUsuario() {
     const menu = document.getElementById("menu");
-    const mensagemBoasVindas = document.getElementById("mensagem-boas-vindas");
-    if (!menu || !mensagemBoasVindas) return;
+    if (!menu) return;
 
     // 1. Checar se o usuário está logado (usa a mesma lógica do login)
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
@@ -15,15 +14,19 @@ function carregarUsuario() {
 
         if (usuarioAtual && usuarioAtual.nome) {
             const fotoPerfil = usuarioAtual.fotoPerfil || 'img/avatar_padrao.png';
+            const primeiroNome = usuarioAtual.nome.split(' ')[0];
+            const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
 
             // 🔐 LOGADO: Monta a mensagem de boas-vindas e o menu do usuário
-            mensagemBoasVindas.innerHTML = `<img src="${fotoPerfil}" alt="Avatar" class="header-avatar"> Olá, ${usuarioAtual.nome.split(' ')[0]}!`;
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="home.html" class="active-nav">Início</a>
                 <a href="servicos.html">Serviços</a>
-                <a href="pedidos.html">Meus Pedidos</a>
+                <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
-                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                    <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                        <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                        <span>${primeiroNome}</span>
+                    </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         <a href="dashboard.html">Dashboard</a>
                         <a href="perfil.html">Meu Perfil</a>
@@ -51,21 +54,18 @@ function carregarUsuario() {
             if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
         } else {
             // Caso não encontre o usuário (p.e., localStorage limpo), mostra o menu padrão de não logado
-            mostrarMenuDeslogado(menu, mensagemBoasVindas);
+            mostrarMenuDeslogado(menu);
         }
     } else {
         // 🔓 NÃO LOGADO
-        mostrarMenuDeslogado(menu, mensagemBoasVindas);
+        mostrarMenuDeslogado(menu);
     }
 }
 
-function mostrarMenuDeslogado(menu, mensagemBoasVindas) {
-    // Limpa a mensagem de boas-vindas se não estiver logado
-    mensagemBoasVindas.innerText = '';
-
+function mostrarMenuDeslogado(menu) {
     // Mostra os links de Entrar/Cadastrar no menu
     menu.innerHTML = `
-        <a href="home.html">Início</a>
+        <a href="home.html" class="active-nav">Início</a>
         <a href="servicos.html">Serviços</a>
         <a href="index.html">Entrar</a>
         <a href="register.html">Cadastrar</a>
@@ -116,7 +116,11 @@ function carregarServicos() {
     grid.innerHTML = ''; // Limpa os cards estáticos
 
     if (prestadores.length === 0) {
-        grid.innerHTML = '<p style="color: #AAAAAA; text-align: center; grid-column: span 4;">Nenhum prestador de serviço encontrado no momento.</p>';
+        grid.innerHTML = `
+            <div class="empty-state fade-up-animation">
+                <div class="empty-state-icon">🔍</div>
+                <p>Nenhum prestador de serviço encontrado no momento.</p>
+            </div>`;
         return;
     }
 

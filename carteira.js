@@ -19,7 +19,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const list = document.getElementById("transactionList");
         if (minhasTransacoes.length === 0) {
-            list.innerHTML = '<p style="color: #AAAAAA; text-align: center; margin-top: 20px;">Nenhuma transação encontrada.</p>';
+            list.innerHTML = `
+                <div class="empty-state fade-up-animation transaction-item" style="justify-content: center; flex-direction: column;">
+                    <div class="empty-state-icon" style="font-size: 48px; margin-bottom: 10px;">💸</div>
+                    <p>Nenhuma transação encontrada.</p>
+                </div>`;
         } else {
             list.innerHTML = minhasTransacoes.map(t => {
                 const isEntrada = t.tipo === 'ENTRADA';
@@ -104,13 +108,18 @@ document.addEventListener("DOMContentLoaded", function() {
         const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
         const usuarioLogado = usuarios.find(u => u.email === emailLogado);
         const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
+        const primeiroNome = usuarioLogado.nome.split(' ')[0];
+        const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
-            <a href="pedidos.html">Meus Pedidos</a>
-            <a href="carteira.html" style="color: #00ADB5; font-weight: bold;">Finanças</a>
+            <a href="pedidos.html">${textoPedidos}</a>
+            <a href="carteira.html" class="active-nav">Finanças</a>
             <div class="profile-menu-container">
-                <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar" id="avatarMenuBtn" style="cursor: pointer;" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
+                    <span>${primeiroNome}</span>
+                </a>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
