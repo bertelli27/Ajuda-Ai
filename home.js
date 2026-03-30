@@ -187,6 +187,25 @@ function configurarBusca() {
     // Na home, o link de "Serviços" leva para a página com a busca funcional.
 }
 
+// ================= ACESSIBILIDADE PARA CARDS CLICÁVEIS =================
+function configurarAcessibilidadeCards() {
+    const clickableCards = document.querySelectorAll('.pop-category-card, .step-card');
+
+    clickableCards.forEach(card => {
+        // Torna o card focável via teclado
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button'); // Informa ao leitor de tela que é um elemento clicável
+
+        // Adiciona o evento para a tecla Enter ou Espaço
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault(); // Previne a rolagem da página com a barra de espaço
+                this.click(); // Dispara o evento de clique já existente no HTML
+            }
+        });
+    });
+}
+
 // ================= INIT =================
 
 window.onload = () => {
@@ -194,4 +213,5 @@ window.onload = () => {
     carregarServicos();
     configurarBotoes();
     configurarBusca();
+    configurarAcessibilidadeCards();
 };

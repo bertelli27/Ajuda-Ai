@@ -2122,6 +2122,27 @@ body {
 }
 
 /* ===========================
+   ACESSIBILIDADE (A11y) - FOCO VISÍVEL
+=========================== */
+/* Adiciona um anel de foco claro para navegação por teclado, sem afetar cliques do mouse */
+*:focus-visible {
+    outline: 3px solid #00CED1;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px rgba(0, 206, 209, 0.3);
+    border-radius: 4px; /* Garante que o outline não fique quadrado em elementos redondos */
+}
+
+/* Remove o outline padrão para não ter dois anéis de foco */
+*:focus {
+    outline: none;
+}
+
+/* Ajuste fino para inputs que já têm um box-shadow no foco */
+.login-card input:focus, .search-section input:focus, .chat-input-wrapper:focus-within {
+    outline: none !important; /* Usa o box-shadow que já existe e previne o anel extra */
+}
+
+/* ===========================
    ANIMAÇÕES E MICRO-INTERAÇÕES
 =========================== */
 .fade-waiting {

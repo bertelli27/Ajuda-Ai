@@ -46,6 +46,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const negociacaoArea = document.getElementById("negociacao-area"); // A caixa interna
     const fecharOrcamentoBtn = document.getElementById("fechar-orcamento-btn");
     let currentPedidoId = null; // Para saber qual chat está aberto
+    let focusableElements = [];
+    let firstFocusableElement;
+    let lastFocusableElement;
 
     // Variáveis de Paginação
     let currentPageEnviados = 1;
@@ -386,6 +389,18 @@ document.addEventListener("DOMContentLoaded", function() {
         renderMensagens(pedidoId);
         modal.style.display = "block";
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
+        // --- NOVO: Lógica de Acessibilidade (Foco) ---
+        // Pega todos os elementos focáveis dentro do modal
+        focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        firstFocusableElement = focusableElements[0]; // Geralmente o botão de fechar 'X'
+        lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+        // Move o foco para o primeiro elemento (o botão de fechar)
+        setTimeout(() => firstFocusableElement.focus(), 100); // Pequeno delay para garantir a renderização
+
+        // Adiciona o listener para o trap de foco
+        modal.addEventListener('keydown', trapFocus);
     }
 
     function atualizarAreaNegociacao() {
@@ -592,6 +607,9 @@ document.addEventListener("DOMContentLoaded", function() {
         currentPedidoId = null;
         chatMessagesContainer.innerHTML = "";
         fecharOrcamento(); // Garante que o overlay do orçamento feche junto com o chat
+
+        // --- NOVO: Remove o listener ao fechar ---
+        modal.removeEventListener('keydown', trapFocus);
     }
 
     function fecharOrcamento() {
@@ -645,6 +663,30 @@ document.addEventListener("DOMContentLoaded", function() {
         
         if (texto) {
             enviarNovaMensagemObjeto(texto);
+        }
+    }
+
+    // --- NOVO: Função para o Focus Trap do Modal ---
+    function trapFocus(e) {
+        const isTabPressed = e.key === 'Tab' || e.keyCode === 9;
+        if (!isTabPressed) {
+            // Se a tecla for ESC, fecha o modal
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                fecharChat();
+            }
+            return;
+        }
+
+        if (e.shiftKey) { // Shift + Tab (voltando)
+            if (document.activeElement === firstFocusableElement) {
+                lastFocusableElement.focus();
+                e.preventDefault();
+            }
+        } else { // Tab (avançando)
+            if (document.activeElement === lastFocusableElement) {
+                firstFocusableElement.focus();
+                e.preventDefault();
+            }
         }
     }
 
