@@ -1,14 +1,14 @@
 document.addEventListener("DOMContentLoaded", function() {
 
     // ================= MENU DINÂMICO E LOGOUT =================
-    function setupHeader() {
+    async function setupHeader() {
         const menu = document.getElementById("menu");
         if (!menu) return;
 
-        const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+        const emailLogado = API.getSessaoAtual();
 
         if (emailLogado) {
-            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const usuarios = await API.getUsuarios();
             const usuarioLogado = usuarios.find(u => u.email === emailLogado);
             const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
             // Usuário Logado
@@ -50,8 +50,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function logout(e) {
         if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
+        API.fazerLogout();
         window.location.href = "index.html";
     }
 
@@ -60,9 +59,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const ITEMS_PER_PAGE = 6;
 
     // ================= CARREGAR SERVIÇOS =================
-    function carregarServicos(categoriaFiltro = "Todos", termoBusca = "") {
+    async function carregarServicos(categoriaFiltro = "Todos", termoBusca = "") {
         const grid = document.querySelector(".services-grid");
-        const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+        const emailLogado = API.getSessaoAtual();
         if (!grid) return;
 
         grid.innerHTML = '';
@@ -84,10 +83,10 @@ document.addEventListener("DOMContentLoaded", function() {
             grid.appendChild(skeletonCard);
         }
 
-        setTimeout(() => {
-            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+        setTimeout(async () => {
+            const usuarios = await API.getUsuarios();
             let prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
-            const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+            const avaliacoes = await API.getAvaliacoes();
 
             // 1. Filtro de categoria
             if (categoriaFiltro !== "Todos") {
@@ -184,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         grid.addEventListener("click", function(e) {
             if (e.target && e.target.classList.contains('btn-service')) {
-                const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+                const emailLogado = API.getSessaoAtual();
 
                 if (!emailLogado) {
                     mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");

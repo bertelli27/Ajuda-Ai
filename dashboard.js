@@ -1,15 +1,16 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO DE LOGIN =================
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         window.location.href = "index.html";
         return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-    const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-    const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+    // 🚀 Consumindo a Camada de Serviços (Prepara para a API)
+    const usuarios = await API.getUsuarios();
+    const solicitacoes = await API.getSolicitacoes();
+    const mensagens = await API.getMensagens();
+    const avaliacoes = await API.getAvaliacoes();
     
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
     if (!usuarioAtual) {
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setupHeader(usuarioAtual);
     carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios);
-    renderizarHistoricoFinanceiro(emailLogado);
+    await renderizarHistoricoFinanceiro(emailLogado);
 });
 
 function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios) {
@@ -134,8 +135,8 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     renderStatusChart(statusCounts);
 }
 
-function renderizarHistoricoFinanceiro(emailLogado) {
-    const todasTransacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
+async function renderizarHistoricoFinanceiro(emailLogado) {
+    const todasTransacoes = await API.getTransacoes();
     // Filtra transações onde o usuário logado é cliente OU prestador
     const minhasTransacoes = todasTransacoes.filter(t => t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado);
     
@@ -259,7 +260,6 @@ function setupHeader(usuarioAtual) {
 
 function logout(e) {
     if (e) e.preventDefault();
-    localStorage.removeItem("usuarioLogado");
-    sessionStorage.removeItem("usuarioLogado");
+    API.fazerLogout();
     window.location.href = "index.html";
 }
