@@ -1592,11 +1592,11 @@ body {
 .chat-input-wrapper {
     display: flex;
     flex-grow: 1;
-    align-items: center;
+    align-items: flex-end; /* Alinha os itens na base para o botão acompanhar o crescimento do textarea */
     background: #2A343D;
     border: 2px solid transparent;
     border-radius: 10px;
-    padding: 0 10px;
+    padding: 4px 10px; /* Padding vertical menor para acomodar o textarea */
     transition: all 0.3s ease;
 }
 .chat-input-wrapper:focus-within {
@@ -1605,24 +1605,25 @@ body {
     box-shadow: 0 0 0 4px rgba(0, 173, 181, 0.1);
 }
 
-.chat-input-wrapper input {
-    border: none;
-    background: transparent;
-}
-
 .chat-input-area {
     margin-top: 20px;
     display: flex;
-    gap: 15px; /* Mais espaço entre input e botão enviar */
+    gap: 10px;
 }
 
-#chat-input {
+textarea#chat-input {
     flex-grow: 1;
-    padding: 14px 10px;
+    padding: 10px;
     outline: none;
     background: transparent;
     color: #EEEEEE;
     font-size: 15px;
+    border: none;
+    resize: none; /* Remove o handle de redimensionamento manual */
+    overflow-y: hidden; /* Esconde a barra de rolagem, a altura será gerenciada via JS */
+    line-height: 1.5;
+    max-height: 120px; /* Limita o crescimento a aproximadamente 5 linhas */
+    font-family: 'Poppins', sans-serif;
 }
 
 #chat-send-btn {

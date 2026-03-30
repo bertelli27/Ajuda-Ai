@@ -212,22 +212,28 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
     // ================= CONFIGURAR BUSCA =================
+    let searchDebounceTimer; // Variável para controlar o debounce
     function configurarBusca() {
         const btn = document.getElementById("searchBtn");
         const searchInput = document.getElementById("searchInput");
         if (!btn || !searchInput) return;
 
         function executarBusca() {
+            // Cancela qualquer debounce pendente se uma busca explícita for acionada
+            clearTimeout(searchDebounceTimer); 
             currentPage = 1; // Reseta a página para a primeira
             const termo = searchInput.value.toLowerCase();
             const categoriaAtiva = document.querySelector('.btn-categoria.active')?.getAttribute('data-cat') || 'Todos';
             carregarServicos(categoriaAtiva, termo);
         }
 
-        btn.addEventListener("click", executarBusca);
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === 'Enter') executarBusca();
+        // Evento de input com debounce para busca em tempo real
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(executarBusca, 500); // Espera 500ms depois que o usuário para de digitar
         });
+
+        btn.addEventListener("click", executarBusca);
     }
 
     // ================= CONFIGURAR FILTROS DE CATEGORIA =================

@@ -675,6 +675,7 @@ document.addEventListener("DOMContentLoaded", function() {
         todasMensagens.push(novaMensagem);
         localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
 
+        chatInput.style.height = 'auto'; // Reseta a altura do textarea
         chatInput.value = "";
         if (chatImageInput) chatImageInput.value = ""; // Limpa o input de arquivo
         renderMensagens(currentPedidoId);
@@ -721,7 +722,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // Event Listeners para o Chat
     closeModalBtn.addEventListener('click', fecharChat);
     chatSendBtn.addEventListener('click', enviarMensagem);
-    chatInput.addEventListener('keypress', e => e.key === 'Enter' && enviarMensagem());
+    chatInput.addEventListener('keydown', e => {
+        // Envia com Enter, cria nova linha com Shift+Enter
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // Previne a quebra de linha
+            enviarMensagem();
+        }
+    });
     
     // Botão para exibir/ocultar a caixa de Orçamento no chat
     if (btnToggleOrcamento) {
@@ -745,6 +752,14 @@ document.addEventListener("DOMContentLoaded", function() {
             if (e.target === orcamentoOverlay) { // Garante que o clique foi no fundo, não na caixa
                 fecharOrcamento();
             }
+        });
+    }
+
+    // Lógica para o textarea auto-expansível
+    if (chatInput) {
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto'; // Reseta a altura para recalcular o scrollHeight
+            chatInput.style.height = (chatInput.scrollHeight) + 'px'; // Ajusta a altura ao conteúdo
         });
     }
 
