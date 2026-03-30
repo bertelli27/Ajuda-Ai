@@ -2516,6 +2516,59 @@ textarea#chat-input {
 }
 
 /* ===========================
+   TOOLTIPS PERSONALIZADOS
+=========================== */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px); /* Exibe acima do elemento por padrão */
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background-color: #2A343D;
+    color: #EEEEEE;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    
+    width: max-content; /* Garante que o balão estique para caber o texto completo */
+    max-width: 250px; /* Limite máximo para não ficar gigante em textos longos */
+    white-space: normal; /* Permite quebrar a linha se passar do limite */
+    text-align: center; /* Centraliza o texto caso tenha duas linhas */
+    
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border: 1px solid #00ADB5;
+    z-index: 10000;
+    pointer-events: none; /* Ignora o mouse para não piscar */
+    font-weight: 500;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Direções alternativas para o Tooltip */
+[data-tooltip-dir="left"]::after {
+    bottom: auto; top: 50%; left: auto; right: calc(100% + 8px);
+    transform: translateY(-50%) translateX(5px);
+}
+[data-tooltip-dir="left"]:hover::after { transform: translateY(-50%) translateX(0); }
+
+[data-tooltip-dir="down"]::after {
+    bottom: auto; top: calc(100% + 8px);
+    transform: translateX(-50%) translateY(-5px);
+}
+[data-tooltip-dir="down"]:hover::after { transform: translateX(-50%) translateY(0); }
+
+/* ===========================
    MODO FOCO (CHAT)
 =========================== */
 .header, .mini-footer, .footer, .back-to-top-btn {
@@ -3036,6 +3089,12 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .hero-section {
     background: radial-gradient(circle at center, #F4F6F8 0%, #E2E8F0 100%) !important;
     border-bottom-color: #CBD5E0 !important;
+}
+
+[data-theme="light"] [data-tooltip]::after {
+    background-color: #FFFFFF !important;
+    color: #2D3748 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
 }
 
 [data-theme="light"] .footer {

@@ -765,16 +765,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Envio de Imagem
     if (chatImageInput) {
-        chatImageInput.addEventListener('change', function(e) {
+        chatImageInput.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file || !currentPedidoId) return;
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64 = event.target.result;
-                enviarNovaMensagemObjeto(chatInput.value.trim(), base64);
-            };
-            reader.readAsDataURL(file);
+            try {
+                mostrarToast("Anexando imagem...", "success");
+                const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
+                enviarNovaMensagemObjeto(chatInput.value.trim(), base64Comprimido);
+            } catch (error) {
+                mostrarToast("Erro ao processar o anexo.", "error");
+            }
         });
     }
 
@@ -799,7 +800,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html" class="active-nav">${textoPedidos}</a>
             <div class="profile-menu-container">
-                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                     <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                     <span>${primeiroNome}</span>
                 </a>

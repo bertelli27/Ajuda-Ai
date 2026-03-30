@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html" class="active-nav">${textoPedidos}</a>
             <div class="profile-menu-container">
-                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                     <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                     <span>${primeiroNome}</span>
                 </a>

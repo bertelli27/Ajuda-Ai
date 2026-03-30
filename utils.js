@@ -161,12 +161,14 @@ function inicializarThemeToggle() {
     const btnLight = document.createElement('button');
     btnLight.className = 'theme-btn';
     btnLight.innerHTML = '☀️';
-    btnLight.title = 'Modo Claro';
+    btnLight.setAttribute('data-tooltip', 'Modo Claro');
+    btnLight.setAttribute('data-tooltip-dir', 'left');
 
     const btnDark = document.createElement('button');
     btnDark.className = 'theme-btn';
     btnDark.innerHTML = '🌙';
-    btnDark.title = 'Modo Escuro';
+    btnDark.setAttribute('data-tooltip', 'Modo Escuro');
+    btnDark.setAttribute('data-tooltip-dir', 'left');
 
     toggleContainer.appendChild(btnLight);
     toggleContainer.appendChild(btnDark);
@@ -304,7 +306,8 @@ function setupPasswordToggle(inputElement) {
     toggleBtn.type = 'button';
     toggleBtn.className = 'password-toggle-btn';
     toggleBtn.setAttribute('aria-label', 'Mostrar/Ocultar senha');
-    toggleBtn.title = 'Mostrar/Ocultar senha';
+    toggleBtn.setAttribute('data-tooltip', 'Ocultar/Mostrar');
+    toggleBtn.setAttribute('data-tooltip-dir', 'left');
 
     const eyeOpenIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
     const eyeClosedIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
@@ -404,6 +407,46 @@ async function buscarCEP(cep) {
         const data = await response.json();
         return data.erro ? null : data;
     } catch (error) { return null; }
+}
+
+// =======================================================
+// COMPRESSÃO DE IMAGENS (FRONT-END)
+// =======================================================
+/**
+ * Comprime uma imagem usando Canvas API antes de salvar em Base64
+ * @param {File} file O arquivo de imagem original
+ * @param {number} maxWidth Largura máxima permitida (padrão: 800)
+ * @param {number} maxHeight Altura máxima permitida (padrão: 800)
+ * @param {number} quality Qualidade do JPEG (0.0 a 1.0)
+ * @returns {Promise<string>} Promessa com a string Base64 da imagem comprimida
+ */
+function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                } else {
+                    if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

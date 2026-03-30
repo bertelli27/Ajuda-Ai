@@ -435,7 +435,7 @@ function setupHeader(usuarioAtual) {
         <a href="servicos.html">Serviços</a>
         <a href="pedidos.html">${textoPedidos}</a>
         <div class="profile-menu-container">
-            <a href="#" class="menu-avatar-link" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown'); return false;" title="Opções da Conta">
+            <a href="#" class="menu-avatar-link" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown'); return false;" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                 <span>${primeiroNome}</span>
             </a>

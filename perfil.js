@@ -244,17 +244,19 @@ document.addEventListener("DOMContentLoaded", function() {
         alternarModoEdicao(true);
     }
 
-    function préVisualizarFoto(event) {
+    async function préVisualizarFoto(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64 = e.target.result;
-            document.getElementById("profilePicPreview").src = base64;
-            novaFotoBase64 = base64; // Armazena para salvar depois
-        };
-        reader.readAsDataURL(file);
+        try {
+            mostrarToast("Processando imagem da foto de perfil...", "success");
+            // Foto de perfil precisa ser menor, 400x400 é suficiente
+            const base64Comprimido = await comprimirImagem(file, 400, 400, 0.8);
+            document.getElementById("profilePicPreview").src = base64Comprimido;
+            novaFotoBase64 = base64Comprimido; // Armazena para salvar depois
+        } catch (err) {
+            mostrarToast("Erro ao processar a foto de perfil.", "error");
+        }
     }
 
     function salvarAlteracoes(e) {
@@ -434,22 +436,24 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    document.getElementById('portfolio-upload')?.addEventListener('change', function(e) {
+    document.getElementById('portfolio-upload')?.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const base64 = event.target.result;
+        try {
+            mostrarToast("Processando imagem, aguarde...", "success");
+            const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
+            
             const userIndex = usuarios.findIndex(u => u.email === emailLogado);
             if (userIndex === -1) return;
 
             if (!usuarios[userIndex].prestador.portfolio) usuarios[userIndex].prestador.portfolio = [];
-            usuarios[userIndex].prestador.portfolio.push(base64);
+            usuarios[userIndex].prestador.portfolio.push(base64Comprimido);
             localStorage.setItem("usuarios", JSON.stringify(usuarios));
             renderizarPortfolio(usuarios[userIndex]);
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            mostrarToast("Erro ao processar a imagem.", "error");
+        }
     });
 
     // ================= FUNÇÕES AUXILIARES =================
@@ -470,7 +474,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
-                    <a href="#" id="avatarMenuBtn" class="menu-avatar-link" title="Opções da Conta">
+                    <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                         <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                         <span>${primeiroNome}</span>
                     </a>
