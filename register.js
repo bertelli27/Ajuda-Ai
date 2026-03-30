@@ -245,6 +245,9 @@ cepInput?.addEventListener('blur', async function() {
 registerForm?.addEventListener("submit", function(e){
     e.preventDefault();
 
+    const submitButton = e.submitter;
+    setButtonLoading(submitButton);
+
     const basicValidations = [
         validateNome(), validateCpf(), validateEmail(), validateTelefone(), 
         validateCep(), validateRua(), validateNumero(), validateBairro(), 
@@ -263,7 +266,11 @@ registerForm?.addEventListener("submit", function(e){
     }
 
     if (!isValid) {
-        mostrarToast("Por favor, corrija os campos em vermelho.", "error");
+        // Pequeno delay para o usuário ver o spinner antes do erro
+        setTimeout(() => {
+            mostrarToast("Por favor, corrija os campos em vermelho.", "error");
+            removeButtonLoading(submitButton);
+        }, 400);
         return;
     }
 
@@ -272,6 +279,7 @@ registerForm?.addEventListener("submit", function(e){
     if(usuarioExistente){
         mostrarToast("Usuário já cadastrado com este e-mail!", "error");
         setInputError(emailInput, "Este e-mail já está em uso.");
+        removeButtonLoading(submitButton);
         return;
     }
 

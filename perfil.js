@@ -258,9 +258,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function salvarAlteracoes(e) {
+        setButtonLoading(btnSalvar);
+
         const userIndex = usuarios.findIndex(u => u.email === emailLogado);
         if (userIndex === -1) {
             mostrarToast("Ocorreu um erro ao salvar. Tente novamente.", "error");
+            removeButtonLoading(btnSalvar);
             return;
         }
 
@@ -290,6 +293,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (!categoria || !servico || !descricao || !valor || !disponibilidade) {
                 mostrarToast("Por favor, preencha todos os dados de prestador, incluindo a categoria!", "error");
+                removeButtonLoading(btnSalvar);
                 return;
             }
 
@@ -302,10 +306,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        mostrarToast("Dados atualizados com sucesso!", "success");
-        novaFotoBase64 = null; // Limpa a foto temporária
-        preencherDados(usuarioEditado); // Re-renderiza os dados no modo de visualização
-        alternarModoEdicao(false); // Volta para o modo de visualização
+
+        // Adiciona um delay para o usuário perceber o loading
+        setTimeout(() => {
+            mostrarToast("Dados atualizados com sucesso!", "success");
+            novaFotoBase64 = null; // Limpa a foto temporária
+            preencherDados(usuarioEditado); // Re-renderiza os dados no modo de visualização
+            alternarModoEdicao(false); // Volta para o modo de visualização
+            removeButtonLoading(btnSalvar);
+        }, 800);
     }
 
     function carregarAvaliacoes(usuario) {

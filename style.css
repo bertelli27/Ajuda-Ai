@@ -2452,6 +2452,32 @@ body {
 }
 
 /* ===========================
+   BUTTON LOADING SPINNER
+=========================== */
+.btn-loading {
+    color: transparent !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #FFFFFF;
+    border-radius: 50%;
+    animation: spinner-spin 0.8s linear infinite;
+}
+
+@keyframes spinner-spin { to { transform: rotate(360deg); } }
+
+/* ===========================
    EMPTY STATES E ERRO 404
 =========================== */
 .empty-state {
@@ -2590,6 +2616,60 @@ body.focus-mode-active .back-to-top-btn {
    AJUSTES FINAIS DE RESPONSIVIDADE (MOBILE)
 =========================== */
 @media (max-width: 768px) {
+    /* Scroll Horizontal Nativo para Cards e Listas (Estilo App) */
+    .services-grid, 
+    .pedidos-grid, 
+    .pop-categories-grid, 
+    .testimonials-grid, 
+    .steps-grid, 
+    .dashboard-container,
+    .categorias-container,
+    .portfolio-gallery {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+        gap: 15px !important;
+        padding-bottom: 20px; /* Respiro para exibir a sombra dos cards */
+        -webkit-overflow-scrolling: touch; /* Suavidade extrema no iOS */
+        scrollbar-width: none; /* Oculta scrollbar no Firefox */
+        min-height: auto !important; /* Remove alturas fixas do grid desktop */
+    }
+
+    /* Oculta barra de rolagem horizontal no Chrome/Safari/Edge */
+    .services-grid::-webkit-scrollbar, 
+    .pedidos-grid::-webkit-scrollbar, 
+    .pop-categories-grid::-webkit-scrollbar, 
+    .testimonials-grid::-webkit-scrollbar, 
+    .steps-grid::-webkit-scrollbar, 
+    .dashboard-container::-webkit-scrollbar,
+    .categorias-container::-webkit-scrollbar,
+    .portfolio-gallery::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Ajusta a largura dos cards maiores (deixa 15% do próximo card visível) */
+    .services-grid > *, 
+    .pedidos-grid > *, 
+    .pop-categories-grid > *, 
+    .testimonials-grid > *, 
+    .steps-grid > *, 
+    .dashboard-container > * {
+        flex: 0 0 85% !important;
+        max-width: 320px;
+        scroll-snap-align: start; /* O card "encaixa" no início da tela ao arrastar */
+    }
+
+    /* Categorias e fotos do portfólio tem larguras menores nativas */
+    .categorias-container > * {
+        flex: 0 0 auto !important;
+        scroll-snap-align: start;
+    }
+    .portfolio-gallery > * {
+        flex: 0 0 160px !important;
+        scroll-snap-align: start;
+    }
+
     /* Cabeçalho e Menu */
     .header {
         padding: 15px 20px;

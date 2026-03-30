@@ -327,6 +327,30 @@ function inicializarAllPasswordToggles() {
 }
 
 // =======================================================
+// SPINNER DE LOADING PARA BOTÕES
+// =======================================================
+
+/**
+ * Ativa o estado de loading de um botão, desabilitando-o e mostrando um spinner.
+ * @param {HTMLElement} buttonElement O elemento do botão.
+ */
+function setButtonLoading(buttonElement) {
+    if (!buttonElement) return;
+    buttonElement.classList.add('btn-loading');
+    buttonElement.disabled = true;
+}
+
+/**
+ * Remove o estado de loading de um botão, reativando-o.
+ * @param {HTMLElement} buttonElement O elemento do botão.
+ */
+function removeButtonLoading(buttonElement) {
+    if (!buttonElement) return;
+    buttonElement.classList.remove('btn-loading');
+    buttonElement.disabled = false;
+}
+
+// =======================================================
 // MÁSCARAS E VALIDAÇÕES GLOBAIS (A11Y & UX)
 // =======================================================
 

@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("formPagamento").addEventListener("submit", function(e) {
         e.preventDefault();
+        const submitButton = e.submitter;
+        setButtonLoading(submitButton);
         
         const method = document.querySelector('input[name="paymentMethod"]:checked').value;
         let transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
@@ -66,9 +68,12 @@ document.addEventListener("DOMContentLoaded", function() {
         todasMensagens.push({ id_mensagem: "MSG-" + Date.now(), id_solicitacao: pedido.id, remetenteEmail: "SISTEMA", mensagem: `✅ <strong>Orçamento Aceito e Pagamento Realizado.</strong> O valor (R$ ${valorFloat.toFixed(2).replace('.', ',')}) está retido na plataforma de forma segura. O serviço já pode ser iniciado.`, data_envio: new Date().toISOString(), lida: false });
         localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
 
-        mostrarToast("Pagamento confirmado com sucesso!", "success");
+        // Simula o processamento do pagamento
         setTimeout(() => {
-            window.location.href = "pedidos.html";
-        }, 1500);
+            mostrarToast("Pagamento confirmado com sucesso!", "success");
+            setTimeout(() => {
+                window.location.href = "pedidos.html";
+            }, 1500);
+        }, 1000);
     });
 });

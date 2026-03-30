@@ -534,6 +534,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (isPrestador && pedido.valorStatus !== 'ACEITO') {
 
             document.getElementById("btnEnviarProposta")?.addEventListener("click", () => {
+                const submitButton = document.getElementById("btnEnviarProposta");
+                setButtonLoading(submitButton);
+
                 const novoValorStr = document.getElementById("inputValorNegociado").value;
                 const novoValor = limparMascaraDinheiro(novoValorStr);
                 const novaDescricao = document.getElementById("textareaDescricaoProposta").value.trim();
@@ -542,34 +545,40 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 if (!novoValor || parseFloat(novoValor) <= 0) {
                     mostrarToast("Digite um valor válido.", "error");
+                    removeButtonLoading(submitButton);
                     return;
                 }
                 if (!novaDescricao) {
                     mostrarToast("Por favor, descreva o serviço que será feito.", "error");
+                    removeButtonLoading(submitButton);
                     return;
                 }
                 if (!novaData || !novaHora) {
                      mostrarToast("Por favor, informe a data e o horário propostos.", "error");
+                     removeButtonLoading(submitButton);
                      return;
                 }
                 
-                pedido.valorCombinado = novoValor;
-                pedido.descricaoProposta = novaDescricao;
-                pedido.dataProposta = novaData;
-                pedido.horaProposta = novaHora;
-                pedido.valorStatus = 'PROPOSTO';
-                salvarEAtualizarPedido(pedido);
-                
-                const dataParts = novaData.split('-');
-                const dataBr = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
-                
-                enviarMensagemSistema(pedido.id, `🕒 <strong>Orçamento enviado:</strong> R$ ${parseFloat(novoValor).toFixed(2).replace('.', ',')}
-                    <br><strong>Data/Hora:</strong> ${dataBr} às ${novaHora}
-                    <br><br><strong>Serviços inclusos:</strong><br>${novaDescricao}
-                `);
-                
-                atualizarAreaNegociacao();
-                setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
+                // Simula o envio
+                setTimeout(() => {
+                    pedido.valorCombinado = novoValor;
+                    pedido.descricaoProposta = novaDescricao;
+                    pedido.dataProposta = novaData;
+                    pedido.horaProposta = novaHora;
+                    pedido.valorStatus = 'PROPOSTO';
+                    salvarEAtualizarPedido(pedido);
+                    
+                    const dataParts = novaData.split('-');
+                    const dataBr = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+                    
+                    enviarMensagemSistema(pedido.id, `🕒 <strong>Orçamento enviado:</strong> R$ ${parseFloat(novoValor).toFixed(2).replace('.', ',')}
+                        <br><strong>Data/Hora:</strong> ${dataBr} às ${novaHora}
+                        <br><br><strong>Serviços inclusos:</strong><br>${novaDescricao}
+                    `);
+                    
+                    atualizarAreaNegociacao();
+                    setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
+                }, 800);
             });
         } else if (!isPrestador && pedido.valorStatus === 'PROPOSTO') {
             document.getElementById("btnAceitarProposta")?.addEventListener("click", () => {
@@ -674,11 +683,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function enviarMensagem() {
         const texto = chatInput.value.trim();
-        if (!texto && !currentPedidoId) return;
-        
-        if (texto) {
-            enviarNovaMensagemObjeto(texto);
-        }
+        if (!texto) return;
+
+        setButtonLoading(chatSendBtn);
+
+        // Simula um pequeno atraso de envio
+        setTimeout(() => {
+            enviarNovaMensagemObjeto(texto, null);
+            removeButtonLoading(chatSendBtn);
+        }, 400);
     }
 
     // --- NOVO: Função para o Focus Trap do Modal ---
