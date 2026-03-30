@@ -440,7 +440,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div class="form-group-row">
                             <div class="form-group">
                                 <label>Orçamento (R$)</label>
-                                <input type="number" id="inputValorNegociado" value="${pedido.valorCombinado || ''}" placeholder="Ex: 150.00">
+                                <input type="text" id="inputValorNegociado" value="${pedido.valorCombinado ? formatarMoedaParaMascara(pedido.valorCombinado) : ''}" placeholder="R$ 0,00">
                             </div>
                         </div>
                         <div class="form-group-row">
@@ -499,12 +499,16 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         
         area.innerHTML = html;
+        
+        // Aplica a máscara no input gerado
+        aplicarMascaraDinheiro(document.getElementById("inputValorNegociado"));
 
         // Adicionar eventos aos botões recém renderizados
         if (isPrestador && pedido.valorStatus !== 'ACEITO') {
 
             document.getElementById("btnEnviarProposta")?.addEventListener("click", () => {
-                const novoValor = document.getElementById("inputValorNegociado").value;
+                const novoValorStr = document.getElementById("inputValorNegociado").value;
+                const novoValor = limparMascaraDinheiro(novoValorStr);
                 const novaDescricao = document.getElementById("textareaDescricaoProposta").value.trim();
                 const novaData = document.getElementById("inputDataProposta").value;
                 const novaHora = document.getElementById("inputHoraProposta").value;

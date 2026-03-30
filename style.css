@@ -1048,6 +1048,7 @@ body {
     height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.6);
+    animation: fadeInBg 0.3s ease-out;
 }
 
 .modal-content {
@@ -1064,6 +1065,17 @@ body {
     height: 90vh; /* Quase ocupa a tela inteira */
     position: relative;
     overflow: hidden; /* Para conter o overlay do orçamento */
+    animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fadeInBg {
+    from { background-color: rgba(0,0,0,0); }
+    to { background-color: rgba(0,0,0,0.6); }
+}
+
+@keyframes modalPop {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 .close-button {
@@ -2107,6 +2119,28 @@ body {
 .skeleton-button {
     height: 40px;
     border-radius: 10px;
+}
+
+/* ===========================
+   ANIMAÇÕES E MICRO-INTERAÇÕES
+=========================== */
+.fade-waiting {
+    opacity: 0 !important;
+}
+.fade-up-animation {
+    animation: fadeUpAnim 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+@keyframes fadeUpAnim {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Efeito de clique tátil nos botões (Micro-interação) */
+.btn-login:active, .btn-service:active, .btn-acao:active, .btn-forgot:active,
+.page-btn:not(:disabled):active, .btn-categoria:active, .tab-btn:active, 
+#chat-send-btn:active, .btn-orcamento:active, .pop-category-card:active, .step-card:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.1s ease;
 }
 
 /* ===========================

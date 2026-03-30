@@ -209,6 +209,38 @@ descricaoInput?.addEventListener('blur', validateDescricao);
 valorInput?.addEventListener('blur', validateValor);
 disponibilidadeInput?.addEventListener('blur', validateDisponibilidade);
 
+// ================= APLICAÇÃO DAS NOVAS MÁSCARAS E VIACEP =================
+aplicarMascaraCEP(cepInput);
+aplicarMascaraDinheiro(valorInput);
+
+cepInput?.addEventListener('blur', async function() {
+    const cep = this.value.replace(/\D/g, '');
+    if (cep.length === 8) {
+        ruaInput.value = 'Buscando...';
+        bairroInput.value = 'Buscando...';
+        cidadeInput.value = 'Buscando...';
+        estadoInput.value = '...';
+        
+        const dadosEndereco = await buscarCEP(cep);
+        
+        if (dadosEndereco) {
+            ruaInput.value = dadosEndereco.logradouro;
+            bairroInput.value = dadosEndereco.bairro;
+            cidadeInput.value = dadosEndereco.localidade;
+            estadoInput.value = dadosEndereco.uf;
+            clearInputError(ruaInput);
+            clearInputError(bairroInput);
+            clearInputError(cidadeInput);
+            clearInputError(estadoInput);
+            numeroInput.focus(); // Direciona o cursor direto para o número!
+        } else {
+            mostrarToast("CEP não encontrado.", "error");
+            ruaInput.value = ''; bairroInput.value = ''; cidadeInput.value = ''; estadoInput.value = '';
+        }
+    }
+});
+
+
 // Submissão do Formulário
 registerForm?.addEventListener("submit", function(e){
     e.preventDefault();
@@ -267,7 +299,7 @@ registerForm?.addEventListener("submit", function(e){
             categoria: categoriaInput.value, 
             servico: servicoInput.value.trim(), 
             descricao: descricaoInput.value.trim(), 
-            valor: valorInput.value.trim(), 
+            valor: limparMascaraDinheiro(valorInput.value.trim()), 
             disponibilidade: disponibilidadeInput.value.trim() 
         };
     }

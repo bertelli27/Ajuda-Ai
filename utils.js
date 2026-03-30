@@ -223,9 +223,109 @@ function inicializarBackToTopButton() {
     });
 }
 
+// =======================================================
+// ANIMAÇÕES DE FADE-IN (SCROLL) E MICRO-INTERAÇÕES
+// =======================================================
+function inicializarAnimacoesFade() {
+    const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                el.classList.add('fade-up-animation');
+                
+                // Remove as classes de animação após ela terminar para não bugar o :hover nativo dos cards
+                el.addEventListener('animationend', function handler() {
+                    el.classList.remove('fade-waiting', 'fade-up-animation');
+                    el.removeEventListener('animationend', handler);
+                });
+                
+                obs.unobserve(el); // Anima apenas a primeira vez que aparece
+            }
+        });
+    }, { threshold: 0.1, rootMargin: "0px 0px -30px 0px" });
+
+    // Classes principais que receberão o efeito de surgir suavemente
+    const seletores = ['.login-card', '.home-section', '.dashboard-card', '.service-card', '.pedido-card', '.activity-card', '.achievement-card', '.pop-category-card', '.step-card', '.testimonial-card'];
+    
+    function observarNovosElementos() {
+        seletores.forEach(seletor => {
+            document.querySelectorAll(seletor).forEach(el => {
+                if (!el.classList.contains('fade-waiting') && !el.classList.contains('fade-up-animation') && !el.hasAttribute('data-animado')) {
+                    el.classList.add('fade-waiting');
+                    el.setAttribute('data-animado', 'true'); // Marca para não processar de novo
+                    observer.observe(el);
+                }
+            });
+        });
+    }
+
+    observarNovosElementos();
+
+    // Usamos o MutationObserver para capturar cards de serviços/pedidos que carregam depois (via API/LocalStorage)
+    const mutationObserver = new MutationObserver(() => observarNovosElementos());
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+// =======================================================
+// MÁSCARAS E VALIDAÇÕES GLOBAIS (A11Y & UX)
+// =======================================================
+
+// Máscara para Dinheiro (R$ 0,00)
+function aplicarMascaraDinheiro(input) {
+    if (!input) return;
+    input.type = 'text'; // Altera para texto para aceitar vírgulas
+    input.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+        if (value === '') { e.target.value = ''; return; }
+        value = (parseInt(value, 10) / 100).toFixed(2) + '';
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        e.target.value = "R$ " + value;
+    });
+}
+
+// Converte o valor mascarado (R$ 1.500,00) de volta para número do Banco de Dados (1500.00)
+function limparMascaraDinheiro(valorFormatado) {
+    if (!valorFormatado) return "0.00";
+    return valorFormatado.replace(/[^\d,]/g, '').replace(',', '.');
+}
+
+// Formata um número do Banco de Dados (1500.00) para mostrar na tela (R$ 1.500,00)
+function formatarMoedaParaMascara(valorReal) {
+    if (!valorReal) return "";
+    const numero = parseFloat(valorReal);
+    if (isNaN(numero)) return "";
+    let formatado = numero.toFixed(2).replace(".", ",");
+    formatado = formatado.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+    return "R$ " + formatado;
+}
+
+// Máscara de CEP (00000-000)
+function aplicarMascaraCEP(input) {
+    if (!input) return;
+    input.maxLength = 9;
+    input.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    });
+}
+
+// Consulta automática de CEP via API pública do ViaCEP
+async function buscarCEP(cep) {
+    cep = cep.replace(/\D/g, '');
+    if (cep.length !== 8) return null;
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        return data.erro ? null : data;
+    } catch (error) { return null; }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(atualizarBadgeNotificacao, 200);
     setInterval(atualizarBadgeNotificacao, 3000); // Verifica notificações a cada 3 segundos
     inicializarThemeToggle();
     inicializarBackToTopButton(); // Chama a nova função
+    inicializarAnimacoesFade(); // Chama as animações fluídas
 });

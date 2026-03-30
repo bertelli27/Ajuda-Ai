@@ -86,6 +86,25 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("perfilForm").addEventListener("submit", salvarAlteracoes);
         document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
         document.getElementById("profilePicInput").addEventListener("change", préVisualizarFoto);
+        
+        aplicarMascaraCEP(document.getElementById("cep"));
+        aplicarMascaraDinheiro(document.getElementById("valor"));
+        
+        document.getElementById("cep")?.addEventListener("blur", async function() {
+            const cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                const dadosEndereco = await buscarCEP(cep);
+                if (dadosEndereco) {
+                    document.getElementById("rua").value = dadosEndereco.logradouro;
+                    document.getElementById("bairro").value = dadosEndereco.bairro;
+                    document.getElementById("cidade").value = dadosEndereco.localidade;
+                    document.getElementById("estado").value = dadosEndereco.uf;
+                    document.getElementById("numero").focus();
+                } else {
+                    mostrarToast("CEP não encontrado.", "error");
+                }
+            }
+        });
     }
 
     // ================= FUNÇÕES PRINCIPAIS =================
@@ -121,7 +140,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (usuario.prestador.categoria) document.getElementById("categoria").value = usuario.prestador.categoria;
             document.getElementById("servico").value = usuario.prestador.servico;
             document.getElementById("descricao").value = usuario.prestador.descricao;
-            document.getElementById("valor").value = usuario.prestador.valor;
+            document.getElementById("valor").value = formatarMoedaParaMascara(usuario.prestador.valor);
             document.getElementById("disponibilidade").value = usuario.prestador.disponibilidade;
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
         } else if (isOwnProfile) {
@@ -202,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function() {
             usuarioEditado.prestador.categoria = categoria;
             usuarioEditado.prestador.servico = servico;
             usuarioEditado.prestador.descricao = descricao;
-            usuarioEditado.prestador.valor = valor;
+            usuarioEditado.prestador.valor = limparMascaraDinheiro(valor);
             usuarioEditado.prestador.disponibilidade = disponibilidade;
         }
 
