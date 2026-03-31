@@ -15,17 +15,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // ================= PEGAR PRESTADOR DA URL =================
     const params = new URLSearchParams(window.location.search);
-    const prestadorEmail = params.get("prestador");
+    const servicoId = params.get("servicoId");
+    const todosServicos = JSON.parse(localStorage.getItem("servicos")) || [];
+    const servicoSolicitado = todosServicos.find(s => s.id === servicoId);
 
-    if (!prestadorEmail) {
-        mostrarToast("Prestador não encontrado.", "error");
+    if (!servicoSolicitado) {
+        mostrarToast("Serviço não encontrado.", "error");
         setTimeout(() => {
             window.location.href = "servicos.html";
         }, 1500);
         return;
     }
 
-    const prestador = usuarios.find(u => u.email === prestadorEmail && u.tipo === "prestador");
+    const prestador = usuarios.find(u => u.email === servicoSolicitado.prestadorEmail);
 
     if (!prestador) {
         mostrarToast("Este usuário não é um prestador válido.", "error");
@@ -36,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Regra: Usuário não pode contratar a si mesmo
-    if (prestador.email === emailLogado) {
+    if (servicoSolicitado.prestadorEmail === emailLogado) {
         mostrarToast("Você não pode solicitar um serviço a si mesmo.", "error");
         setTimeout(() => {
             window.location.href = "servicos.html";
@@ -47,10 +49,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // ================= EXIBIR DADOS =================
     const infoDiv = document.getElementById("infoPrestador");
     infoDiv.innerHTML = `
-        <h3 style="color: #00ADB5; margin-bottom: 5px;">${prestador.prestador.servico}</h3>
+        <h3 style="color: #00ADB5; margin-bottom: 5px;">${servicoSolicitado.titulo}</h3>
         <p style="margin-bottom: 5px;"><strong>Profissional:</strong> ${prestador.nome}</p>
-        <p style="margin-bottom: 5px;"><strong>Valor Médio:</strong> R$${parseFloat(prestador.prestador.valor || 0).toFixed(2).replace('.', ',')}</p>
-        <p><strong>Disponibilidade:</strong> ${prestador.prestador.disponibilidade}</p>
     `;
 
     // Preenche o endereço do cliente como sugestão inicial
@@ -70,9 +70,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const novaSolicitacao = {
             id: "SOL-" + Date.now(), // Gera um ID único simulado
+            servicoId: servicoSolicitado.id, // VINCULA AO SERVIÇO
             clienteEmail: clienteAtual.email,
             prestadorEmail: prestador.email,
-            servico: prestador.prestador.servico,
+            servico: servicoSolicitado.titulo, // Nome do serviço para exibição rápida
             descricao: descricao,
             dataSelecionada: data,
             enderecoRealizacao: endereco,

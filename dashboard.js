@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     const solicitacoes = await API.getSolicitacoes();
     const mensagens = await API.getMensagens();
     const avaliacoes = await API.getAvaliacoes();
+    const servicos = await API.getServicos();
     
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
     if (!usuarioAtual) {
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     setupHeader(usuarioAtual);
-    carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios);
+    carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos);
     await renderizarHistoricoFinanceiro(emailLogado);
 
     // Só renderiza o gráfico financeiro se a seção for visível
@@ -36,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 });
 
-function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios) {
+function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos) {
     // ================= 0. CABEÇALHO =================
     if (usuarioAtual.nome) document.getElementById('dash-user-name').innerText = usuarioAtual.nome.split(' ')[0];
 
@@ -76,9 +77,23 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     // Métricas de Prestador
     if (isPrestador) {
         const conversasAtivasPrestador = meusPedidosComoPrestador.filter(s => s.status !== 'CONCLUIDO' && s.status !== 'CANCELADO').length;
+        const meusServicos = servicos.filter(s => s.prestadorEmail === emailLogado);
+
+        // Lógica para Serviço Mais Solicitado
+        let servicoPopular = 'N/A';
+        if (meusPedidosComoPrestador.length > 0) {
+            const contagem = meusPedidosComoPrestador.reduce((acc, pedido) => {
+                acc[pedido.servicoId] = (acc[pedido.servicoId] || 0) + 1;
+                return acc;
+            }, {});
+            const idMaisPedido = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0];
+            const servicoEncontrado = servicos.find(s => s.id === idMaisPedido);
+            if (servicoEncontrado) servicoPopular = servicoEncontrado.titulo;
+        }
+
         document.getElementById("card-conversas-ativas-prestador").innerText = conversasAtivasPrestador;
-        document.getElementById("card-novas-solicitacoes").innerText = meusPedidosComoPrestador.filter(s => s.status === 'PENDENTE' && s.valorStatus === 'INICIAL').length;
-        document.getElementById("card-propostas-enviadas").innerText = meusPedidosComoPrestador.filter(s => s.valorStatus === 'PROPOSTO').length;
+        document.getElementById("card-servicos-publicados").innerText = meusServicos.length;
+        document.getElementById("card-servico-popular").innerText = servicoPopular;
         document.getElementById("card-clientes-atendidos").innerText = new Set(meusPedidosComoPrestador.filter(s => s.status === 'CONCLUIDO').map(s => s.clienteEmail)).size;
         document.getElementById("card-andamento-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'ACEITO').length;
         document.getElementById("card-concluidos-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'CONCLUIDO').length;

@@ -12,6 +12,11 @@ document.addEventListener("DOMContentLoaded", function() {
     // Elementos do DOM
     const btnEditar = document.getElementById("btnEditar");
     const btnSalvar = document.getElementById("btnSalvar");
+    const btnAddServico = document.getElementById("btn-add-servico");
+    const servicoModal = document.getElementById("servicoModal");
+    const closeServicoModal = document.getElementById("closeServicoModal");
+    const formServico = document.getElementById("formServico");
+    const servicoModalTitle = document.getElementById("servicoModalTitle");
 
     // Determina qual perfil carregar (público ou próprio)
     if (perfilEmail) {
@@ -87,6 +92,10 @@ document.addEventListener("DOMContentLoaded", function() {
         btnEditar.addEventListener("click", () => alternarModoEdicao(true));
         btnSalvar.addEventListener("click", salvarAlteracoes);
         document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
+        btnAddServico?.addEventListener("click", () => abrirModalServico());
+        closeServicoModal?.addEventListener("click", () => servicoModal.style.display = "none");
+        window.addEventListener('click', (e) => { if (e.target == servicoModal) servicoModal.style.display = "none"; });
+        formServico?.addEventListener("submit", salvarServico);
         document.getElementById("profilePicInput").addEventListener("change", préVisualizarFoto);
         
         aplicarMascaraCEP(document.getElementById("cep"));
@@ -201,19 +210,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (usuario.tipo === "prestador" && usuario.prestador) {
             document.getElementById("secao-prestador").style.display = "block";
-            const p = usuario.prestador;
-            // Preenche visualização
-            document.getElementById("view-categoria").innerText = p.categoria || '-';
-            document.getElementById("view-servico").innerText = p.servico || '-';
-            document.getElementById("view-descricao").innerText = p.descricao || '-';
-            document.getElementById("view-valor").innerText = formatarMoedaParaMascara(p.valor) || '-';
-            document.getElementById("view-disponibilidade").innerText = p.disponibilidade || '-';
-            // Preenche edição
-            if (p.categoria) document.getElementById("categoria").value = p.categoria;
-            document.getElementById("servico").value = p.servico;
-            document.getElementById("descricao").value = p.descricao;
-            document.getElementById("valor").value = formatarMoedaParaMascara(p.valor);
-            document.getElementById("disponibilidade").value = p.disponibilidade;
+            renderizarMeusServicos(usuario.email); // Passa o email do prestador alvo
             
             renderizarPortfolio(usuario);
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
@@ -273,6 +270,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         if (isOwnProfile) document.getElementById("editPicLabel").style.display = editar ? "flex" : "none";
+        if (isOwnProfile && usuarioAlvo.tipo === "prestador") btnAddServico.style.display = editar ? "inline-flex" : "none";
         if (isOwnProfile) document.getElementById("btn-add-portfolio").style.display = editar ? "inline-flex" : "none";
     }
 
@@ -324,29 +322,13 @@ document.addEventListener("DOMContentLoaded", function() {
         usuarioEditado.endereco.cidade = document.getElementById("cidade").value.trim();
         usuarioEditado.endereco.estado = document.getElementById("estado").value.trim();
         usuarioEditado.tipo = usuarioAlvo.tipo;
-
-        if (usuarios[userIndex].tipo === "prestador") {
-            const categoria = document.getElementById("categoria").value.trim();
-            const servico = document.getElementById("servico").value.trim();
-            const descricao = document.getElementById("descricao").value.trim();
-            const valor = document.getElementById("valor").value.trim();
-            const disponibilidade = document.getElementById("disponibilidade").value.trim();
-
-            if (!categoria || !servico || !descricao || !valor || !disponibilidade) {
-                mostrarToast("Por favor, preencha todos os dados de prestador, incluindo a categoria!", "error");
-                removeButtonLoading(btnSalvar);
-                return;
-            }
-
-            if (!usuarioEditado.prestador) usuarioEditado.prestador = {};
-            usuarioEditado.prestador.categoria = categoria;
-            usuarioEditado.prestador.servico = servico;
-            usuarioEditado.prestador.descricao = descricao;
-            usuarioEditado.prestador.valor = limparMascaraDinheiro(valor);
-            usuarioEditado.prestador.disponibilidade = disponibilidade;
+        
+        // Se o usuário se tornou prestador agora, inicializa o objeto
+        if (usuarioEditado.tipo === "prestador" && !usuarioEditado.prestador) {
+            usuarioEditado.prestador = {}; // Objeto de metadados do prestador
         }
 
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
+        API.salvarUsuarios(usuarios);
 
         // Adiciona um delay para o usuário perceber o loading
         setTimeout(() => {
@@ -357,6 +339,121 @@ document.addEventListener("DOMContentLoaded", function() {
             removeButtonLoading(btnSalvar);
         }, 800);
     }
+
+    // ================= NOVAS FUNÇÕES DE GERENCIAMENTO DE SERVIÇOS =================
+
+    async function renderizarMeusServicos(emailDoPrestador) {
+        const listaContainer = document.getElementById("lista-meus-servicos");
+        if (!listaContainer) return;
+
+        const todosServicos = await API.getServicos();
+        const meusServicos = todosServicos.filter(s => s.prestadorEmail === emailDoPrestador);
+
+        if (meusServicos.length === 0) {
+            listaContainer.innerHTML = `<p style="color: #AAAAAA; font-style: italic; text-align: center;">Você ainda não cadastrou nenhum serviço.</p>`;
+            return;
+        }
+
+        listaContainer.innerHTML = meusServicos.map(servico => `
+            <div class="meu-servico-card">
+                <div class="servico-info">
+                    <h4>${servico.titulo}</h4>
+                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria}</p>
+                </div>
+                <div class="botoes-acao" style="margin-top: 0;">
+                    ${isOwnProfile 
+                        ? `<button class="btn-ver-perfil" onclick="abrirModalServico('${servico.id}')" style="padding: 8px 15px;">Editar</button>
+                           <button class="btn-acao recusar" onclick="excluirServico('${servico.id}')" style="padding: 8px 15px;">Excluir</button>`
+                        : `<button class="btn-service" onclick="window.location.href='solicitar.html?servicoId=${servico.id}'" style="padding: 8px 15px;">Solicitar</button>`}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function abrirModalServico(servicoId = null) {
+        formServico.reset();
+        document.getElementById("servicoId").value = "";
+
+        if (servicoId) {
+            // Modo Edição
+            servicoModalTitle.innerText = "Editar Serviço";
+            const todosServicos = await API.getServicos();
+            const servico = todosServicos.find(s => s.id === servicoId);
+            if (servico) {
+                document.getElementById("servicoId").value = servico.id;
+                document.getElementById("servicoTitulo").value = servico.titulo;
+                document.getElementById("servicoCategoria").value = servico.categoria;
+                document.getElementById("servicoDescricao").value = servico.descricao;
+            }
+        } else {
+            // Modo Adição
+            servicoModalTitle.innerText = "Adicionar Novo Serviço";
+        }
+        servicoModal.style.display = "block";
+    }
+    window.abrirModalServico = abrirModalServico; // Expondo para o onclick
+
+    async function salvarServico(e) {
+        e.preventDefault();
+        // Fallback de segurança para garantir a captura do botão em todos os navegadores
+        const submitButton = e.submitter || document.querySelector('#formServico button[type="submit"]');
+        setButtonLoading(submitButton);
+
+        const id = document.getElementById("servicoId").value;
+        const titulo = document.getElementById("servicoTitulo").value.trim();
+        const categoria = document.getElementById("servicoCategoria").value;
+        const descricao = document.getElementById("servicoDescricao").value.trim();
+
+        if (!titulo || !categoria) {
+            removeButtonLoading(submitButton);
+            mostrarToast("Título e Categoria são obrigatórios.", "error");
+            return;
+        }
+
+        try {
+            const todosServicos = await API.getServicos();
+    
+            if (id) { // Editando
+                const index = todosServicos.findIndex(s => s.id === id);
+                if (index > -1) {
+                    todosServicos[index] = { ...todosServicos[index], titulo, categoria, descricao };
+                }
+            } else { // Criando
+                const novoServico = {
+                    id: "SRV-" + Date.now(),
+                    prestadorEmail: emailLogado,
+                    titulo,
+                    categoria,
+                    descricao,
+                    dataCriacao: new Date().toISOString()
+                };
+                todosServicos.push(novoServico);
+            }
+    
+            // Simula o tempo de salvamento com a API
+            setTimeout(async () => {
+                await API.salvarServicos(todosServicos);
+                mostrarToast("Serviço salvo com sucesso!", "success");
+                servicoModal.style.display = "none";
+                renderizarMeusServicos();
+                removeButtonLoading(submitButton);
+            }, 600);
+        } catch (error) {
+            console.error("Erro interno:", error);
+            mostrarToast("Ocorreu um erro ao tentar salvar o serviço.", "error");
+            removeButtonLoading(submitButton);
+        }
+    }
+
+    async function excluirServico(servicoId) {
+        if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
+        let todosServicos = await API.getServicos();
+        todosServicos = todosServicos.filter(s => s.id !== servicoId);
+        await API.salvarServicos(todosServicos);
+        mostrarToast("Serviço excluído.", "success");
+        renderizarMeusServicos();
+    }
+    window.excluirServico = excluirServico; // Expondo para o onclick
 
     function carregarAvaliacoes(usuario) {
         const containerAvaliacoes = document.getElementById("avaliacoesRecebidas");

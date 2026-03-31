@@ -89,43 +89,43 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         setTimeout(async () => {
+            const todosServicos = await API.getServicos();
             const usuarios = await API.getUsuarios();
-            let prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
             const avaliacoes = await API.getAvaliacoes();
+            let servicosFiltrados = [...todosServicos];
 
             // 1. Filtro de categoria
             if (categoriaFiltro !== "Todos") {
-                prestadores = prestadores.filter(u => {
-                    const cat = u.prestador.categoria || "Outros";
-                    return cat === categoriaFiltro;
-                });
+                servicosFiltrados = servicosFiltrados.filter(s => s.categoria === categoriaFiltro);
             }
 
             // 2. Filtro de busca
             if (termoBusca) {
-                prestadores = prestadores.filter(p => {
-                    const textoCard = `${p.prestador.servico || ''} ${p.nome || ''} ${p.endereco.cidade || ''} ${p.prestador.categoria || ''} ${p.prestador.descricao || ''}`.toLowerCase();
+                servicosFiltrados = servicosFiltrados.filter(s => {
+                    const prestador = usuarios.find(u => u.email === s.prestadorEmail);
+                    const textoCard = `${s.titulo} ${s.categoria} ${s.descricao} ${prestador?.nome} ${prestador?.endereco.cidade}`.toLowerCase();
                     return textoCard.includes(termoBusca);
                 });
             }
 
             // 3. Paginação
-            const totalItems = prestadores.length;
+            const totalItems = servicosFiltrados.length;
             const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-            const paginatedPrestadores = prestadores.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+            const paginatedServicos = servicosFiltrados.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
             grid.innerHTML = ''; // Limpa os skeletons
 
-            if (paginatedPrestadores.length === 0) {
+            if (paginatedServicos.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state fade-up-animation">
                         <div class="empty-state-icon">🔍</div>
                         <p>Nenhum prestador encontrado com estes critérios.</p>
                     </div>`;
             } else {
-                paginatedPrestadores.forEach(prestador => {
-                    const isSelf = prestador.email === emailLogado;
-                    renderizarCard(prestador, avaliacoes, grid, isSelf);
+                paginatedServicos.forEach(servico => {
+                    const prestador = usuarios.find(u => u.email === servico.prestadorEmail);
+                    const isSelf = prestador?.email === emailLogado;
+                    if (prestador) renderizarCard(servico, prestador, avaliacoes, grid, isSelf);
                 });
             }
 
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1500);
     }
 
-    function renderizarCard(prestador, avaliacoes, grid, isSelf) {
+    function renderizarCard(servico, prestador, avaliacoes, grid, isSelf) {
             const card = document.createElement('div');
             card.className = 'service-card';
 
@@ -146,22 +146,20 @@ document.addEventListener("DOMContentLoaded", function() {
         if (avaliacoesDoPrestador.length > 0) {
             const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
             const notaMedia = somaNotas / avaliacoesDoPrestador.length;
-            mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
+            mediaEstrelas = `★ ${notaMedia.toFixed(1)}`;
         }
 
         card.innerHTML = `
                 <img src="${prestador.fotoPerfil || 'img/avatar_padrao.png'}" alt="Foto de ${prestador.nome}" class="card-avatar">
-                <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
-                <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
+                <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${servico.categoria}</span>
+                <h3>${servico.titulo}</h3>
                 <p><strong>Prestador:</strong> ${prestador.nome}</p>
                 <p><strong>Avaliação:</strong> <span class="rating-display">${mediaEstrelas}</span> (${avaliacoesDoPrestador.length})</p>
-                <p><strong>Descrição:</strong> ${prestador.prestador.descricao || '-'}</p>
-                <p><strong>Preço médio:</strong> R$${parseFloat(prestador.prestador.valor || 0).toFixed(2).replace('.', ',')}</p>
-                <p><strong>Disponibilidade:</strong> ${prestador.prestador.disponibilidade || '-'}</p>
+                <p><strong>Descrição:</strong> ${servico.descricao || 'Sem descrição.'}</p>
                 <p><strong>Local:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
                 <div class="card-botoes">
                     <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
-                    ${!isSelf ? `<button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>` : ''}
+                    ${!isSelf ? `<button class="btn-service" data-servico-id="${servico.id}">Solicitar</button>` : ''}
                 </div>
             `;
         grid.appendChild(card);
@@ -200,8 +198,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         window.location.href = "index.html";
                     }, 1500);
                 } else {
-                    const prestadorEmail = e.target.getAttribute('data-email-prestador');
-                    window.location.href = `solicitar.html?prestador=${encodeURIComponent(prestadorEmail)}`;
+                    const servicoId = e.target.getAttribute('data-servico-id');
+                    window.location.href = `solicitar.html?servicoId=${servicoId}`;
                 }
             }
             if (e.target && e.target.classList.contains('btn-ver-perfil')) {

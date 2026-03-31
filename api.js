@@ -27,6 +27,14 @@ const API = {
         localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
     },
 
+    // ================= SERVIÇOS =================
+    async getServicos() {
+        return JSON.parse(localStorage.getItem("servicos")) || [];
+    },
+    async salvarServicos(servicos) {
+        localStorage.setItem("servicos", JSON.stringify(servicos));
+    },
+
     // ================= TRANSAÇÕES / FINANCEIRO =================
     async getTransacoes() {
         return JSON.parse(localStorage.getItem("transacoes")) || [];

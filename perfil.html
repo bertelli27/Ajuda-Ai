@@ -179,29 +179,15 @@
 
             <!-- SEÇÕES DE PONTA A PONTA (FULL WIDTH) -->
             <div id="secao-prestador" style="display: none; margin-top: 10px;">
+                <!-- SEÇÃO MEUS SERVIÇOS -->
                 <div class="profile-info-card">
-                    <h3 class="section-title">Dados Profissionais</h3>
-                    <div id="view-prestador">
-                        <div class="form-grid">
-                            <div class="form-group"><label>Categoria</label><p class="view-mode-text" id="view-categoria"></p></div>
-                            <div class="form-group"><label>Valor Médio</label><p class="view-mode-text" id="view-valor"></p></div>
-                            <div class="form-group full-width"><label>Serviço Principal</label><p class="view-mode-text" id="view-servico"></p></div>
-                            <div class="form-group full-width"><label>Descrição</label><p class="view-mode-text" id="view-descricao"></p></div>
-                            <div class="form-group full-width"><label>Disponibilidade</label><p class="view-mode-text" id="view-disponibilidade"></p></div>
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 class="section-title" style="margin: 0; border: none;">Meus Serviços</h3>
+                        <button id="btn-add-servico" class="btn-forgot" style="width: auto; padding: 8px 15px; margin: 0; display: none; cursor: pointer;">Adicionar Serviço</button>
                     </div>
-                    <form id="form-prestador-edit" style="display: none;">
-                        <div class="form-grid">
-                            <div class="form-group full-width">
-                                <label for="categoria">Categoria de Serviço</label>
-                                <select id="categoria"><option value="" disabled selected>Selecione...</option><option>Limpeza</option><option>Manutenção</option><option>Reformas</option><option>Tecnologia</option><option>Saúde e Beleza</option><option>Outros</option></select>
-                            </div>
-                            <div class="form-group full-width"><label for="servico">Serviço Prestado</label><input type="text" id="servico"></div>
-                            <div class="form-group full-width"><label for="descricao">Descrição Rápida</label><input type="text" id="descricao"></div>
-                            <div class="form-group"><label for="valor">Valor Médio (R$)</label><input type="text" id="valor"></div>
-                            <div class="form-group"><label for="disponibilidade">Disponibilidade</label><input type="text" id="disponibilidade"></div>
-                        </div>
-                    </form>
+                    <div id="lista-meus-servicos" class="meus-servicos-list">
+                        <!-- Os cards de serviço do prestador serão inseridos aqui -->
+                    </div>
                 </div>
 
                         <!-- NOVA SEÇÃO: PORTFÓLIO -->
@@ -259,7 +245,32 @@
     </div>
 </div>
 
+<!-- MODAL PARA ADICIONAR/EDITAR SERVIÇO -->
+<div id="servicoModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: auto;">
+        <span class="close-button" id="closeServicoModal">&times;</span>
+        <h3 id="servicoModalTitle" style="color: #00ADB5; margin-bottom: 20px;">Adicionar Novo Serviço</h3>
+        <form id="formServico">
+            <input type="hidden" id="servicoId">
+            <div class="form-group">
+                <label for="servicoTitulo">Título do Serviço</label>
+                <input type="text" id="servicoTitulo" placeholder="Ex: Conserto de Ar Condicionado" required>
+            </div>
+            <div class="form-group">
+                <label for="servicoCategoria">Categoria</label>
+                <select id="servicoCategoria" required><option value="" disabled selected>Selecione...</option><option>Limpeza</option><option>Manutenção</option><option>Reformas</option><option>Tecnologia</option><option>Saúde e Beleza</option><option>Outros</option></select>
+            </div>
+            <div class="form-group">
+                <label for="servicoDescricao">Descrição Curta</label>
+                <textarea id="servicoDescricao" placeholder="Descreva o que você faz neste serviço." style="min-height: 80px;"></textarea>
+            </div>
+            <button type="submit" class="btn-login" style="width: 100%; margin-top: 15px;">Salvar Serviço</button>
+        </form>
+    </div>
+</div>
+
 <script src="utils.js"></script>
+<script src="api.js"></script>
 <script src="perfil.js"></script>
 </body>
 </html>

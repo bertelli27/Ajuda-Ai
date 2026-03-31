@@ -188,7 +188,9 @@ body {
 
 /* INPUTS BASE */
 .login-card input, .login-card select, .form-grid select, .login-card textarea,
-.profile-info-card input, .profile-info-card select, .profile-info-card textarea {
+.profile-info-card input, .profile-info-card select, .profile-info-card textarea,
+.modal-content input, .modal-content select, .modal-content textarea
+{
     width: 100%;
     padding: 14px 16px;
     border: 2px solid #4F5B66; /* Borda visível (Outlined) */
@@ -202,7 +204,8 @@ body {
 }
 
 .login-card input::placeholder, .login-card textarea::placeholder,
-.profile-info-card input::placeholder, .profile-info-card textarea::placeholder {
+.profile-info-card input::placeholder, .profile-info-card textarea::placeholder,
+.modal-content input::placeholder, .modal-content textarea::placeholder {
     color: #888888;
 }
 
@@ -213,12 +216,16 @@ body {
 .login-card textarea:hover:not(:disabled),
 .profile-info-card input:hover:not(:disabled),
 .profile-info-card select:hover:not(:disabled),
-.profile-info-card textarea:hover:not(:disabled) {
+.profile-info-card textarea:hover:not(:disabled),
+.modal-content input:hover:not(:disabled), .modal-content select:hover:not(:disabled), .modal-content textarea:hover:not(:disabled)
+{
     border-color: #6C7A89;
 }
 
 .login-card input:focus, .login-card select:focus, .form-grid select:focus, .login-card textarea:focus,
-.profile-info-card input:focus, .profile-info-card select:focus, .profile-info-card textarea:focus {
+.profile-info-card input:focus, .profile-info-card select:focus, .profile-info-card textarea:focus,
+.modal-content input:focus, .modal-content select:focus, .modal-content textarea:focus
+{
     border-color: #00ADB5;
     background: #222A31;
     box-shadow: 0 0 0 4px rgba(0, 173, 181, 0.15);
@@ -3307,4 +3314,35 @@ body.focus-mode-active .back-to-top-btn {
 }
 .public-view #public-profile-header {
     display: flex !important;
+}
+
+/* ===========================
+   MEUS SERVIÇOS (PERFIL)
+=========================== */
+.meus-servicos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.meu-servico-card {
+    background: #2A343D;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid #4F5B66;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    transition: background-color 0.3s;
+}
+
+.meu-servico-card:hover {
+    background-color: #393E46;
+}
+
+.meu-servico-card h4 {
+    color: #EEEEEE;
+    font-size: 16px;
+    margin: 0;
 }
