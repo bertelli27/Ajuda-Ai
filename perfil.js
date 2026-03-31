@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        configurarPerfilPublico();
+        document.body.classList.add('public-view'); // ATIVA O LAYOUT PÚBLICO
+        configurarPerfilPublico(); // Apenas para ajustar títulos e botões
 
     } else {
         // --- MODO MEU PERFIL (EDITÁVEL) ---
@@ -78,15 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const pageTitle = document.getElementById("perfil-page-title");
         if (pageTitle) pageTitle.innerText = `Perfil de Prestador`;
 
-        // Esconde dados pessoais sensíveis na visão pública
-        document.getElementById('view-email').style.display = 'none';
-        document.getElementById('view-telefone').style.display = 'none';
-        document.querySelector('#view-email').parentElement.style.display = 'none';
-        document.querySelector('#view-telefone').parentElement.style.display = 'none';
-
-        // Esconde e-mail da sidebar também
-        const sidebarEmail = document.getElementById('sidebar-user-email');
-        if (sidebarEmail) sidebarEmail.style.display = 'none';
+        // A ocultação dos dados privados agora é feita via CSS com a classe .public-view no body
     }
 
     function configurarMeuPerfil() {
@@ -130,6 +123,13 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("sidebar-user-name").innerText = usuario.nome;
         document.getElementById("sidebar-user-email").innerText = usuario.email;
 
+        // Preenche o novo header público
+        document.getElementById("publicProfilePic").src = profilePic.src;
+        document.getElementById("public-sidebar-user-name").innerText = usuario.nome;
+        document.getElementById("public-sidebar-user-email").style.display = 'none'; // Oculta o email na visão pública
+        const btnContratar = document.getElementById("public-btnContratar");
+        if(btnContratar) btnContratar.onclick = () => window.location.href = `solicitar.html?prestador=${encodeURIComponent(usuario.email)}`;
+
         // Preenche os campos de visualização
         document.getElementById("view-nome").innerText = usuario.nome;
         document.getElementById("view-email").innerText = usuario.email;
@@ -139,22 +139,52 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("view-cidade-estado").innerText = `${end.cidade} - ${end.estado}, CEP: ${end.cep}`;
 
         // Preenche as estatísticas da Sidebar
+        
+        // Calcula a Avaliação Média para exibir no Header Público
+        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === usuario.email);
+        let mediaEstrelas = 'Novo';
+        if (avaliacoesDoPrestador.length > 0) {
+            const soma = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
+            const media = (soma / avaliacoesDoPrestador.length).toFixed(1);
+            mediaEstrelas = `★ ${media}`;
+        }
+        const ratingContainer = document.getElementById("public-sidebar-rating-container");
+        const ratingElement = document.getElementById("public-sidebar-rating");
+        if (ratingElement) ratingElement.innerText = mediaEstrelas;
+        if (usuario.tipo !== "prestador" && ratingContainer) {
+            ratingContainer.style.display = "none"; // Oculta se for cliente
+        }
+
         const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
         if (usuario.tipo === "prestador") {
             document.getElementById("sidebar-tipo-perfil").innerText = "Profissional";
             document.getElementById("sidebar-label-servicos").innerText = "Serviços Concluídos";
             const concluidos = solicitacoes.filter(s => s.prestadorEmail === usuario.email && s.status === 'CONCLUIDO').length;
             document.getElementById("sidebar-servicos-count").innerText = concluidos;
+            // Preenche header público
+            document.getElementById("public-sidebar-tipo-perfil").innerText = "Profissional";
+            document.getElementById("public-sidebar-label-servicos").innerText = "Serviços Concluídos";
+            document.getElementById("public-sidebar-servicos-count").innerText = concluidos;
         } else {
             document.getElementById("sidebar-tipo-perfil").innerText = "Cliente";
             document.getElementById("sidebar-label-servicos").innerText = "Serviços Solicitados";
             const solicitados = solicitacoes.filter(s => s.clienteEmail === usuario.email).length;
             document.getElementById("sidebar-servicos-count").innerText = solicitados;
+            // Preenche header público
+            document.getElementById("public-sidebar-tipo-perfil").innerText = "Cliente";
+            document.getElementById("public-sidebar-label-servicos").innerText = "Serviços Solicitados";
+            document.getElementById("public-sidebar-servicos-count").innerText = solicitados;
         }
         
         // Exibe "Ativa e Verificada" apenas para o próprio perfil, se for visitante mostra "Perfil Verificado"
         const statusConta = document.getElementById("sidebar-status-conta");
-        if (!isOwnProfile && statusConta) statusConta.innerHTML = `<span style="display: inline-block; width: 10px; height: 10px; background-color: #5cb85c; border-radius: 50%;"></span> Perfil Verificado`;
+        const statusContaPublico = document.getElementById("public-sidebar-status-conta");
+        const statusHTML = `<span style="display: inline-block; width: 10px; height: 10px; background-color: #5cb85c; border-radius: 50%;"></span> Perfil Verificado`;
+        if (!isOwnProfile && statusConta) {
+            statusConta.innerHTML = statusHTML;
+        }
+        if (statusContaPublico) statusContaPublico.innerHTML = statusHTML;
 
         // Preenche os inputs do formulário de edição (que está escondido)
         document.getElementById("nome").value = usuario.nome;
@@ -221,9 +251,16 @@ document.addEventListener("DOMContentLoaded", function() {
         // Lógica para a seção do prestador
         const viewPrestador = document.getElementById("view-prestador");
         const formPrestador = document.getElementById("form-prestador-edit");
+        const secaoPrestador = document.getElementById("secao-prestador");
+
         if (viewPrestador && formPrestador) {
             viewPrestador.style.display = editar ? "none" : "block";
             formPrestador.style.display = editar ? "block" : "none";
+        }
+
+        if (secaoPrestador) {
+            if (editar) secaoPrestador.classList.add('edit-mode');
+            else secaoPrestador.classList.remove('edit-mode');
         }
 
         btnEditar.style.display = editar ? "none" : "block";
@@ -439,6 +476,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const restantes = portfolio.length - MAX_VISIVEIS + 1;
                     html += `
                         <div class="portfolio-item">
+                            <button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto">&times;</button>
                             <img src="${imgBase64}" alt="Foto do portfólio">
                             <div class="portfolio-more" id="btn-open-full-portfolio">
                                 +${restantes}
@@ -449,6 +487,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Imagem normal
                     html += `
                         <div class="portfolio-item">
+                            <button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto">&times;</button>
                             <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this)">
                         </div>
                     `;
@@ -475,6 +514,33 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const closeBtn = document.getElementById('closePortfolioModal');
         if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+    }
+
+    function excluirFotoPortfolio(indexParaExcluir) {
+        // Pede confirmação ao usuário
+        const confirmou = confirm("Tem certeza que deseja excluir esta foto do seu portfólio? Esta ação não pode ser desfeita.");
+        if (!confirmou) return;
+
+        const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+        if (userIndex === -1) {
+            mostrarToast("Erro ao encontrar seu usuário.", "error");
+            return;
+        }
+
+        const usuario = usuarios[userIndex];
+        const portfolio = usuario.prestador?.portfolio;
+
+        if (portfolio && portfolio[indexParaExcluir] !== undefined) {
+            // Remove a imagem do array pelo índice
+            portfolio.splice(indexParaExcluir, 1);
+
+            // Salva o array de usuários atualizado no localStorage
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+            // Re-renderiza a seção do portfólio para refletir a mudança
+            renderizarPortfolio(usuario);
+            mostrarToast("Foto excluída com sucesso!", "success");
+        }
     }
 
     document.getElementById('portfolio-upload')?.addEventListener('change', async function(e) {
@@ -541,6 +607,14 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+
+    // Event Delegation para o botão de excluir foto
+    portfolioContainer?.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-portfolio-btn')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            excluirFotoPortfolio(index);
+        }
+    });
 
     // Fecha o modal de portfólio se clicar fora dele
     window.addEventListener('click', e => { 

@@ -28,7 +28,37 @@
 <section class="services-section" style="padding-top: 40px; max-width: 1200px; width: 100%;">
     <h2 id="perfil-page-title" class="dashboard-header-title" style="text-align: left; margin-bottom: 30px;">Meu Perfil</h2>
 
-    <div class="profile-layout">
+    <!-- NOVO: CARD HORIZONTAL PARA PERFIL PÚBLICO -->
+    <div id="public-profile-header" class="profile-info-card" style="display: none; margin-bottom: 30px; flex-direction: row; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <div class="profile-pic-container" style="margin: 0;">
+            <img src="img/avatar_padrao.png" alt="Foto de Perfil" id="publicProfilePic" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #00ADB5;">
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 5px;">
+            <h3 id="public-sidebar-user-name" style="color: #EEEEEE; font-size: 24px; margin: 0;"></h3>
+            <p id="public-sidebar-user-email" style="color: #00ADB5; font-size: 15px; margin: 0;"></p>
+        </div>
+        <div class="sidebar-stat-box" style="margin: 0; border: none; padding: 0; flex-direction: row; gap: 25px; flex-wrap: wrap;">
+            <div class="sidebar-stat-item" style="background: transparent; border: none; padding: 0;">
+                <span class="sidebar-stat-label">Status da Conta</span>
+                <span class="sidebar-stat-value" id="public-sidebar-status-conta"></span>
+            </div>
+            <div class="sidebar-stat-item" style="background: transparent; border: none; padding: 0;">
+                <span class="sidebar-stat-label">Tipo de Perfil</span>
+                <span class="sidebar-stat-value" id="public-sidebar-tipo-perfil" style="color: #00ADB5;"></span>
+            </div>
+            <div class="sidebar-stat-item" style="background: transparent; border: none; padding: 0;">
+                <span class="sidebar-stat-label" id="public-sidebar-label-servicos"></span>
+                <span class="sidebar-stat-value" id="public-sidebar-servicos-count"></span>
+            </div>
+            <div class="sidebar-stat-item" style="background: transparent; border: none; padding: 0;" id="public-sidebar-rating-container">
+                <span class="sidebar-stat-label">Avaliação</span>
+                <span class="sidebar-stat-value rating-display" id="public-sidebar-rating">Novo</span>
+            </div>
+        </div>
+        <button id="public-btnContratar" class="btn-service" style="width: auto; padding: 12px 25px; margin-left: auto;">Contratar Serviço</button>
+    </div>
+
+    <div id="private-profile-layout" class="profile-layout">
                 <!-- COLUNA ESQUERDA: SIDEBAR -->
                 <aside class="profile-sidebar">
                     <div class="profile-pic-container">
@@ -72,7 +102,7 @@
                 </aside>
 
                 <!-- COLUNA DIREITA: CONTEÚDO PRINCIPAL -->
-                <div class="profile-main">
+                <div id="private-profile-main" class="profile-main">
                     <div id="view-mode">
                         <div class="profile-info-card">
                             <h3 class="section-title">Dados Pessoais</h3>

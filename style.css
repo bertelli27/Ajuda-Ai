@@ -3289,3 +3289,13 @@ body.focus-mode-active .back-to-top-btn {
     pointer-events: none;
     backdrop-filter: blur(4px);
 }
+
+/* ===========================
+   VISÃO PÚBLICA DO PERFIL
+=========================== */
+.public-view #private-profile-layout {
+    display: none;
+}
+.public-view #public-profile-header {
+    display: flex !important;
+}
