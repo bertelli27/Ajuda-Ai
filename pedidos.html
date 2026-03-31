@@ -121,5 +121,73 @@
     </div>
 </div>
 
+<!-- MODAL DE PAGAMENTO SIMULADO -->
+<div id="pagamentoModal" class="modal">
+    <div class="modal-content" style="overflow-y: auto;">
+        <span class="close-button" id="closePagamentoModal" onclick="document.getElementById('pagamentoModal').style.display='none'">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Finalizar Pagamento</h3>
+        
+        <!-- Resumo do Pedido (Novo Layout Premium) -->
+        <div style="background: rgba(0, 173, 181, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(0, 173, 181, 0.2);">
+            <h4 id="pagamentoServicoTitulo" style="color: #EEEEEE; margin-bottom: 5px; font-size: 18px;">Nome do Serviço</h4>
+            <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 15px;">Profissional: <strong id="pagamentoPrestadorNome" style="color: #EEEEEE;">Nome</strong></p>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <span style="font-weight: 500; color: #CCCCCC;">Total a Pagar:</span>
+                <span id="pagamentoValorTotal" style="font-size: 28px; font-weight: 700; color: #5cb85c;">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Toggle de Seleção -->
+        <div class="payment-methods">
+            <div class="payment-method">
+                <input type="radio" name="metodoPagamento" id="payPix" value="pix" checked>
+                <label for="payPix">PIX</label>
+            </div>
+            <div class="payment-method">
+                <input type="radio" name="metodoPagamento" id="payCartao" value="cartao">
+                <label for="payCartao">Cartão de Crédito</label>
+            </div>
+        </div>
+
+        <!-- ÁREA DO PIX -->
+        <div id="areaPix" style="text-align: center; padding: 40px 20px; background: #2A343D; border-radius: 10px; border: 1px solid #4F5B66;">
+            <p style="margin-bottom: 25px; font-size: 16px; color: #AAAAAA;">Escaneie o QR Code ou copie a chave PIX abaixo.</p>
+            <!-- Imagem genérica de QR Code para simulação -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=PagamentoSimuladoAjudaAi" alt="QR Code PIX" style="border-radius: 8px; border: 4px solid #fff; margin-bottom: 25px; width: 220px; height: 220px;">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" value="0002012636br.gov.bcb.pix..." readonly style="flex-grow: 1; padding: 10px; background: #222A31; border: 1px solid #4F5B66; border-radius: 8px; color: #EEE;">
+                <button type="button" class="btn-forgot" style="width: auto; margin: 0; padding: 10px 15px;" onclick="mostrarToast('Chave PIX copiada!', 'success')">Copiar</button>
+            </div>
+        </div>
+
+        <!-- ÁREA DO CARTÃO -->
+        <div id="areaCartao" style="display: none; padding: 40px 30px; background: #2A343D; border-radius: 10px; border: 1px solid #4F5B66;">
+            <div class="form-grid" style="margin-bottom: 0;">
+                <div class="form-group full-width">
+                    <label>Número do Cartão</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                </div>
+                <div class="form-group full-width">
+                    <label>Nome do Titular</label>
+                    <input type="text" placeholder="NOME COMO ESTÁ NO CARTÃO">
+                </div>
+                <div class="form-group">
+                    <label>Validade</label>
+                    <input type="text" placeholder="MM/AA" maxlength="5">
+                </div>
+                <div class="form-group">
+                    <label>CVV</label>
+                    <input type="password" placeholder="123" maxlength="4">
+                </div>
+            </div>
+        </div>
+
+        <!-- Spacer para empurrar o botão para o fundo se a tela for grande -->
+        <div style="flex-grow: 1;"></div>
+
+        <button type="button" id="btnConfirmarPagamentoSimulado" class="btn-login" style="margin-top: 30px; font-size: 18px; padding: 18px;">Confirmar Pagamento</button>
+    </div>
+</div>
+
 </body>
 </html>

@@ -582,8 +582,21 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         } else if (!isPrestador && pedido.valorStatus === 'PROPOSTO') {
             document.getElementById("btnAceitarProposta")?.addEventListener("click", () => {
-                // Envia para o Checkout (Pagamento)
-                window.location.href = `pagamento.html?pedido=${pedido.id}`;
+                // 1. Puxa os dados do pedido atual para exibir na box de pagamento
+                const allUsers = JSON.parse(localStorage.getItem("usuarios")) || [];
+                const prestadorDoPedido = allUsers.find(u => u.email === pedido.prestadorEmail);
+                
+                document.getElementById('pagamentoServicoTitulo').innerText = pedido.servico;
+                document.getElementById('pagamentoPrestadorNome').innerText = prestadorDoPedido ? prestadorDoPedido.nome : 'Profissional';
+                document.getElementById('pagamentoValorTotal').innerText = `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}`;
+
+                // 2. Reseta as abas para sempre mostrar o PIX e o QR Code primeiro
+                document.getElementById('payPix').checked = true;
+                document.getElementById('areaPix').style.display = 'block';
+                document.getElementById('areaCartao').style.display = 'none';
+
+                // Abre o modal de pagamento simulado
+                document.getElementById('pagamentoModal').style.display = 'flex';
             });
         }
     }
@@ -863,6 +876,84 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
     }
+
+    // ==========================================================
+    // LÓGICA DE PAGAMENTO SIMULADO (UI Toggle e Processamento)
+    // ==========================================================
+    document.querySelectorAll('input[name="metodoPagamento"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'pix') {
+                document.getElementById('areaPix').style.display = 'block';
+                document.getElementById('areaCartao').style.display = 'none';
+            } else {
+                document.getElementById('areaPix').style.display = 'none';
+                document.getElementById('areaCartao').style.display = 'block';
+            }
+        });
+    });
+
+    const btnConfirmarPag = document.getElementById('btnConfirmarPagamentoSimulado');
+    if (btnConfirmarPag) {
+        btnConfirmarPag.addEventListener('click', function() {
+            const btn = this;
+            setButtonLoading(btn);
+
+            const metodoEscolhido = document.querySelector('input[name="metodoPagamento"]:checked').value;
+            if (metodoEscolhido === 'cartao') {
+                const numeroCartao = document.querySelector('#areaCartao input[placeholder="0000 0000 0000 0000"]').value;
+                if (numeroCartao.length < 14) {
+                    mostrarToast("Digite um número de cartão válido.", "error");
+                    removeButtonLoading(btn);
+                    return;
+                }
+            }
+
+            setTimeout(async () => {
+                if (currentPedidoId) {
+                    const index = solicitacoes.findIndex(s => s.id === currentPedidoId);
+                    if (index !== -1) {
+                        solicitacoes[index].status = 'ACEITO';
+                        solicitacoes[index].valorStatus = 'ACEITO';
+                        solicitacoes[index].statusPagamento = 'RETIDO'; // Dinheiro retido pela plataforma
+                        
+                        const transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+                        const valorTotal = parseFloat(solicitacoes[index].valorCombinado);
+                        const taxa = valorTotal * 0.10;
+                        
+                        transacoes.push({
+                            id: "TX-" + Date.now(),
+                            servicoId: solicitacoes[index].id,
+                            clienteEmail: solicitacoes[index].clienteEmail,
+                            prestadorEmail: solicitacoes[index].prestadorEmail,
+                            valorServico: valorTotal,
+                            taxaPlataforma: taxa,
+                            valorPrestador: valorTotal - taxa,
+                            data: new Date().toISOString(),
+                            status: "RETIDO",
+                            tipo: "PAGAMENTO"
+                        });
+                        
+                        localStorage.setItem("transacoes", JSON.stringify(transacoes));
+                        localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+                        enviarMensagemSistema(currentPedidoId, "💳 <strong>Pagamento Aprovado!</strong> O valor foi retido com segurança pela plataforma. O serviço já pode ser iniciado.");
+                    }
+                }
+                
+                mostrarToast("Pagamento aprovado com sucesso!", "success");
+                document.getElementById('pagamentoModal').style.display = 'none';
+                removeButtonLoading(btn);
+                
+                setTimeout(() => location.reload(), 1000);
+            }, 1500);
+        });
+    }
+
+    const modalPagamento = document.getElementById('pagamentoModal');
+    window.addEventListener('click', (e) => {
+        if (e.target === modalPagamento) {
+            modalPagamento.style.display = 'none';
+        }
+    });
 
     // Inicia a renderização
     setupHeader();

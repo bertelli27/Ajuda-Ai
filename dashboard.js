@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     const mensagens = await API.getMensagens();
     const avaliacoes = await API.getAvaliacoes();
     const servicos = await API.getServicos();
+    const transacoes = await API.getTransacoes();
     
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
     if (!usuarioAtual) {
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     setupHeader(usuarioAtual);
-    carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos);
+    carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos, transacoes);
     await renderizarHistoricoFinanceiro(emailLogado);
 
     // Só renderiza o gráfico financeiro se a seção for visível
@@ -37,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 });
 
-function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos) {
+function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos, transacoes) {
     // ================= 0. CABEÇALHO =================
     if (usuarioAtual.nome) document.getElementById('dash-user-name').innerText = usuarioAtual.nome.split(' ')[0];
 
@@ -90,6 +91,10 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
             const servicoEncontrado = servicos.find(s => s.id === idMaisPedido);
             if (servicoEncontrado) servicoPopular = servicoEncontrado.titulo;
         }
+
+        const minhasTransacoesConcluidas = transacoes.filter(t => t.prestadorEmail === emailLogado && t.status === 'CONCLUIDO');
+        const totalRecebido = minhasTransacoesConcluidas.reduce((acc, t) => acc + t.valorPrestador, 0);
+        document.getElementById("card-total-recebido").innerText = `R$ ${totalRecebido.toFixed(2).replace('.', ',')}`;
 
         document.getElementById("card-conversas-ativas-prestador").innerText = conversasAtivasPrestador;
         document.getElementById("card-servicos-publicados").innerText = meusServicos.length;
