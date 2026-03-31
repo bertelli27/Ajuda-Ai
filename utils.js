@@ -204,17 +204,65 @@ function inicializarThemeToggle() {
 // VOLTAR AO TOPO (BACK TO TOP BUTTON)
 // =======================================================
 function inicializarBackToTopButton() {
-    const backToTopBtn = document.getElementById("backToTopBtn");
-    if (!backToTopBtn) return;
+    // 1. Remove botões antigos (Limpeza)
+    document.querySelectorAll("#backToTopBtn, .back-to-top-btn").forEach(btn => btn.remove());
 
-    // Mostra/esconde o botão ao rolar a página
-    window.addEventListener("scroll", () => {
-        if (window.scrollY > 300) { // Mostra o botão após rolar 300px
-            backToTopBtn.style.display = "flex";
+    // 2. BURLANDO O CACHE: Injetando o CSS blindado diretamente pelo JS
+    if (!document.getElementById("back-to-top-styles")) {
+        const style = document.createElement("style");
+        style.id = "back-to-top-styles";
+        style.innerHTML = `
+            .back-to-top-btn {
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                background-color: #00ADB5 !important;
+                color: #222A31 !important;
+                border: none !important;
+                border-radius: 50% !important;
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 24px !important;
+                display: none !important; /* Só aparece quando o JS mandar */
+                justify-content: center !important;
+                align-items: center !important;
+                cursor: pointer !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+                z-index: 999999 !important; /* Prioridade máxima para ficar por cima de tudo */
+                transition: transform 0.3s ease, background-color 0.3s ease !important;
+            }
+            .back-to-top-btn.show {
+                display: flex !important;
+                animation: slideUpFade 0.3s ease-out forwards !important;
+            }
+            .back-to-top-btn:hover {
+                background-color: #00CED1 !important;
+                transform: translateY(-2px) !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 3. Cria o botão dinâmico
+    const backToTopBtn = document.createElement("button");
+    backToTopBtn.id = "backToTopBtn";
+    backToTopBtn.className = "back-to-top-btn";
+    backToTopBtn.setAttribute("data-tooltip", "Voltar ao Topo");
+    backToTopBtn.setAttribute("data-tooltip-dir", "left");
+    backToTopBtn.innerHTML = "&#9650;";
+    document.body.appendChild(backToTopBtn);
+
+    // 4. Lógica para mostrar/esconder (Verifica no Load e no Scroll)
+    const checkScroll = () => {
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add("show");
         } else {
-            backToTopBtn.style.display = "none";
+            backToTopBtn.classList.remove("show");
         }
-    });
+    };
+
+    window.addEventListener("scroll", checkScroll);
+    checkScroll(); // Verifica o scroll imediatamente ao carregar a página
 
     // Rola para o topo ao clicar no botão
     backToTopBtn.addEventListener("click", () => {
