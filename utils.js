@@ -452,7 +452,35 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
 // =======================================================
 // LIGHTBOX (VISUALIZADOR DE IMAGENS)
 // =======================================================
-function abrirLightbox(imageSrc) {
+let lightboxGallery = [];
+let lightboxCurrentIndex = 0;
+
+function showLightboxImage(index) {
+    if (index < 0 || index >= lightboxGallery.length) return;
+    const imgElement = document.getElementById('lightbox-img');
+    if (!imgElement) return;
+
+    // Adiciona um efeito de fade para a transição da imagem
+    imgElement.style.opacity = '0';
+    setTimeout(() => {
+        imgElement.src = lightboxGallery[index];
+        imgElement.style.opacity = '1';
+        lightboxCurrentIndex = index;
+    }, 150);
+}
+
+function changeLightboxImage(direction) {
+    const newIndex = lightboxCurrentIndex + direction;
+    if (newIndex >= lightboxGallery.length) {
+        showLightboxImage(0); // Volta para o início
+    } else if (newIndex < 0) {
+        showLightboxImage(lightboxGallery.length - 1); // Volta para o final
+    } else {
+        showLightboxImage(newIndex);
+    }
+}
+
+function abrirLightbox(clickedImgElement) {
     let overlay = document.getElementById('lightbox-overlay');
     
     // Cria o lightbox no DOM se for a primeira vez que é chamado
@@ -460,28 +488,55 @@ function abrirLightbox(imageSrc) {
         overlay = document.createElement('div');
         overlay.id = 'lightbox-overlay';
         overlay.className = 'lightbox-overlay';
-        
+
         const closeBtn = document.createElement('span');
         closeBtn.className = 'lightbox-close';
         closeBtn.innerHTML = '&times;';
-        
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'lightbox-nav lightbox-prev';
+        prevBtn.innerHTML = '&#10094;';
+        prevBtn.setAttribute('aria-label', 'Imagem anterior');
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'lightbox-nav lightbox-next';
+        nextBtn.innerHTML = '&#10095;';
+        nextBtn.setAttribute('aria-label', 'Próxima imagem');
+
         const img = document.createElement('img');
         img.className = 'lightbox-content';
         img.id = 'lightbox-img';
-        
+        img.style.transition = 'opacity 0.2s ease-in-out';
+
         overlay.appendChild(closeBtn);
+        overlay.appendChild(prevBtn);
+        overlay.appendChild(nextBtn);
         overlay.appendChild(img);
         document.body.appendChild(overlay);
         
-        const fecharLightbox = () => { overlay.style.display = 'none'; img.src = ''; };
-        
+        const fecharLightbox = () => { overlay.style.display = 'none'; img.src = ''; lightboxGallery = []; };
+
         closeBtn.addEventListener('click', fecharLightbox);
         overlay.addEventListener('click', (e) => { if (e.target === overlay) fecharLightbox(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.style.display === 'flex') fecharLightbox(); });
+        prevBtn.addEventListener('click', (e) => { e.stopPropagation(); changeLightboxImage(-1); });
+        nextBtn.addEventListener('click', (e) => { e.stopPropagation(); changeLightboxImage(1); });
+
+        document.addEventListener('keydown', (e) => { 
+            if (overlay.style.display !== 'flex') return;
+            if (e.key === 'Escape') fecharLightbox();
+            if (e.key === 'ArrowLeft') changeLightboxImage(-1);
+            if (e.key === 'ArrowRight') changeLightboxImage(1);
+        });
     }
     
-    const imgElement = document.getElementById('lightbox-img');
-    imgElement.src = imageSrc;
+    const galleryContainer = clickedImgElement.closest('.portfolio-gallery, #modalListaPortfolio, .chat-messages');
+    lightboxGallery = galleryContainer ? Array.from(galleryContainer.querySelectorAll('img')).map(img => img.src) : [clickedImgElement.src];
+
+    const navButtons = overlay.querySelectorAll('.lightbox-nav');
+    navButtons.forEach(btn => btn.style.display = lightboxGallery.length > 1 ? 'flex' : 'none');
+
+    const startIndex = lightboxGallery.findIndex(src => src === clickedImgElement.src);
+    showLightboxImage(startIndex >= 0 ? startIndex : 0);
     overlay.style.display = 'flex';
 }
 

@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // ================= VARIÁVEIS GLOBAIS E VERIFICAÇÃO DE CONTEXTO =================
     const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
     const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
     const perfilEmail = params.get("usuario");
     const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
     let usuarioAlvo; // O usuário cujo perfil está sendo exibido
@@ -54,6 +55,14 @@ document.addEventListener("DOMContentLoaded", function() {
     // Preenche os dados na tela e configura o cabeçalho, seja qual for o modo
     preencherDados(usuarioAlvo);
     setupHeader();
+
+    // --- Ação direta para se tornar prestador vindo de outra página ---
+    if (isOwnProfile && action === 'become_provider' && usuarioAlvo.tipo === 'cliente') {
+        // Atraso mínimo para garantir que a UI está pronta antes de simular o clique
+        setTimeout(() => {
+            tornarPrestador();
+        }, 100);
+    }
 
     // ================= FUNÇÕES DE CONFIGURAÇÃO DE MODO =================
 
@@ -179,15 +188,8 @@ document.addEventListener("DOMContentLoaded", function() {
             renderizarPortfolio(usuario);
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
         } else if (isOwnProfile) {
-            // Mostra a opção de se tornar prestador apenas no próprio perfil
-            document.getElementById("areaTornarPrestador").innerHTML = `
-                <div class="become-provider-banner">
-                    <h3>Quer aumentar sua renda?</h3>
-                    <p>Ofereça seus serviços para milhares de clientes na sua região.</p>
-                    <button type="button" id="btnTornarPrestador" class="btn-login" style="width: auto; padding: 12px 25px;">Seja um Profissional</button>
-                </div>
-            `;
-            document.getElementById("btnTornarPrestador")?.addEventListener("click", tornarPrestador);
+            // Se o usuário é um cliente vendo o próprio perfil, mostra o botão para virar prestador
+            document.getElementById("areaTornarPrestador").style.display = "block";
         }
 
         // Configura o botão de Copiar Link (apenas para prestadores)
@@ -428,12 +430,51 @@ document.addEventListener("DOMContentLoaded", function() {
         if (portfolio.length === 0) {
             galeria.innerHTML = `<p style="color: #AAAAAA; font-style: italic; grid-column: 1 / -1; text-align: center;">Nenhuma foto no portfólio ainda.</p>`;
         } else {
-            galeria.innerHTML = portfolio.map(imgBase64 => `
-                <div class="portfolio-item">
-                    <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this.src)">
-                </div>
-            `).join('');
+            const MAX_VISIVEIS = 6;
+            let html = '';
+
+            portfolio.slice(0, MAX_VISIVEIS).forEach((imgBase64, index) => {
+                // Se for a última imagem permitida na grade E existirem mais imagens no array
+                if (index === MAX_VISIVEIS - 1 && portfolio.length > MAX_VISIVEIS) {
+                    const restantes = portfolio.length - MAX_VISIVEIS + 1;
+                    html += `
+                        <div class="portfolio-item">
+                            <img src="${imgBase64}" alt="Foto do portfólio">
+                            <div class="portfolio-more" id="btn-open-full-portfolio">
+                                +${restantes}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Imagem normal
+                    html += `
+                        <div class="portfolio-item">
+                            <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this)">
+                        </div>
+                    `;
+                }
+            });
+            
+            galeria.innerHTML = html;
+
+            // Adiciona o evento de clique no card "+X" se ele existir
+            const btnMore = document.getElementById("btn-open-full-portfolio");
+            if (btnMore) {
+                btnMore.addEventListener('click', () => abrirModalPortfolio(portfolio));
+            }
         }
+    }
+
+    function abrirModalPortfolio(portfolioArray) {
+        const modal = document.getElementById('portfolioModal');
+        const listaModal = document.getElementById('modalListaPortfolio');
+        if(!modal || !listaModal) return;
+        
+        listaModal.innerHTML = portfolioArray.map(img => `<div class="portfolio-item"><img src="${img}" alt="Foto do portfólio" onclick="abrirLightbox(this)"></div>`).join('');
+        modal.style.display = 'block';
+        
+        const closeBtn = document.getElementById('closePortfolioModal');
+        if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
     }
 
     document.getElementById('portfolio-upload')?.addEventListener('change', async function(e) {
@@ -500,6 +541,14 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+
+    // Fecha o modal de portfólio se clicar fora dele
+    window.addEventListener('click', e => { 
+        const pModal = document.getElementById('portfolioModal');
+        if(pModal && e.target === pModal) {
+            pModal.style.display = 'none'; 
+        }
+    });
 
     // ================= FUNÇÕES AUXILIARES =================
 

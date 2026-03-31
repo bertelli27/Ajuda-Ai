@@ -653,7 +653,7 @@ document.addEventListener("DOMContentLoaded", function() {
             
             let conteudo = msg.mensagem ? `<div>${msg.mensagem}</div>` : '';
             if (msg.imagemBase64) {
-                conteudo += `<img src="${msg.imagemBase64}" alt="Anexo" class="chat-image" onclick="abrirLightbox(this.src)">`;
+                conteudo += `<img src="${msg.imagemBase64}" alt="Anexo" class="chat-image" onclick="abrirLightbox(this)">`;
             }
             
             return `<div class="message ${classe}">${conteudo}</div>`;

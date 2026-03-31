@@ -21,11 +21,15 @@ document.addEventListener("DOMContentLoaded", async function() {
     setupHeader(usuarioAtual);
     carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios);
     await renderizarHistoricoFinanceiro(emailLogado);
-    await renderEvolucaoFinanceiraChart(emailLogado);
+
+    // Só renderiza o gráfico financeiro se a seção for visível
+    if (usuarioAtual.tipo === 'prestador') {
+        await renderEvolucaoFinanceiraChart(emailLogado);
+    }
 
     // Adiciona o evento de clique para o novo botão de exportar
     document.getElementById("btnExportarPDF").addEventListener("click", exportarParaPDF);
-
+    
     // Adiciona o evento de filtro de período para o histórico financeiro
     document.getElementById("filtroPeriodoTransacoes").addEventListener("change", () => {
         renderizarHistoricoFinanceiro(emailLogado);
@@ -42,6 +46,7 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     
     if (isPrestador) {
         document.getElementById("dashboard-prestador-area").style.display = "block";
+        document.getElementById("financeiro-section").style.display = "block";
     }
 
     const meusPedidosComoCliente = solicitacoes.filter(s => s.clienteEmail === emailLogado);
@@ -65,9 +70,16 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
     document.getElementById("card-solicitados").innerText = solicitados;
     document.getElementById("card-andamento-cliente").innerText = meusPedidosComoCliente.filter(s => s.status === 'ACEITO').length;
     document.getElementById("card-concluidos-cliente").innerText = meusPedidosComoCliente.filter(s => s.status === 'CONCLUIDO').length;
+    const conversasAtivasCliente = meusPedidosComoCliente.filter(s => s.status !== 'CONCLUIDO' && s.status !== 'CANCELADO').length;
+    document.getElementById("card-conversas-ativas").innerText = conversasAtivasCliente;
 
     // Métricas de Prestador
     if (isPrestador) {
+        const conversasAtivasPrestador = meusPedidosComoPrestador.filter(s => s.status !== 'CONCLUIDO' && s.status !== 'CANCELADO').length;
+        document.getElementById("card-conversas-ativas-prestador").innerText = conversasAtivasPrestador;
+        document.getElementById("card-novas-solicitacoes").innerText = meusPedidosComoPrestador.filter(s => s.status === 'PENDENTE' && s.valorStatus === 'INICIAL').length;
+        document.getElementById("card-propostas-enviadas").innerText = meusPedidosComoPrestador.filter(s => s.valorStatus === 'PROPOSTO').length;
+        document.getElementById("card-clientes-atendidos").innerText = new Set(meusPedidosComoPrestador.filter(s => s.status === 'CONCLUIDO').map(s => s.clienteEmail)).size;
         document.getElementById("card-andamento-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'ACEITO').length;
         document.getElementById("card-concluidos-prestador").innerText = meusPedidosComoPrestador.filter(s => s.status === 'CONCLUIDO').length;
 

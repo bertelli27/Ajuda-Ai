@@ -35,9 +35,9 @@
         <h4 style="color: #00ADB5; margin-bottom: 15px; font-size: 18px;">Como Cliente</h4>
         <div class="dashboard-container" style="margin-bottom: 30px;">
             <div class="dashboard-card">
-                <span class="dashboard-icon">💸</span>
-                <h3>Total Gasto</h3>
-                <div class="dashboard-value" id="card-total-gasto">R$ 0,00</div>
+                <span class="dashboard-icon">💬</span>
+                <h3>Conversas Ativas</h3>
+                <div class="dashboard-value" id="card-conversas-ativas">0</div>
             </div>
             <div class="dashboard-card">
                 <span class="dashboard-icon">📋</span>
@@ -85,10 +85,20 @@
                     <h3>Avaliação Média</h3>
                     <div class="dashboard-value" id="card-avaliacao">N/A</div>
                 </div>
-                <div class="dashboard-card" id="card-taxas-wrapper">
-                    <span class="dashboard-icon">📉</span>
-                    <h3>Taxas Retidas (10%)</h3>
-                    <div class="dashboard-value" id="card-total-taxas">R$ 0,00</div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">💬</span>
+                    <h3>Conversas Ativas</h3>
+                    <div class="dashboard-value" id="card-conversas-ativas-prestador">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">📬</span>
+                    <h3>Novas Solicitações</h3>
+                    <div class="dashboard-value" id="card-novas-solicitacoes">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <span class="dashboard-icon">📝</span>
+                    <h3>Propostas Enviadas</h3>
+                    <div class="dashboard-value" id="card-propostas-enviadas">0</div>
                 </div>
             </div>
         </div>
@@ -114,7 +124,7 @@
     </div>
 
     <!-- 4. SEÇÃO FINANCEIRA -->
-    <div class="dashboard-section fade-up-animation" style="margin-bottom: 50px;">
+    <div id="financeiro-section" class="dashboard-section fade-up-animation" style="margin-bottom: 50px; display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
             <h3 class="section-title" style="font-size: 22px; margin: 0; flex-grow: 1; border: none; padding: 0;">Resumo Financeiro</h3>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
