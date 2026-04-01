@@ -12,37 +12,32 @@ const validateForgotEmail = () => {
         setInputError(emailInput, "Por favor, insira um e-mail válido.");
         return false;
     }
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    if (!usuarios.some(u => u.email === email)) {
-        setInputError(emailInput, "Este e-mail não está cadastrado no sistema.");
-        return false;
-    }
     clearInputError(emailInput);
     return true;
 };
 
 emailInput.addEventListener('blur', validateForgotEmail);
 
-forgotForm.addEventListener("submit", function(e){
+forgotForm.addEventListener("submit", async function(e){
     e.preventDefault();
 
     if (!validateForgotEmail()) {
         mostrarToast("Por favor, corrija o campo em vermelho.", "error");
         return;
     }
+    
+    const btnSubmit = document.querySelector('#forgotForm button[type="submit"]');
+    setButtonLoading(btnSubmit);
 
     const email = emailInput.value.trim();
-    // Simular a geração de um Token de Recuperação Seguro (15 minutos de validade)
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const resetData = {
-        token: token,
-        email: email,
-        expires: Date.now() + 15 * 60 * 1000 // 15 minutos
-    };
-    localStorage.setItem("resetTokenData", JSON.stringify(resetData));
-
-    mostrarToast(`Link de recuperação gerado! Redirecionando (simulação)...`, "success");
-    setTimeout(() => {
-        window.location.href = `redefinir-senha.html?token=${token}`;
-    }, 2000);
+    const resetUrlBase = window.location.href.replace('forgot.html', 'redefinir-senha.html').split('?')[0];
+    
+    try {
+        await API.solicitarRecuperacaoSenha(email, resetUrlBase);
+        mostrarToast("E-mail enviado! Verifique sua caixa de entrada.", "success");
+        setTimeout(() => { window.location.href = "index.html"; }, 2500);
+    } catch (error) {
+        mostrarToast(error.message, "error");
+        removeButtonLoading(btnSubmit);
+    }
 });

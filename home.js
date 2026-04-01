@@ -1,15 +1,15 @@
 // ================= USUÁRIO =================
 
-function carregarUsuario() {
+async function carregarUsuario() {
     const menu = document.getElementById("menu");
     if (!menu) return;
 
     // 1. Checar se o usuário está logado (usa a mesma lógica do login)
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
 
     if (emailLogado) {
         // 2. Se logado, buscar os dados completos do usuário
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+        const usuarios = await API.getUsuarios();
         const usuarioAtual = usuarios.find(u => u.email === emailLogado);
 
         if (usuarioAtual && usuarioAtual.nome) {
@@ -76,8 +76,7 @@ function mostrarMenuDeslogado(menu) {
 
 function logout(e) {
     if (e) e.preventDefault();
-    localStorage.removeItem("usuarioLogado");
-    sessionStorage.removeItem("usuarioLogado");
+    API.fazerLogout();
     window.location.href = "index.html";
 }
 
@@ -108,10 +107,13 @@ function carregarServicos() {
     }
 
     // 2. Simular um atraso de rede (1.5 segundos) antes de carregar os dados reais
-    setTimeout(() => {
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    setTimeout(async () => {
+    const usuarios = await API.getUsuarios();
     const prestadores = usuarios.filter(u => u.tipo === "prestador" && u.prestador);
-    const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
+    
+    // 🚀 Busca as avaliações REAIS da API
+    const avaliacoes = await API.getAvaliacoes(); 
+    const todosServicos = await API.getServicos(); // 🚀 Busca os serviços para cruzar os dados
 
     grid.innerHTML = ''; // Limpa os cards estáticos
 
@@ -137,13 +139,20 @@ function carregarServicos() {
             const notaMedia = somaNotas / avaliacoesDoPrestador.length;
             mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
         }
+        
+        // Encontra o serviço principal do prestador para exibir no card
+        const servicoPrincipal = todosServicos.find(s => s.prestadorEmail === prestador.email);
+        const tituloExibicao = servicoPrincipal ? servicoPrincipal.titulo : 'Profissional Autônomo';
+        const categoriaExibicao = servicoPrincipal ? servicoPrincipal.categoria : 'Serviços Gerais';
+        const preco = servicoPrincipal ? (servicoPrincipal.preco_base || servicoPrincipal.precoBase || servicoPrincipal.preco) : null;
+        const valorDisplay = preco ? 'R$ ' + parseFloat(preco).toFixed(2).replace('.', ',') : 'A combinar';
 
         card.innerHTML = `
             <img src="${prestador.fotoPerfil || 'img/avatar_padrao.png'}" alt="Foto de ${prestador.nome}" class="card-avatar">
-            <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${prestador.prestador.categoria || 'Outros'}</span>
-            <h3>${prestador.prestador.servico || 'Serviço não informado'}</h3>
+            <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${categoriaExibicao}</span>
+            <h3>${tituloExibicao}</h3>
             <p>Prestador: ${prestador.nome.split(' ')[0]}</p>
-            <p>Preço médio: R$${parseFloat(prestador.prestador.valor || 0).toFixed(2).replace('.', ',')}</p>
+            <p>Valor base: ${valorDisplay}</p>
             <p>Avaliação: <span class="rating-display">${mediaEstrelas}</span></p>
             <p>Cidade: ${prestador.endereco.cidade}</p>
             <div class="card-botoes">

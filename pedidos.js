@@ -1,21 +1,30 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO E CARREGAMENTO DE DADOS =================
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         mostrarToast("Você precisa fazer login para ver seus pedidos!", "error");
         setTimeout(() => {
             window.location.href = "index.html";
-        }, 1500); // Aguarda um pouco para o usuário ler o toast
+        }, 1500); 
         return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
+    // 🚀 BUSCA OS DADOS DA API COM FALLBACK DE SEGURANÇA
+    const [usuarios, solicitacoesDaAPI, avaliacoesGlobais] = await Promise.all([
+        API.getUsuarios(), 
+        API.getSolicitacoes(),
+        API.getAvaliacoes()
+    ]);
+    
+    // Pega as solicitações 100% da API agora!
+    let solicitacoes = solicitacoesDaAPI;
+
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
 
     if (!usuarioAtual) {
         mostrarToast("Usuário não encontrado. Faça login novamente.", "error");
-        logout();
+        API.fazerLogout();
+        window.location.href = "index.html";
         return;
     }
 
@@ -43,12 +52,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const btnToggleOrcamento = document.getElementById("btnToggleOrcamento");
     const orcamentoOverlay = document.getElementById("orcamento-overlay");
     const chatView = document.getElementById("chat-view");
-    const negociacaoArea = document.getElementById("negociacao-area"); // A caixa interna
+    const negociacaoArea = document.getElementById("negociacao-area"); 
     const fecharOrcamentoBtn = document.getElementById("fechar-orcamento-btn");
-    let currentPedidoId = null; // Para saber qual chat está aberto
+    let currentPedidoId = null; 
     let focusableElements = [];
     let firstFocusableElement;
     let lastFocusableElement;
+    let chatPollingInterval = null; // 🚀 Variável para o chat em tempo real
 
     // Variáveis de Paginação
     let currentPageEnviados = 1;
@@ -57,39 +67,45 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // ================= LÓGICA DE EXIBIÇÃO (CLIENTE vs PRESTADOR) =================
     function carregarPedidos() {
-        // Adiciona listeners de eventos aos controles de filtro e ordenação
-        filtroStatusRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
-        ordenarDataRecebidos.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
-        filtroStatusEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
-        ordenarDataEnviados.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
+        filtroStatusRecebidos?.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
+        ordenarDataRecebidos?.addEventListener('change', () => { currentPageRecebidos = 1; atualizarLista('recebidos'); });
+        filtroStatusEnviados?.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
+        ordenarDataEnviados?.addEventListener('change', () => { currentPageEnviados = 1; atualizarLista('enviados'); });
 
-        // Configuração das Abas (Contexto de Uso)
+        // Configuração das Abas para separar Prestados e Contratados
         const btnTabContratados = document.getElementById("btnTabContratados");
         const btnTabPrestados = document.getElementById("btnTabPrestados");
+        const tabsContainer = document.querySelector(".tabs-container");
+        const pageTitle = document.querySelector(".services-section h2");
 
         if (usuarioAtual.tipo === 'prestador') {
-            btnTabPrestados.style.display = 'block';
+            if(btnTabPrestados) btnTabPrestados.style.display = 'block';
+            if(pageTitle) pageTitle.innerText = "Meus Serviços e Pedidos";
 
-            btnTabContratados.addEventListener("click", () => {
+            btnTabContratados?.addEventListener("click", () => {
                 btnTabContratados.classList.add("active");
                 btnTabPrestados.classList.remove("active");
                 enviadosSection.style.display = "block";
                 recebidosSection.style.display = "none";
             });
 
-            btnTabPrestados.addEventListener("click", () => {
+            btnTabPrestados?.addEventListener("click", () => {
                 btnTabPrestados.classList.add("active");
                 btnTabContratados.classList.remove("active");
                 recebidosSection.style.display = "block";
                 enviadosSection.style.display = "none";
             });
+        } else {
+            // Se for apenas cliente, remove o visual das abas e muda o título
+            if (tabsContainer) tabsContainer.style.display = 'none';
+            if (pageTitle) pageTitle.innerText = "Meus Pedidos";
         }
 
-        // Carga inicial dos pedidos
         atualizarExibicaoPedidos();
     }
 
     function renderSkeletons(container, quantidade) {
+        if (!container) return;
         container.innerHTML = '';
         for (let i = 0; i < quantidade; i++) {
             const skeletonCard = document.createElement('div');
@@ -99,11 +115,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <div class="skeleton skeleton-text" style="width: 90%; margin: 0 0 10px 0;"></div>
                 <div class="skeleton skeleton-text" style="width: 60%; margin: 0 0 10px 0;"></div>
                 <div class="skeleton skeleton-text" style="width: 40%; margin: 0 0 10px 0;"></div>
-                <div class="skeleton skeleton-text" style="width: 30%; margin: 0 0 15px 0;"></div>
-                <div class="botoes-acao">
-                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
-                    <div class="skeleton skeleton-button" style="flex-grow: 1;"></div>
-                </div>
+                <div class="botoes-acao"><div class="skeleton skeleton-button" style="flex-grow: 1;"></div></div>
             `;
             container.appendChild(skeletonCard);
         }
@@ -119,34 +131,35 @@ document.addEventListener("DOMContentLoaded", function() {
     function atualizarLista(tipo) {
         const isEnviados = tipo === 'enviados';
         const container = isEnviados ? enviadosContainer : recebidosContainer;
-        const filtroStatus = isEnviados ? filtroStatusEnviados.value : filtroStatusRecebidos.value;
-        const ordenarData = isEnviados ? ordenarDataEnviados.value : ordenarDataRecebidos.value;
+        const filtroStatus = isEnviados ? (filtroStatusEnviados?.value || 'todos') : (filtroStatusRecebidos?.value || 'todos');
+        const ordenarData = isEnviados ? (ordenarDataEnviados?.value || 'recentes') : (ordenarDataRecebidos?.value || 'recentes');
         const currentPage = isEnviados ? currentPageEnviados : currentPageRecebidos;
 
-        // Filtra e ordena síncrono para calcular paginação
-        let pedidos = solicitacoes.filter(s => isEnviados ? s.clienteEmail === usuarioAtual.email : s.prestadorEmail === usuarioAtual.email);
+        // FILTRO DE PEDIDOS COM BLINDAGEM DE VARIÁVEIS API x LOCALSTORAGE
+        let pedidos = solicitacoes.filter(s => {
+            const cEmail = s.clienteEmail || s.cliente_email;
+            const pEmail = s.prestadorEmail || s.prestador_email;
+            return isEnviados ? cEmail === usuarioAtual.email : pEmail === usuarioAtual.email;
+        });
+
         pedidos = aplicarFiltros(pedidos, filtroStatus, ordenarData);
 
         const totalItems = pedidos.length;
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const paginatedPedidos = pedidos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-        // 1. Mostrar Skeletons na quantidade exata de itens que vão renderizar (evita pulos)
         const numSkeletons = paginatedPedidos.length > 0 ? paginatedPedidos.length : 1;
         renderSkeletons(container, numSkeletons);
 
-        // Renderiza a paginação imediatamente
         renderPaginacao(totalItems, currentPage, ITEMS_PER_PAGE, isEnviados ? 'paginacao-enviados' : 'paginacao-recebidos', (newPage) => {
             if (isEnviados) currentPageEnviados = newPage;
             else currentPageRecebidos = newPage;
             atualizarLista(tipo);
         });
 
-        // 2. Simular carregamento rápido e renderizar dados reais
         setTimeout(() => {
-            const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
             if (isEnviados) {
-                renderPedidosCliente(paginatedPedidos, container, avaliacoes);
+                renderPedidosCliente(paginatedPedidos, container, avaliacoesGlobais);
             } else {
                 renderPedidosPrestador(paginatedPedidos, container);
             }
@@ -157,11 +170,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const container = document.getElementById(containerId);
         if (!container) return;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-        if (totalPages <= 1) {
-            container.innerHTML = ''; // Não exibe setas se houver apenas 1 página
-            return;
-        }
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
         container.innerHTML = `
             <button class="page-btn" id="prev-${containerId}" ${currentPage === 1 ? 'disabled' : ''}>&#8592;</button>
             <span class="page-info">Página ${currentPage} de ${totalPages}</span>
@@ -173,28 +182,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function aplicarFiltros(listaPedidos, status, ordenacao) {
         let pedidosFiltrados = [...listaPedidos];
-
-        // 1. Filtrar por status
         if (status !== 'todos') {
             pedidosFiltrados = pedidosFiltrados.filter(p => p.status === status);
         }
-
-        // 2. Ordenar por data
         pedidosFiltrados.sort((a, b) => {
-            // Usando dataSolicitacao para uma ordenação consistente
-            const dataA = new Date(a.dataSolicitacao);
-            const dataB = new Date(b.dataSolicitacao);
-            if (ordenacao === 'recentes') {
-                return dataB - dataA; // Mais recente primeiro
-            } else {
-                return dataA - dataB; // Mais antigo primeiro
-            }
+            const dataStrA = a.dataSolicitacao || a.criado_em || new Date().toISOString();
+            const dataStrB = b.dataSolicitacao || b.criado_em || new Date().toISOString();
+            return ordenacao === 'recentes' ? new Date(dataStrB) - new Date(dataStrA) : new Date(dataStrA) - new Date(dataStrB);
         });
-
         return pedidosFiltrados;
     }
 
     function renderPedidosCliente(pedidos, container, avaliacoes) {
+        if (!container) return;
         if (pedidos.length === 0) {
             container.innerHTML = `
                 <div class="empty-state fade-up-animation">
@@ -204,16 +204,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>`;
             return;
         }
-        const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
         container.innerHTML = pedidos.map(pedido => {
-            const prestador = usuarios.find(u => u.email === pedido.prestadorEmail);
-            const naoLidas = mensagens.filter(m => m.id_solicitacao === pedido.id && m.remetenteEmail !== emailLogado && !m.lida).length;
+            // Fallbacks de segurança para as variáveis
+            const dataPedido = pedido.data_desejada || pedido.dataSelecionada || pedido.criado_em || new Date().toISOString();
+            const pEmail = pedido.prestadorEmail || pedido.prestador_email;
+            const nomePrestador = pedido.prestador_nome || usuarios.find(u => u.email === pEmail)?.nome || 'Não encontrado';
+            const valorCombinado = pedido.valor_combinado || pedido.valorCombinado;
+            const statusPagamento = pedido.statusPagamento || pedido.status_pagamento || 'Pendente';
+            const valorStatusAtual = pedido.valorStatus || pedido.valor_status; // 🚀 Blindagem Extra
+
+            const naoLidas = pedido.mensagensNaoLidas || 0;
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
-            const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
-            const statusBadgeHTML = formatarStatusBadge(pedido);
+            const valorFormatado = valorCombinado ? `R$ ${parseFloat(valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
+            const statusBadgeHTML = formatarStatusBadge(pedido, emailLogado);
             const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
-            const statusPagamento = pedido.statusPagamento || 'Pendente';
 
             let avaliacaoInfoHTML = '';
             if (pedido.status === 'CONCLUIDO' && pedido.avaliado) {
@@ -230,16 +235,17 @@ document.addEventListener("DOMContentLoaded", function() {
                         <h3>${pedido.servico}</h3>
                         ${statusBadgeHTML}
                     </div>
-                    <p><strong>Prestador:</strong> ${prestador ? prestador.nome : 'Não encontrado'}</p>
+                    <p><strong>Prestador:</strong> ${nomePrestador}</p>
                     ${timelineHTML}
                     <div class="card-details">
-                        <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                        <p><strong>Data:</strong> ${new Date(dataPedido).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                         <p><strong>Valor:</strong> ${valorFormatado}</p>
                         <p><strong>Pagamento:</strong> <span style="color: ${statusPagamento === 'RETIDO' ? '#f0ad4e' : statusPagamento === 'LIBERADO' ? '#5cb85c' : '#AAAAAA'};">${statusPagamento.replace('_', ' ')}</span></p>
                         ${avaliacaoInfoHTML}
                     </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
+                    ${(pedido.status === 'PENDENTE' && valorStatusAtual === 'PROPOSTO') ? `<button class="btn-acao ver-orcamento" data-pedido-id="${pedido.id}" style="background-color: #f0ad4e; color: #222A31;">Ver Orçamento</button>` : ''}
                         ${pedido.status === 'PENDENTE' ? `<button class="btn-acao cancelar" data-pedido-id="${pedido.id}">Cancelar Solicitação</button>` : ''}
                         ${pedido.status === 'AGUARDANDO_CONFIRMACAO' ? `<button class="btn-acao confirmar-conclusao" data-pedido-id="${pedido.id}">Confirmar Conclusão</button>` : ''}
                         ${(pedido.status === 'CONCLUIDO' && !pedido.avaliado) ? `<button class="btn-acao btn-avaliar" data-pedido-id="${pedido.id}">Avaliar Serviço</button>` : ''}
@@ -250,6 +256,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function renderPedidosPrestador(pedidos, container) {
+        if (!container) return;
         if (pedidos.length === 0) {
             container.innerHTML = `
                 <div class="empty-state fade-up-animation">
@@ -258,35 +265,42 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>`;
             return;
         }
-        const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
         container.innerHTML = pedidos.map(pedido => {
-            const cliente = usuarios.find(u => u.email === pedido.clienteEmail);
-            const naoLidas = mensagens.filter(m => m.id_solicitacao === pedido.id && m.remetenteEmail !== emailLogado && !m.lida).length;
+            // Fallbacks de segurança
+            const cEmail = pedido.clienteEmail || pedido.cliente_email;
+            const nomeCliente = pedido.cliente_nome || usuarios.find(u => u.email === cEmail)?.nome || 'Cliente';
+            const dataPedido = pedido.data_desejada || pedido.dataSelecionada || pedido.criado_em || new Date().toISOString();
+            const descricaoProblema = pedido.descricao_problema || pedido.descricaoProblema || pedido.descricao || 'Não informado';
+            const enderecoLocal = pedido.endereco_realizacao || pedido.enderecoRealizacao || 'Não informado';
+            const valorCombinado = pedido.valor_combinado || pedido.valorCombinado;
+            const statusPagamento = pedido.statusPagamento || pedido.status_pagamento || 'Pendente';
+            const valorStatusAtual = pedido.valorStatus || pedido.valor_status; // 🚀 Blindagem Extra
+
+            const naoLidas = pedido.mensagensNaoLidas || 0;
             const badgeHTML = naoLidas > 0 ? `<span class="notificacao-badge" style="top: -8px; right: -8px;">${naoLidas}</span>` : '';
-            const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
-            const statusBadgeHTML = formatarStatusBadge(pedido);
+            const valorFormatado = valorCombinado ? `R$ ${parseFloat(valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
+            const statusBadgeHTML = formatarStatusBadge(pedido, emailLogado);
             const timelineHTML = gerarTimelineHTML(pedido);
             const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
-            const statusPagamento = pedido.statusPagamento || 'Pendente';
             
             return `
                 <div class="pedido-card">
                     <div class="card-header">
-                        <h3>Solicitação de ${cliente ? cliente.nome.split(' ')[0] : 'Cliente'}</h3>
+                        <h3>Solicitação de ${nomeCliente.split(' ')[0]}</h3>
                         ${statusBadgeHTML}
                     </div>
                     <p><strong>Serviço:</strong> ${pedido.servico}</p>
                     ${timelineHTML}
                     <div class="card-details">
-                        <p><strong>Descrição:</strong> ${pedido.descricao}</p>
-                        <p><strong>Endereço:</strong> ${pedido.enderecoRealizacao}</p>
-                        <p><strong>Data:</strong> ${new Date(pedido.dataSelecionada).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                        <p><strong>Descrição:</strong> ${descricaoProblema}</p>
+                        <p><strong>Endereço:</strong> ${enderecoLocal}</p>
+                        <p><strong>Data:</strong> ${new Date(dataPedido).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                         <p><strong>Valor:</strong> ${valorFormatado}</p>
                         <p><strong>Pagamento:</strong> <span style="color: ${statusPagamento === 'RETIDO' ? '#f0ad4e' : statusPagamento === 'LIBERADO' ? '#5cb85c' : '#AAAAAA'};">${statusPagamento.replace('_', ' ')}</span></p>
                     </div>
                     <div class="botoes-acao">
                         <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
-                        ${(pedido.status === 'PENDENTE' && pedido.valorStatus !== 'PROPOSTO') ? `
+                    ${(pedido.status === 'PENDENTE' && valorStatusAtual !== 'PROPOSTO') ? `
                             <button class="btn-acao aceitar" data-pedido-id="${pedido.id}">Aceitar</button>
                             <button class="btn-acao recusar" data-pedido-id="${pedido.id}">Recusar</button>
                         ` : ''}
@@ -300,118 +314,132 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // ================= LÓGICA DAS AÇÕES =================
-    mainContainer.addEventListener('click', function(e) {
-        const target = e.target;
-        const pedidoId = target.getAttribute('data-pedido-id');
-        if (!pedidoId) return;
+    if(mainContainer) {
+        mainContainer.addEventListener('click', async function(e) {
+            const target = e.target;
+            const pedidoIdStr = target.getAttribute('data-pedido-id');
+            if (!pedidoIdStr) return;
 
-        let novoStatus = '';
-        if (target.classList.contains('aceitar')) novoStatus = 'ACEITO';
-        else if (target.classList.contains('recusar')) novoStatus = 'CANCELADO';
-        else if (target.classList.contains('cancelar')) novoStatus = 'CANCELADO';
-        else if (target.classList.contains('concluir')) novoStatus = 'AGUARDANDO_CONFIRMACAO';
-        else if (target.classList.contains('confirmar-conclusao')) novoStatus = 'CONCLUIDO';
-        
-        if (novoStatus) {
-            const index = solicitacoes.findIndex(s => s.id === pedidoId);
-            if (index !== -1) {
-                const pedidoModificado = solicitacoes[index];
-                
-                // LOGICA FINANCEIRA
-                const transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
-                const txIndex = transacoes.findIndex(t => t.servicoId === pedidoModificado.id);
-                
-                if (novoStatus === 'CANCELADO' && pedidoModificado.statusPagamento === 'RETIDO') {
-                    pedidoModificado.statusPagamento = 'ESTORNADO';
-                    // Atualiza o status da transação existente para 'CANCELADO'
-                    if (txIndex !== -1) transacoes[txIndex].status = 'CANCELADO';
+            let novoStatus = '';
+            if (target.classList.contains('aceitar')) novoStatus = 'ACEITO';
+            else if (target.classList.contains('recusar')) novoStatus = 'CANCELADO';
+            else if (target.classList.contains('cancelar')) novoStatus = 'CANCELADO';
+            else if (target.classList.contains('concluir')) novoStatus = 'AGUARDANDO_CONFIRMACAO';
+            else if (target.classList.contains('confirmar-conclusao')) novoStatus = 'CONCLUIDO';
+            
+            if (novoStatus) {
+                const index = solicitacoes.findIndex(s => s.id == pedidoIdStr); // Usando == para evitar erro de String vs Number
+                if (index !== -1) {
+                    const pedidoModificado = { ...solicitacoes[index] }; // Cria uma cópia segura para não bugar a memória
+                    
+                    const statusAtualPagamento = pedidoModificado.statusPagamento || pedidoModificado.status_pagamento;
+                    
+                    if (novoStatus === 'CANCELADO' && statusAtualPagamento === 'RETIDO') {
+                        pedidoModificado.statusPagamento = 'ESTORNADO';
+                    }
+                    
+                    if (novoStatus === 'CONCLUIDO' && statusAtualPagamento === 'RETIDO') {
+                        pedidoModificado.statusPagamento = 'LIBERADO';
+                    }
+                    
+                    // UX: Botão em estado de carregamento para evitar cliques duplos
+                    const textoOriginal = target.innerText;
+                    target.innerText = "Aguarde...";
+                    target.disabled = true;
+
+                    try {
+                        // 🚀 Aguarda a API atualizar o Banco de Dados Real ANTES de mexer na tela!
+                        await API.atualizarSolicitacao(pedidoModificado.id, { 
+                            status: novoStatus, 
+                            statusPagamento: pedidoModificado.statusPagamento 
+                        });
+
+                        // Se deu tudo certo no banco, atualizamos a tela e as variáveis locais
+                        solicitacoes[index].status = novoStatus;
+                        solicitacoes[index].statusPagamento = pedidoModificado.statusPagamento;
+
+                        if (novoStatus === 'AGUARDANDO_CONFIRMACAO') {
+                            await enviarMensagemSistema(pedidoIdStr, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão para liberar o pagamento.");
+                        } else if (novoStatus === 'CONCLUIDO') {
+                            await enviarMensagemSistema(pedidoIdStr, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para o prestador.");
+                        } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
+                            await enviarMensagemSistema(pedidoIdStr, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado.");
+                        }
+
+                        // Garante dados 100% frescos da API e atualiza a interface visualmente
+                        const novasSolicitacoes = await API.getSolicitacoes();
+                        solicitacoes = novasSolicitacoes.length > 0 ? novasSolicitacoes : solicitacoes;
+                        
+                        atualizarExibicaoPedidos(); 
+                        mostrarToast("Status atualizado com sucesso!", "success");
+                        if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
+                        
+                    } catch (error) {
+                        console.error(error);
+                        mostrarToast("Erro ao atualizar o status. Tente novamente.", "error");
+                        target.innerText = textoOriginal;
+                        target.disabled = false;
+                    }
                 }
-                
-                if (novoStatus === 'CONCLUIDO' && pedidoModificado.statusPagamento === 'RETIDO') {
-                    pedidoModificado.statusPagamento = 'LIBERADO';
-                    // Atualiza o status da transação existente para 'CONCLUIDO'
-                    if (txIndex !== -1) transacoes[txIndex].status = 'CONCLUIDO';
-                }
-                
-                localStorage.setItem('transacoes', JSON.stringify(transacoes));
-                
-                solicitacoes[index] = pedidoModificado;
-                solicitacoes[index].status = novoStatus;
-                localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
-
-                if (novoStatus === 'AGUARDANDO_CONFIRMACAO') {
-                    enviarMensagemSistema(pedidoId, "🛠️ <strong>Serviço finalizado pelo prestador.</strong> Aguardando o cliente confirmar a conclusão para liberar o pagamento.");
-                } else if (novoStatus === 'CONCLUIDO') {
-                    enviarMensagemSistema(pedidoId, "✅ <strong>Conclusão confirmada pelo cliente.</strong> O pagamento foi liberado para o prestador.");
-                } else if (target.classList.contains('cancelar') && novoStatus === 'CANCELADO') {
-                    enviarMensagemSistema(pedidoId, "🚫 <strong>Solicitação cancelada.</strong> O valor pago foi estornado.");
-                }
-
-                atualizarExibicaoPedidos(); // Recarrega a lista para refletir a mudança
-                if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
-            }
-        } else if (target.classList.contains('btn-avaliar')) {
-            window.location.href = `avaliar.html?pedido=${pedidoId}`;
-        } else if (target.classList.contains('btn-chat')) {
-            abrirChat(pedidoId);
-        }
-    });
-
-    // ================= LÓGICA DO CHAT =================
-
-    function abrirChat(pedidoId) {
-        currentPedidoId = pedidoId;
-        const pedido = solicitacoes.find(s => s.id === pedidoId);
-        if (!pedido) return;
-
-        const outraPessoaEmail = usuarioAtual.tipo === 'cliente' ? pedido.prestadorEmail : pedido.clienteEmail;
-        const outraPessoa = usuarios.find(u => u.email === outraPessoaEmail);
-        
-        chatHeader.innerText = `Conversa sobre "${pedido.servico}"`;
-
-        fecharOrcamento(); // Garante que o orçamento comece fechado
-        atualizarAreaNegociacao();
-
-        // Arquivar chat se estiver cancelado ou concluído (esconder área de digitação)
-        const chatInputArea = document.querySelector(".chat-input-area");
-        if (pedido.status === 'CANCELADO' || pedido.status === 'CONCLUIDO') {
-            chatInputArea.style.display = 'none';
-        } else {
-            chatInputArea.style.display = 'flex';
-        }
-
-        // Marcar mensagens recebidas neste chat como lidas
-        const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-        let atualizou = false;
-        todasMensagens.forEach(m => {
-            if (m.id_solicitacao === pedidoId && m.remetenteEmail !== emailLogado && m.lida !== true) {
-                m.lida = true;
-                atualizou = true;
+            } else if (target.classList.contains('btn-avaliar')) {
+                window.location.href = `avaliar.html?pedido=${pedidoIdStr}`;
+            } else if (target.classList.contains('btn-chat')) {
+                abrirChat(pedidoIdStr);
+            } else if (target.classList.contains('ver-orcamento')) {
+                abrirChat(pedidoIdStr, true); // O 'true' avisa a função para já abrir a caixa de orçamento!
             }
         });
-        if (atualizou) {
-            localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
-            if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
-            atualizarExibicaoPedidos(); // Recarrega os botões para a bolinha sumir
+    }
+
+    // ================= LÓGICA DO CHAT =================
+    function abrirChat(pedidoId, autoOpenOrcamento = false) {
+        currentPedidoId = pedidoId;
+        const pedido = solicitacoes.find(s => s.id == pedidoId);
+        if (!pedido) return;
+
+        chatHeader.innerText = `Conversa sobre "${pedido.servico}"`;
+
+        if (autoOpenOrcamento) {
+            abrirOrcamento();
+        } else {
+            fecharOrcamento(); 
         }
+        atualizarAreaNegociacao();
+
+        const chatInputArea = document.querySelector(".chat-input-area");
+        if (pedido.status === 'CANCELADO' || pedido.status === 'CONCLUIDO') {
+            if(chatInputArea) chatInputArea.style.display = 'none';
+        } else {
+            if(chatInputArea) chatInputArea.style.display = 'flex';
+        }
+
+        // 🚀 Chama a API para marcar as mensagens como lidas no Banco de Dados
+        API.marcarMensagensComoLidas(pedidoId).then(() => {
+            if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
+            
+            // Atualiza o contador localmente para a bolinha do chat sumir da tela imediatamente
+            const pIndex = solicitacoes.findIndex(s => s.id == pedidoId);
+            if (pIndex !== -1 && solicitacoes[pIndex].mensagensNaoLidas > 0) {
+                solicitacoes[pIndex].mensagensNaoLidas = 0;
+                atualizarExibicaoPedidos();
+            }
+        });
 
         renderMensagens(pedidoId);
         modal.style.display = "block";
-        // Ativa o Modo Foco
         document.body.classList.add('focus-mode-active');
+        
+        // 🚀 INICIA O CHAT EM TEMPO REAL (Atualiza a cada 3 segundos)
+        if (chatPollingInterval) clearInterval(chatPollingInterval);
+        chatPollingInterval = setInterval(() => {
+            if (currentPedidoId) renderMensagens(currentPedidoId, false);
+        }, 3000);
 
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-
-        // --- NOVO: Lógica de Acessibilidade (Foco) ---
-        // Pega todos os elementos focáveis dentro do modal
         focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        firstFocusableElement = focusableElements[0]; // Geralmente o botão de fechar 'X'
+        firstFocusableElement = focusableElements[0]; 
         lastFocusableElement = focusableElements[focusableElements.length - 1];
 
-        // Move o foco para o primeiro elemento (o botão de fechar)
-        setTimeout(() => firstFocusableElement.focus(), 100); // Pequeno delay para garantir a renderização
-
-        // Adiciona o listener para o trap de foco
+        setTimeout(() => { if(firstFocusableElement) firstFocusableElement.focus(); }, 100);
         modal.addEventListener('keydown', trapFocus);
     }
 
@@ -419,10 +447,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const area = document.getElementById("negociacao-area");
         if (!area || !currentPedidoId) return;
 
-        const pedido = solicitacoes.find(s => s.id === currentPedidoId);
+        const pedido = solicitacoes.find(s => s.id == currentPedidoId);
         if (!pedido) return;
         
-        // Se estiver cancelado ou concluído, limpa a negociação e mostra aviso de arquivado
         if (pedido.status === 'CANCELADO') {
             area.innerHTML = `<div style="text-align: center; color: #d9534f; font-weight: bold; padding: 20px;">🚫 Solicitação cancelada. O chat foi arquivado.</div>`;
             return;
@@ -431,108 +458,126 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        let html = '';
+        // Fallbacks Seguros
+        const pEmail = pedido.prestadorEmail || pedido.prestador_email;
+        const valorCombinado = pedido.valorCombinado || pedido.valor_combinado;
+        const descricaoProposta = pedido.descricaoProposta || pedido.descricao_proposta || '';
+        const dataProposta = pedido.dataProposta || pedido.data_proposta;
+        const horaProposta = pedido.horaProposta || pedido.hora_proposta;
+        const nomePrestador = pedido.prestador_nome || usuarios.find(u => u.email === pEmail)?.nome || 'Profissional';
+
+        const isPrestador = pEmail === usuarioAtual.email;
+        const valorFormatado = valorCombinado ? `R$ ${parseFloat(valorCombinado).toFixed(2).replace('.', ',')}` : 'Não definido';
         
-        // Verifica se o usuário logado é o prestador DESTE pedido específico
-        const isPrestador = pedido.prestadorEmail === usuarioAtual.email;
-        const valorFormatado = pedido.valorCombinado ? `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}` : 'Não definido';
-        const descricaoProposta = pedido.descricaoProposta || '';
-        
-        // Formatação de Data e Hora para exibição
         let dataHoraFormatada = '';
-        if (pedido.dataProposta) {
-             const dataParts = pedido.dataProposta.split('-');
-             const dataBr = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
-             dataHoraFormatada = `<strong>Data/Hora Proposta:</strong> ${dataBr} às ${pedido.horaProposta || 'Não informado'}`;
+        if (dataProposta) {
+            let dataBr = dataProposta;
+            if (dataProposta.includes('T')) {
+                dataBr = new Date(dataProposta).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+            } else if (dataProposta.includes('-')) {
+                const dataParts = dataProposta.split('-');
+                if (dataParts.length === 3) dataBr = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+            }
+            dataHoraFormatada = `<strong>Data/Hora Proposta:</strong> ${dataBr} às ${horaProposta || 'Não informado'}`;
         }
 
+        let html = '';
         if (isPrestador) {
             if (pedido.valorStatus === 'ACEITO') {
                 html = `
-                    <div class="orcamento-details">
-                        <div class="orcamento-highlight" style="border-left-color: #5cb85c; background: rgba(92, 184, 92, 0.1);">
-                            <span>Valor Combinado:</span>
-                            <strong style="color: #5cb85c;">${valorFormatado} (Aceito pelo Cliente)</strong>
+                    <div class="orcamento-details" style="background: #222A31; padding: 25px; border-radius: 12px; border: 1px solid #5cb85c;">
+                        <h4 style="color: #5cb85c; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #393E46; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            ✅ Orçamento Aprovado
+                        </h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: #AAAAAA; font-size: 14px;">Valor Combinado:</span>
+                            <strong style="color: #5cb85c; font-size: 24px;">${valorFormatado}</strong>
                         </div>
-                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
-                        <div class="orcamento-desc">
-                            <strong>Escopo do Serviço:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${pedido.descricaoProposta}</p>
+                        ${dataHoraFormatada ? `<div style="color: #EEEEEE; font-size: 14px; margin-bottom: 15px;">📅 ${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc" style="background: #2A343D; padding: 15px; border-radius: 8px;">
+                            <strong style="color: #EEEEEE; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Escopo do Serviço</strong>
+                            <p style="white-space: pre-wrap; margin-top: 8px; color: #CCCCCC; font-size: 14px; line-height: 1.6;">${descricaoProposta}</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             } else {
                 html = `
-                    <div class="orcamento-form">
+                    <div class="orcamento-form" style="background: #222A31; padding: 25px; border-radius: 12px; border: 1px solid #00ADB5;">
+                        <h4 style="color: #00ADB5; margin-bottom: 20px; font-size: 18px;">Enviar Nova Proposta</h4>
                         <div class="form-group-row">
                             <div class="form-group">
-                                <label>Orçamento (R$)</label>
-                                <input type="text" id="inputValorNegociado" value="${pedido.valorCombinado ? formatarMoedaParaMascara(pedido.valorCombinado) : ''}" placeholder="R$ 0,00">
+                                <label style="color:#AAAAAA; font-size:13px;">Orçamento (R$)</label>
+                                <input type="text" id="inputValorNegociado" value="${valorCombinado ? formatarMoedaParaMascara(valorCombinado) : ''}" placeholder="R$ 0,00" style="background:#2A343D; border:1px solid #4F5B66; color:#EEE;">
                             </div>
                         </div>
-                        <div class="form-group-row">
+                        <div class="form-group-row" style="margin-top:15px;">
                             <div class="form-group">
-                                <label>Data Sugerida</label>
-                                <input type="date" id="inputDataProposta" value="${pedido.dataProposta || ''}">
+                                <label style="color:#AAAAAA; font-size:13px;">Data Sugerida</label>
+                                <input type="date" id="inputDataProposta" value="${dataProposta || ''}" style="background:#2A343D; border:1px solid #4F5B66; color:#EEE;">
                             </div>
                             <div class="form-group">
-                                <label>Horário Sugerido</label>
-                                <input type="time" id="inputHoraProposta" value="${pedido.horaProposta || ''}">
+                                <label style="color:#AAAAAA; font-size:13px;">Horário</label>
+                                <input type="time" id="inputHoraProposta" value="${horaProposta || ''}" style="background:#2A343D; border:1px solid #4F5B66; color:#EEE;">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Descrição do Serviço / Inclusões</label>
-                            <textarea id="textareaDescricaoProposta" placeholder="Descreva o que está incluso no valor (ex: material, mão de obra...).">${descricaoProposta}</textarea>
+                        <div class="form-group" style="margin-top:15px;">
+                            <label style="color:#AAAAAA; font-size:13px;">Descrição do Serviço / Inclusões</label>
+                            <textarea id="textareaDescricaoProposta" placeholder="Descreva o que está incluso no valor..." style="background:#2A343D; border:1px solid #4F5B66; color:#EEE;">${descricaoProposta}</textarea>
                         </div>
-                        <button id="btnEnviarProposta" class="btn-service" style="width: 100%;">Enviar Proposta</button>
-                        ${pedido.valorStatus === 'PROPOSTO' ? '<div style="color: #f0ad4e; font-size: 13px; text-align: center; margin-top: 10px;">Aguardando aprovação do cliente...</div>' : ''}
-                    </div>
-                `;
+                        <button id="btnEnviarProposta" class="btn-service" style="width: 100%; margin-top:20px; font-size:16px;">Enviar Proposta ao Cliente</button>
+                        ${pedido.valorStatus === 'PROPOSTO' ? '<div style="color: #f0ad4e; font-size: 13px; text-align: center; margin-top: 15px; font-weight: 500;">⏳ Aguardando aprovação do cliente...</div>' : ''}
+                    </div>`;
             }
         } else {
-            // Cliente
             if (pedido.valorStatus === 'ACEITO') {
                 html = `
-                    <div class="orcamento-details">
-                        <div class="orcamento-highlight" style="border-left-color: #5cb85c; background: rgba(92, 184, 92, 0.1);">
-                            <span>Valor Combinado:</span>
-                            <strong style="color: #5cb85c;">${valorFormatado} (Aceito)</strong>
+                    <div class="orcamento-details" style="background: #222A31; padding: 25px; border-radius: 12px; border: 1px solid #5cb85c;">
+                        <h4 style="color: #5cb85c; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #393E46; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            ✅ Orçamento Aprovado
+                        </h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: #AAAAAA; font-size: 14px;">Valor Combinado:</span>
+                            <strong style="color: #5cb85c; font-size: 24px;">${valorFormatado}</strong>
                         </div>
-                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
-                        <div class="orcamento-desc">
-                            <strong>Escopo do Serviço:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${descricaoProposta}</p>
+                        ${dataHoraFormatada ? `<div style="color: #EEEEEE; font-size: 14px; margin-bottom: 15px;">📅 ${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc" style="background: #2A343D; padding: 15px; border-radius: 8px;">
+                            <strong style="color: #EEEEEE; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Escopo do Serviço</strong>
+                            <p style="white-space: pre-wrap; margin-top: 8px; color: #CCCCCC; font-size: 14px; line-height: 1.6;">${descricaoProposta}</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             } else if (pedido.valorStatus === 'PROPOSTO') {
                 html = `
-                    <div class="orcamento-details">
-                        <div class="orcamento-highlight" style="border-left-color: #f0ad4e; background: rgba(240, 173, 78, 0.1);">
-                            <span>Proposta do Prestador:</span>
-                            <strong style="color: #f0ad4e;">${valorFormatado}</strong>
+                    <div class="orcamento-details" style="background: #222A31; padding: 25px; border-radius: 12px; border: 1px solid #f0ad4e; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #f0ad4e;"></div>
+                        <h4 style="color: #f0ad4e; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #393E46; padding-bottom: 10px;">
+                            Nova Proposta Recebida
+                        </h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: #AAAAAA; font-size: 14px;">Valor Cobrado:</span>
+                            <strong style="color: #f0ad4e; font-size: 24px;">${valorFormatado}</strong>
                         </div>
-                        ${dataHoraFormatada ? `<div class="orcamento-info">${dataHoraFormatada}</div>` : ''}
-                        <div class="orcamento-desc">
-                            <strong>Escopo do Serviço Proposto:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px; color: #CCCCCC;">${pedido.descricaoProposta}</p>
+                        ${dataHoraFormatada ? `<div style="color: #EEEEEE; font-size: 14px; margin-bottom: 15px;">📅 ${dataHoraFormatada}</div>` : ''}
+                        <div class="orcamento-desc" style="background: #2A343D; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <strong style="color: #EEEEEE; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Escopo do Serviço</strong>
+                            <p style="white-space: pre-wrap; margin-top: 8px; color: #CCCCCC; font-size: 14px; line-height: 1.6;">${descricaoProposta}</p>
                         </div>
-                        <button id="btnAceitarProposta" class="btn-aceitar-orcamento">Aceitar Proposta</button>
-                    </div>
-                `;
+                        <button id="btnAceitarProposta" class="btn-aceitar-orcamento" style="width: 100%; font-size: 16px; padding: 14px; box-shadow: 0 4px 15px rgba(92, 184, 92, 0.2);">Aceitar Proposta e Pagar</button>
+                    </div>`;
             } else {
-                html = `<div style="text-align: center; color: #AAAAAA; padding: 20px;">Aguardando orçamento do prestador...</div>`;
+                html = `
+                    <div style="text-align: center; color: #AAAAAA; padding: 40px 20px; background: #222A31; border-radius: 12px; border: 1px dashed #4F5B66;">
+                        <span style="font-size: 32px; display: block; margin-bottom: 10px;">⏳</span>
+                        Aguardando orçamento do prestador...
+                    </div>`;
             }
         }
         
         area.innerHTML = html;
         
-        // Aplica a máscara no input gerado
-        aplicarMascaraDinheiro(document.getElementById("inputValorNegociado"));
+        if (document.getElementById("inputValorNegociado")) {
+            aplicarMascaraDinheiro(document.getElementById("inputValorNegociado"));
+        }
 
-        // Adicionar eventos aos botões recém renderizados
         if (isPrestador && pedido.valorStatus !== 'ACEITO') {
-
             document.getElementById("btnEnviarProposta")?.addEventListener("click", () => {
                 const submitButton = document.getElementById("btnEnviarProposta");
                 setButtonLoading(submitButton);
@@ -545,21 +590,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 if (!novoValor || parseFloat(novoValor) <= 0) {
                     mostrarToast("Digite um valor válido.", "error");
-                    removeButtonLoading(submitButton);
-                    return;
+                    removeButtonLoading(submitButton); return;
                 }
                 if (!novaDescricao) {
                     mostrarToast("Por favor, descreva o serviço que será feito.", "error");
-                    removeButtonLoading(submitButton);
-                    return;
+                    removeButtonLoading(submitButton); return;
                 }
                 if (!novaData || !novaHora) {
                      mostrarToast("Por favor, informe a data e o horário propostos.", "error");
-                     removeButtonLoading(submitButton);
-                     return;
+                     removeButtonLoading(submitButton); return;
                 }
                 
-                // Simula o envio
                 setTimeout(() => {
                     pedido.valorCombinado = novoValor;
                     pedido.descricaoProposta = novaDescricao;
@@ -571,63 +612,49 @@ document.addEventListener("DOMContentLoaded", function() {
                     const dataParts = novaData.split('-');
                     const dataBr = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
                     
-                    enviarMensagemSistema(pedido.id, `🕒 <strong>Orçamento enviado:</strong> R$ ${parseFloat(novoValor).toFixed(2).replace('.', ',')}
-                        <br><strong>Data/Hora:</strong> ${dataBr} às ${novaHora}
-                        <br><br><strong>Serviços inclusos:</strong><br>${novaDescricao}
-                    `);
+                    enviarMensagemSistema(pedido.id, `🕒 <strong>Orçamento enviado:</strong> R$ ${parseFloat(novoValor).toFixed(2).replace('.', ',')}<br><strong>Data/Hora:</strong> ${dataBr} às ${novaHora}<br><br><strong>Serviços inclusos:</strong><br>${novaDescricao}`);
                     
                     atualizarAreaNegociacao();
-                    setTimeout(fecharOrcamento, 500); // Fecha a caixa de orçamento automaticamente
+                    setTimeout(fecharOrcamento, 500); 
                 }, 800);
             });
         } else if (!isPrestador && pedido.valorStatus === 'PROPOSTO') {
             document.getElementById("btnAceitarProposta")?.addEventListener("click", () => {
-                // 1. Puxa os dados do pedido atual para exibir na box de pagamento
-                const allUsers = JSON.parse(localStorage.getItem("usuarios")) || [];
-                const prestadorDoPedido = allUsers.find(u => u.email === pedido.prestadorEmail);
-                
                 document.getElementById('pagamentoServicoTitulo').innerText = pedido.servico;
-                document.getElementById('pagamentoPrestadorNome').innerText = prestadorDoPedido ? prestadorDoPedido.nome : 'Profissional';
-                document.getElementById('pagamentoValorTotal').innerText = `R$ ${parseFloat(pedido.valorCombinado).toFixed(2).replace('.', ',')}`;
+                document.getElementById('pagamentoPrestadorNome').innerText = nomePrestador;
+                document.getElementById('pagamentoValorTotal').innerText = `R$ ${parseFloat(valorCombinado).toFixed(2).replace('.', ',')}`;
 
-                // 2. Reseta as abas para sempre mostrar o PIX e o QR Code primeiro
                 document.getElementById('payPix').checked = true;
                 document.getElementById('areaPix').style.display = 'block';
                 document.getElementById('areaCartao').style.display = 'none';
 
-                // Abre o modal de pagamento simulado
                 document.getElementById('pagamentoModal').style.display = 'flex';
             });
         }
     }
 
-    function salvarEAtualizarPedido(pedidoModificado) {
-        const index = solicitacoes.findIndex(s => s.id === pedidoModificado.id);
+    async function salvarEAtualizarPedido(pedidoModificado) {
+        const index = solicitacoes.findIndex(s => s.id == pedidoModificado.id);
         if (index !== -1) {
             solicitacoes[index] = pedidoModificado;
-            localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
             atualizarExibicaoPedidos();
+            
+            // 🚀 Salva o Orçamento do Prestador no Banco de Dados Real!
+            await API.atualizarSolicitacao(pedidoModificado.id, pedidoModificado).catch(console.error);
         }
     }
 
-    function enviarMensagemSistema(pedidoId, texto) {
-        const novaMensagem = {
-            id_mensagem: "MSG-" + Date.now(),
-            id_solicitacao: pedidoId,
-            remetenteEmail: "SISTEMA",
-            mensagem: texto,
-            data_envio: new Date().toISOString(),
-            lida: false
-        };
-        const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-        todasMensagens.push(novaMensagem);
-        localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
-
-        if (currentPedidoId === pedidoId) {
-            renderMensagens(pedidoId);
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    async function enviarMensagemSistema(pedidoId, texto) {
+        try {
+            // 🚀 Envia a mensagem do sistema para a API
+            await API.enviarMensagemSistemaApi(pedidoId, texto);
+            
+            if (currentPedidoId == pedidoId) {
+                renderMensagens(pedidoId, true);
+            }
+        } catch (e) {
+            console.error("Erro ao salvar mensagem do sistema na API", e);
         }
-        
         if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
     }
 
@@ -637,16 +664,24 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function fecharChat() {
-        modal.style.display = "none";
-        // Desativa o Modo Foco
+        if(modal) modal.style.display = "none";
         document.body.classList.remove('focus-mode-active');
-
         currentPedidoId = null;
-        chatMessagesContainer.innerHTML = "";
-        fecharOrcamento(); // Garante que o overlay do orçamento feche junto com o chat
-
-        // --- NOVO: Remove o listener ao fechar ---
-        modal.removeEventListener('keydown', trapFocus);
+        if(chatMessagesContainer) chatMessagesContainer.innerHTML = "";
+        fecharOrcamento(); 
+        if(modal) modal.removeEventListener('keydown', trapFocus);
+        
+        // 🚀 DESLIGA O TEMPO REAL AO FECHAR O CHAT
+        if (chatPollingInterval) {
+            clearInterval(chatPollingInterval);
+            chatPollingInterval = null;
+        }
+        
+        // 🚀 FORÇA A ATUALIZAÇÃO DA TELA (Garante que o botão "Confirmar Conclusão" apareça assim que o chat fechar)
+        API.getSolicitacoes().then(novasSolicitacoes => {
+            solicitacoes = novasSolicitacoes.length > 0 ? novasSolicitacoes : solicitacoes;
+            atualizarExibicaoPedidos();
+        });
     }
 
     function fecharOrcamento() {
@@ -654,163 +689,130 @@ document.addEventListener("DOMContentLoaded", function() {
         if (chatView) chatView.classList.remove('blurred');
     }
 
-    function renderMensagens(pedidoId) {
-        const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-        const mensagensDoPedido = todasMensagens.filter(m => m.id_solicitacao === pedidoId);
+    async function renderMensagens(pedidoId, autoScroll = true) {
+        if(!chatMessagesContainer) return;
+        
+        // 🚀 Busca as mensagens REAIS do banco de dados
+        const mensagensDoPedido = await API.getMensagensPorPedido(pedidoId);
+
+        // Verifica se o usuário estava no final do chat para não puxar a tela se ele estiver lendo algo antigo
+        const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop <= chatMessagesContainer.clientHeight + 50;
 
         chatMessagesContainer.innerHTML = mensagensDoPedido.map(msg => {
             if (msg.remetenteEmail === "SISTEMA") {
                 return `<div class="message system">${msg.mensagem}</div>`;
             }
             const classe = msg.remetenteEmail === emailLogado ? 'sent' : 'received';
-            
             let conteudo = msg.mensagem ? `<div>${msg.mensagem}</div>` : '';
             if (msg.imagemBase64) {
                 conteudo += `<img src="${msg.imagemBase64}" alt="Anexo" class="chat-image" onclick="abrirLightbox(this)">`;
             }
-            
             return `<div class="message ${classe}">${conteudo}</div>`;
         }).join('');
+        
+        if (autoScroll || isAtBottom) {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
     }
 
-    function enviarNovaMensagemObjeto(texto, imagemBase64 = null) {
-        const novaMensagem = {
-            id_mensagem: "MSG-" + Date.now(),
-            id_solicitacao: currentPedidoId,
-            remetenteEmail: emailLogado,
-            mensagem: texto,
-            imagemBase64: imagemBase64,
-            data_envio: new Date().toISOString(),
-            lida: false
-        };
-
-        const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-        todasMensagens.push(novaMensagem);
-        localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
-
-        chatInput.style.height = 'auto'; // Reseta a altura do textarea
-        chatInput.value = "";
-        if (chatImageInput) chatImageInput.value = ""; // Limpa o input de arquivo
-        renderMensagens(currentPedidoId);
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    async function enviarNovaMensagemObjeto(texto, imagemBase64 = null) {
+        try {
+            // 🚀 Envia a mensagem real para o Banco de Dados
+            await API.enviarMensagemApi(currentPedidoId, texto, imagemBase64);
+            
+            if(chatInput) {
+                chatInput.style.height = 'auto'; 
+                chatInput.value = "";
+            }
+            if (chatImageInput) chatImageInput.value = ""; 
+            
+            renderMensagens(currentPedidoId, true);
+        } catch (e) {
+            console.error("Erro ao enviar mensagem para a API", e);
+            mostrarToast(e.message, "error");
+        }
     }
 
     function enviarMensagem() {
+        if(!chatInput) return;
         const texto = chatInput.value.trim();
         if (!texto) return;
 
         setButtonLoading(chatSendBtn);
-
-        // Simula um pequeno atraso de envio
-        setTimeout(() => {
-            enviarNovaMensagemObjeto(texto, null);
+        enviarNovaMensagemObjeto(texto, null).finally(() => {
             removeButtonLoading(chatSendBtn);
-        }, 400);
+        });
     }
 
-    // --- NOVO: Função para o Focus Trap do Modal ---
     function trapFocus(e) {
         const isTabPressed = e.key === 'Tab' || e.keyCode === 9;
         if (!isTabPressed) {
-            // Se a tecla for ESC, fecha o modal
-            if (e.key === 'Escape' || e.keyCode === 27) {
-                fecharChat();
-            }
+            if (e.key === 'Escape' || e.keyCode === 27) fecharChat();
             return;
         }
-
-        if (e.shiftKey) { // Shift + Tab (voltando)
+        if (e.shiftKey) { 
             if (document.activeElement === firstFocusableElement) {
-                lastFocusableElement.focus();
-                e.preventDefault();
+                lastFocusableElement.focus(); e.preventDefault();
             }
-        } else { // Tab (avançando)
+        } else { 
             if (document.activeElement === lastFocusableElement) {
-                firstFocusableElement.focus();
-                e.preventDefault();
+                firstFocusableElement.focus(); e.preventDefault();
             }
         }
     }
 
-    // Event Listeners para o Chat
-    closeModalBtn.addEventListener('click', fecharChat);
-    chatSendBtn.addEventListener('click', enviarMensagem);
-    chatInput.addEventListener('keydown', e => {
-        // Envia com Enter, cria nova linha com Shift+Enter
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault(); // Previne a quebra de linha
-            enviarMensagem();
-        }
+    if(closeModalBtn) closeModalBtn.addEventListener('click', fecharChat);
+    if(chatSendBtn) chatSendBtn.addEventListener('click', enviarMensagem);
+    if(chatInput) chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagem(); }
     });
     
-    // Botão para exibir/ocultar a caixa de Orçamento no chat
     if (btnToggleOrcamento) {
         btnToggleOrcamento.addEventListener('click', () => {
-            if (orcamentoOverlay.style.display === 'none' || orcamentoOverlay.style.display === '') {
-                abrirOrcamento();
-            } else {
-                fecharOrcamento();
-            }
+            if (orcamentoOverlay.style.display === 'none' || orcamentoOverlay.style.display === '') abrirOrcamento();
+            else fecharOrcamento();
         });
     }
 
-    // Botão X dentro do orçamento
-    if (fecharOrcamentoBtn) {
-        fecharOrcamentoBtn.addEventListener('click', fecharOrcamento);
-    }
-
-    // Fecha o orçamento se clicar no fundo (overlay)
+    if (fecharOrcamentoBtn) fecharOrcamentoBtn.addEventListener('click', fecharOrcamento);
     if (orcamentoOverlay) {
         orcamentoOverlay.addEventListener('click', function(e) {
-            if (e.target === orcamentoOverlay) { // Garante que o clique foi no fundo, não na caixa
-                fecharOrcamento();
-            }
+            if (e.target === orcamentoOverlay) fecharOrcamento();
         });
     }
 
-    // Lógica para o textarea auto-expansível
     if (chatInput) {
         chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto'; // Reseta a altura para recalcular o scrollHeight
-            chatInput.style.height = (chatInput.scrollHeight) + 'px'; // Ajusta a altura ao conteúdo
+            chatInput.style.height = 'auto';
+            chatInput.style.height = (chatInput.scrollHeight) + 'px';
         });
     }
 
-    // Envio de Imagem
     if (chatImageInput) {
         chatImageInput.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file || !currentPedidoId) return;
-
             try {
                 mostrarToast("Anexando imagem...", "success");
                 const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
                 enviarNovaMensagemObjeto(chatInput.value.trim(), base64Comprimido);
-            } catch (error) {
-                mostrarToast("Erro ao processar o anexo.", "error");
-            }
+            } catch (error) { mostrarToast("Erro ao processar o anexo.", "error"); }
         });
     }
 
-    // --- NOVO: Drag & Drop para Chat ---
     if (chatView) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             chatView.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
         });
-
         ['dragenter', 'dragover'].forEach(eventName => {
             chatView.addEventListener(eventName, () => {
                 const inputArea = document.querySelector(".chat-input-area");
-                if (currentPedidoId && inputArea && inputArea.style.display !== 'none') {
-                    chatView.classList.add('drag-active');
-                }
+                if (currentPedidoId && inputArea && inputArea.style.display !== 'none') chatView.classList.add('drag-active');
             }, false);
         });
-
         chatView.addEventListener('dragleave', e => {
             if (!chatView.contains(e.relatedTarget)) chatView.classList.remove('drag-active');
         }, false);
-
         chatView.addEventListener('drop', async (e) => {
             chatView.classList.remove('drag-active');
             const inputArea = document.querySelector(".chat-input-area");
@@ -822,31 +824,21 @@ document.addEventListener("DOMContentLoaded", function() {
                     mostrarToast("Anexando imagem...", "success");
                     const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
                     enviarNovaMensagemObjeto(chatInput.value.trim(), base64Comprimido);
-                } catch (error) {
-                    mostrarToast("Erro ao processar o anexo.", "error");
-                }
-            } else if (file) {
-                mostrarToast("Por favor, solte apenas arquivos de imagem.", "error");
-            }
+                } catch (error) { mostrarToast("Erro ao processar o anexo.", "error"); }
+            } else if (file) { mostrarToast("Por favor, solte apenas arquivos de imagem.", "error"); }
         }, false);
     }
 
-    window.addEventListener('click', e => e.target == modal && fecharChat());
+    window.addEventListener('click', e => { if(e.target == modal) fecharChat() });
 
     // ================= HEADER E LOGOUT =================
-    function logout(e) {
-        if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
-        window.location.href = "index.html";
-    }
-
     function setupHeader() {
         const menu = document.getElementById("menu");
         if (!menu) return;
         const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
         const primeiroNome = usuarioAtual.nome.split(' ')[0];
         const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
+        
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
@@ -859,27 +851,37 @@ document.addEventListener("DOMContentLoaded", function() {
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
-                    <a href="#" id="btnLogout">Sair</a>
+                    <a href="#" onclick="logout(event)">Sair</a>
                 </div>
             </div>
         `;
-        document.getElementById("btnLogout").addEventListener("click", logout);
-        document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
-            e.stopPropagation();
-            document.getElementById("profileDropdown").classList.toggle("show-dropdown");
-        });
+        
+        const avatarMenuBtn = document.getElementById("avatarMenuBtn");
+        if(avatarMenuBtn) {
+            avatarMenuBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+            });
+        }
+
         window.addEventListener("click", function() {
             const dropdown = document.getElementById("profileDropdown");
             if (dropdown && dropdown.classList.contains("show-dropdown")) {
                 dropdown.classList.remove("show-dropdown");
             }
         });
+        
         if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
     }
 
-    // ==========================================================
-    // LÓGICA DE PAGAMENTO SIMULADO (UI Toggle e Processamento)
-    // ==========================================================
+    // A função de logout precisa estar no escopo global para o `onclick="logout(event)"` funcionar perfeitamente
+    window.logout = function(e) {
+        if (e) e.preventDefault();
+        API.fazerLogout();
+        window.location.href = "index.html";
+    }
+
+    // ================= LÓGICA DE PAGAMENTO SIMULADO =================
     document.querySelectorAll('input[name="metodoPagamento"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'pix') {
@@ -910,40 +912,28 @@ document.addEventListener("DOMContentLoaded", function() {
 
             setTimeout(async () => {
                 if (currentPedidoId) {
-                    const index = solicitacoes.findIndex(s => s.id === currentPedidoId);
+                    const index = solicitacoes.findIndex(s => s.id == currentPedidoId);
                     if (index !== -1) {
                         solicitacoes[index].status = 'ACEITO';
                         solicitacoes[index].valorStatus = 'ACEITO';
-                        solicitacoes[index].statusPagamento = 'RETIDO'; // Dinheiro retido pela plataforma
+                        solicitacoes[index].statusPagamento = 'RETIDO'; 
                         
-                        const transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
-                        const valorTotal = parseFloat(solicitacoes[index].valorCombinado);
-                        const taxa = valorTotal * 0.10;
-                        
-                        transacoes.push({
-                            id: "TX-" + Date.now(),
-                            servicoId: solicitacoes[index].id,
-                            clienteEmail: solicitacoes[index].clienteEmail,
-                            prestadorEmail: solicitacoes[index].prestadorEmail,
-                            valorServico: valorTotal,
-                            taxaPlataforma: taxa,
-                            valorPrestador: valorTotal - taxa,
-                            data: new Date().toISOString(),
-                            status: "RETIDO",
-                            tipo: "PAGAMENTO"
-                        });
-                        
-                        localStorage.setItem("transacoes", JSON.stringify(transacoes));
-                        localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
-                        enviarMensagemSistema(currentPedidoId, "💳 <strong>Pagamento Aprovado!</strong> O valor foi retido com segurança pela plataforma. O serviço já pode ser iniciado.");
+                        try {
+                            // 🚀 Aguarda o banco salvar a transação REAL antes de dar o ok visual
+                            await API.atualizarSolicitacao(solicitacoes[index].id, solicitacoes[index]);
+                            await enviarMensagemSistema(currentPedidoId, "💳 <strong>Pagamento Aprovado!</strong> O valor foi retido com segurança pela plataforma. O serviço já pode ser iniciado.");
+                            
+                            mostrarToast("Pagamento aprovado com sucesso!", "success");
+                            document.getElementById('pagamentoModal').style.display = 'none';
+                            setTimeout(() => location.reload(), 1000);
+                        } catch (err) {
+                            console.error(err);
+                            mostrarToast("Erro ao processar o pagamento no banco de dados.", "error");
+                        } finally {
+                            removeButtonLoading(btn);
+                        }
                     }
                 }
-                
-                mostrarToast("Pagamento aprovado com sucesso!", "success");
-                document.getElementById('pagamentoModal').style.display = 'none';
-                removeButtonLoading(btn);
-                
-                setTimeout(() => location.reload(), 1000);
             }, 1500);
         });
     }
@@ -955,36 +945,77 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Inicia a renderização
+    // Inicia a renderização (Final)
     setupHeader();
     carregarPedidos();
+
+    // 🚀 INICIA O POLLING DA LISTA DE PEDIDOS PARA ATUALIZAÇÕES EM TEMPO REAL
+    setInterval(async () => {
+        // Só atualiza se o chat não estiver aberto para não causar conflitos de renderização
+        if (modal && modal.style.display === 'block') return;
+
+        const novasSolicitacoes = await API.getSolicitacoes();
+        if (novasSolicitacoes.length === 0) return;
+
+        // Compara a lista nova com a antiga para ver se algo mudou
+        let mudancaDetectada = false;
+        if (novasSolicitacoes.length !== solicitacoes.length) {
+            mudancaDetectada = true;
+        } else {
+            for (const novoPedido of novasSolicitacoes) {
+                    // Usamos == para evitar falsos negativos entre String e Number
+                    const pedidoAntigo = solicitacoes.find(p => p.id == novoPedido.id);
+                if (!pedidoAntigo || 
+                    pedidoAntigo.status !== novoPedido.status || 
+                    pedidoAntigo.statusPagamento !== novoPedido.statusPagamento ||
+                    pedidoAntigo.mensagensNaoLidas !== novoPedido.mensagensNaoLidas) { // 🚀 Atualiza se receber mensagem!
+                    mudancaDetectada = true;
+                    break;
+                }
+            }
+        }
+
+        if (mudancaDetectada) {
+            solicitacoes = novasSolicitacoes;
+            atualizarExibicaoPedidos();
+        }
+    }, 5000); // Verifica a cada 5 segundos
 });
 
-function formatarStatusBadge(pedido) {
-    const { status, valorStatus } = pedido;
+function formatarStatusBadge(pedido, emailLogado) {
+    const status = pedido.status;
+    const valorStatus = pedido.valorStatus || pedido.valor_status;
+    const pEmail = pedido.prestadorEmail || pedido.prestador_email;
+    const isPrestador = pEmail === emailLogado;
+    
     let texto = status;
     let classe = `status-${status.toLowerCase()}`;
 
     if (status === 'PENDENTE') {
         if (valorStatus === 'PROPOSTO') {
-            texto = 'Orçamento Enviado';
-            classe = 'status-aguardando_confirmacao'; // Reusing a blueish color
+            texto = isPrestador ? 'Orçamento Enviado' : 'Orçamento Recebido';
+            classe = 'status-aguardando_confirmacao'; 
         } else {
-            texto = 'Aguardando Orçamento';
-            classe = 'status-pendente'; // Orange
+            texto = 'Aguardando Resposta';
+            classe = 'status-pendente'; 
         }
     } else if (status === 'ACEITO') {
-        texto = 'Em Andamento';
-        classe = 'status-aceito'; // Green
+        if (valorStatus === 'ACEITO') {
+            texto = 'Em Andamento';
+            classe = 'status-aceito'; 
+        } else {
+            texto = 'Serviço Aceito';
+            classe = 'status-aceito';
+        }
     } else if (status === 'AGUARDANDO_CONFIRMACAO') {
         texto = 'Aguardando Confirmação';
-        classe = 'status-aguardando_confirmacao'; // Blueish
+        classe = 'status-aguardando_confirmacao'; 
     } else if (status === 'CONCLUIDO') {
-        texto = 'Finalizado';
-        classe = 'status-concluido'; // Blue
+        texto = 'Serviço Concluído';
+        classe = 'status-concluido'; 
     } else if (status === 'CANCELADO') {
         texto = 'Cancelado';
-        classe = 'status-cancelado'; // Red
+        classe = 'status-cancelado'; 
     }
     
     return `<span class="status ${classe}">${texto}</span>`;
@@ -993,24 +1024,22 @@ function formatarStatusBadge(pedido) {
 function gerarTimelineHTML(pedido) {
     const { status } = pedido;
 
-    if (status === 'CANCELADO') {
-        return `<div class="timeline-cancelled">Serviço Cancelado</div>`;
-    }
+    if (status === 'CANCELADO') return `<div class="timeline-cancelled">Serviço Cancelado</div>`;
 
     const steps = [
-        { id: 'solicitado', icon: '📝', label: 'Solicitado' },
+        { id: 'solicitado', icon: '📝', label: 'Aguardando' },
         { id: 'orcamento', icon: '💲', label: 'Orçamento' },
         { id: 'pagamento', icon: '💳', label: 'Pagamento' },
         { id: 'andamento', icon: '🛠️', label: 'Em Andamento' },
-        { id: 'finalizado', icon: '✅', label: 'Finalizado' }
+        { id: 'finalizado', icon: '✅', label: 'Concluído' }
     ];
 
     let currentStepIndex = 0;
 
-    if (status === 'PENDENTE') currentStepIndex = 1; // Orçamento
-    else if (status === 'ACEITO') currentStepIndex = 3; // Em Andamento
-    else if (status === 'AGUARDANDO_CONFIRMACAO') currentStepIndex = 4; // Finalizado
-    else if (status === 'CONCLUIDO') currentStepIndex = 5; // Todos completos
+    if (status === 'PENDENTE') currentStepIndex = 1;
+    else if (status === 'ACEITO') currentStepIndex = 3;
+    else if (status === 'AGUARDANDO_CONFIRMACAO') currentStepIndex = 4;
+    else if (status === 'CONCLUIDO') currentStepIndex = 5;
     
     return `<div class="status-timeline">${steps.map((step, index) => {
         let stepClass = index < currentStepIndex ? 'completed' : (index === currentStepIndex ? 'current' : 'future');

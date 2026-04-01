@@ -1,5 +1,5 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+document.addEventListener("DOMContentLoaded", async function() {
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         window.location.href = "index.html";
         return;
@@ -7,8 +7,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const params = new URLSearchParams(window.location.search);
     const pedidoId = params.get("pedido");
-    const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-    const pedido = solicitacoes.find(s => s.id === pedidoId);
+    const solicitacoes = await API.getSolicitacoes();
+    const pedido = solicitacoes.find(s => s.id == pedidoId);
 
     if (!pedido || pedido.clienteEmail !== emailLogado || pedido.status !== 'PENDENTE') {
         mostrarToast("Pedido inválido para pagamento.", "error");
@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    const usuarios = await API.getUsuarios();
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
     const valorFloat = parseFloat(pedido.valorCombinado);
     
@@ -32,41 +32,19 @@ document.addEventListener("DOMContentLoaded", function() {
         e.preventDefault();
         const submitButton = e.submitter;
         setButtonLoading(submitButton);
-        
-        const method = document.querySelector('input[name="paymentMethod"]:checked').value;
-        let transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
-
-        // Fluxo Financeiro e Taxa da Plataforma (10%)
-        const taxaPlataforma = valorFloat * 0.10;
-        const valorPrestador = valorFloat - taxaPlataforma;
-
-        transacoes.push({
-            id: 'TX-' + Date.now(),
-            servicoId: pedido.id,
-            clienteEmail: emailLogado,
-            prestadorEmail: pedido.prestadorEmail,
-            valorServico: valorFloat,
-            taxaPlataforma: taxaPlataforma,
-            valorPrestador: valorPrestador,
-            tipo: method === 'cartao' ? 'CARTAO' : 'PIX',
-            status: 'RETIDO', // Status inicial da transação
-            data: new Date().toISOString()
-        });
-        localStorage.setItem("transacoes", JSON.stringify(transacoes));
 
         // Atualiza o pedido
         pedido.status = 'ACEITO';
         pedido.valorStatus = 'ACEITO';
         pedido.statusPagamento = 'RETIDO';
-        
-        const index = solicitacoes.findIndex(s => s.id === pedido.id);
-        solicitacoes[index] = pedido;
-        localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+
+        // 🚀 Salva o status de Pago/Retido no Banco de Dados Real!
+        // A API agora cria a transação automaticamente quando o statusPagamento é 'RETIDO'
+        API.atualizarSolicitacao(pedido.id, pedido).catch(console.error);
 
         // Envia mensagem no chat avisando a retenção
-        const todasMensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-        todasMensagens.push({ id_mensagem: "MSG-" + Date.now(), id_solicitacao: pedido.id, remetenteEmail: "SISTEMA", mensagem: `✅ <strong>Orçamento Aceito e Pagamento Realizado.</strong> O valor (R$ ${valorFloat.toFixed(2).replace('.', ',')}) está retido na plataforma de forma segura. O serviço já pode ser iniciado.`, data_envio: new Date().toISOString(), lida: false });
-        localStorage.setItem("mensagens", JSON.stringify(todasMensagens));
+        const msgPagamento = `✅ <strong>Orçamento Aceito e Pagamento Realizado.</strong> O valor (R$ ${valorFloat.toFixed(2).replace('.', ',')}) está retido na plataforma de forma segura. O serviço já pode ser iniciado.`;
+        API.enviarMensagemSistemaApi(pedido.id, msgPagamento).catch(console.error);
 
         // Simula o processamento do pagamento
         setTimeout(() => {

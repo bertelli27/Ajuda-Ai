@@ -1,6 +1,6 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO E CARREGAMENTO DE DADOS =================
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         mostrarToast("Você precisa fazer login para avaliar um serviço!", "error");
         setTimeout(() => {
@@ -19,10 +19,16 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-    const pedido = solicitacoes.find(s => s.id === pedidoId);
+    // 🚀 Busca os dados reais da API!
+    const [usuarios, solicitacoes] = await Promise.all([
+        API.getUsuarios(),
+        API.getSolicitacoes()
+    ]);
 
-    if (!pedido || pedido.clienteEmail !== emailLogado) {
+    const pedido = solicitacoes.find(s => s.id == pedidoId);
+    const cEmail = pedido?.clienteEmail || pedido?.cliente_email;
+
+    if (!pedido || cEmail !== emailLogado) {
         mostrarToast("Você não tem permissão para avaliar este pedido.", "error");
         setTimeout(() => {
             window.location.href = "pedidos.html";
@@ -38,15 +44,16 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const prestador = usuarios.find(u => u.email === pedido.prestadorEmail);
+    const pEmail = pedido.prestadorEmail || pedido.prestador_email;
+    const prestador = usuarios.find(u => u.email === pEmail);
 
     // Preenche informações do serviço
+    const dataSolicitacao = pedido.dataSolicitacao || pedido.criado_em || new Date().toISOString();
     const infoDiv = document.getElementById("infoServicoAvaliacao");
     infoDiv.innerHTML = `
         <h3 style="color: #00ADB5; margin-bottom: 5px;">${pedido.servico}</h3>
         <p><strong>Profissional:</strong> ${prestador ? prestador.nome : 'Não encontrado'}</p>
-        <p><strong>Data de Conclusão:</strong> ${new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR')}</p>
+        <p><strong>Data de Conclusão:</strong> ${new Date(dataSolicitacao).toLocaleDateString('pt-BR')}</p>
     `;
 
     // ================= LÓGICA DAS ESTRELAS =================
@@ -84,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // ================= SALVAR AVALIAÇÃO =================
-    document.getElementById("formAvaliacao").addEventListener("submit", function(e) {
+    document.getElementById("formAvaliacao").addEventListener("submit", async function(e) {
         e.preventDefault();
 
         if (currentRating === 0) {
@@ -93,50 +100,45 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         const comentario = document.getElementById("comentario").value.trim();
+        const btnSubmit = document.querySelector('#formAvaliacao button[type="submit"]');
+        setButtonLoading(btnSubmit);
 
         const novaAvaliacao = {
-            id_avaliacao: "AV-" + Date.now(),
-            id_solicitacao: pedidoId,
-            prestadorEmail: pedido.prestadorEmail,
-            clienteEmail: emailLogado,
+            id_solicitacao: pedido.id,
+            prestadorEmail: pEmail,
             nota: currentRating,
-            comentario: comentario,
-            data_avaliacao: new Date().toISOString()
+            comentario: comentario
         };
 
-        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
-        avaliacoes.push(novaAvaliacao);
-        localStorage.setItem("avaliacoes", JSON.stringify(avaliacoes));
-
-        // Marcar o pedido como avaliado
-        const pedidoIndex = solicitacoes.findIndex(s => s.id === pedidoId);
-        if (pedidoIndex !== -1) {
-            solicitacoes[pedidoIndex].avaliado = true;
-            localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+        try {
+            await API.criarAvaliacao(novaAvaliacao);
+            mostrarToast("Avaliação enviada com sucesso! Obrigado.", "success");
+            setTimeout(() => {
+                window.location.href = "pedidos.html";
+            }, 1500);
+        } catch (error) {
+            mostrarToast(error.message, "error");
+            removeButtonLoading(btnSubmit);
         }
-
-        mostrarToast("Avaliação enviada com sucesso! Obrigado.", "success");
-        setTimeout(() => {
-            window.location.href = "pedidos.html";
-        }, 1500);
     });
     
     // ================= HEADER E LOGOUT =================
-    function logout(e) {
+    window.logout = function(e) {
         if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
+        API.fazerLogout();
         window.location.href = "index.html";
     }
 
     function setupHeader() {
         const menu = document.getElementById("menu");
         if (!menu) return;
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
         const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+        if (!usuarioLogado) return;
+        
         const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
         const primeiroNome = usuarioLogado.nome.split(' ')[0];
         const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
+        
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
@@ -149,15 +151,19 @@ document.addEventListener("DOMContentLoaded", function() {
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
-                    <a href="#" id="btnLogout">Sair</a>
+                    <a href="#" onclick="logout(event)">Sair</a>
                 </div>
             </div>
         `;
-        document.getElementById("btnLogout").addEventListener("click", logout);
-        document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
-            e.stopPropagation();
-            document.getElementById("profileDropdown").classList.toggle("show-dropdown");
-        });
+        
+        const avatarMenuBtn = document.getElementById("avatarMenuBtn");
+        if(avatarMenuBtn) {
+            avatarMenuBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+            });
+        }
+        
         window.addEventListener("click", function() {
             const dropdown = document.getElementById("profileDropdown");
             if (dropdown && dropdown.classList.contains("show-dropdown")) {

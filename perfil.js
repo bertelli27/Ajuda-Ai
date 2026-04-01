@@ -1,10 +1,15 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
     // ================= VARIÁVEIS GLOBAIS E VERIFICAÇÃO DE CONTEXTO =================
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
     const params = new URLSearchParams(window.location.search);
     const action = params.get("action");
     const perfilEmail = params.get("usuario");
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+    
+    // 🚀 Busca dados REAIS da API!
+    const usuarios = await API.getUsuarios();
+    const solicitacoes = await API.getSolicitacoes();
+    const avaliacoes = await API.getAvaliacoes();
+
     let usuarioAlvo; // O usuário cujo perfil está sendo exibido
     let isOwnProfile = false; // Flag para verificar se o usuário está vendo seu próprio perfil
     let novaFotoBase64 = null; // Para armazenar a nova foto antes de salvar
@@ -150,7 +155,6 @@ document.addEventListener("DOMContentLoaded", function() {
         // Preenche as estatísticas da Sidebar
         
         // Calcula a Avaliação Média para exibir no Header Público
-        const avaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
         const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === usuario.email);
         let mediaEstrelas = 'Novo';
         if (avaliacoesDoPrestador.length > 0) {
@@ -165,7 +169,6 @@ document.addEventListener("DOMContentLoaded", function() {
             ratingContainer.style.display = "none"; // Oculta se for cliente
         }
 
-        const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
         if (usuario.tipo === "prestador") {
             document.getElementById("sidebar-tipo-perfil").innerText = "Profissional";
             document.getElementById("sidebar-label-servicos").innerText = "Serviços Concluídos";
@@ -274,10 +277,31 @@ document.addEventListener("DOMContentLoaded", function() {
         if (isOwnProfile) document.getElementById("btn-add-portfolio").style.display = editar ? "inline-flex" : "none";
     }
 
-    function tornarPrestador() {
+    async function tornarPrestador() {
         document.getElementById("areaTornarPrestador").style.display = "none";
         document.getElementById("secao-prestador").style.display = "block";
-        usuarioAlvo.tipo = "prestador"; // Marca temporariamente para salvar
+        usuarioAlvo.tipo = "prestador"; // Marca a mudança
+        
+        if (!usuarioAlvo.prestador) {
+            usuarioAlvo.prestador = {}; // Inicializa o objeto de metadados
+        }
+
+        // UX: Mostra que está processando a mudança para evitar impaciência
+        const btnTornar = document.getElementById("btnTornarPrestador");
+        if (btnTornar) {
+            btnTornar.innerText = "Configurando seu perfil profissional...";
+            btnTornar.disabled = true;
+        }
+
+        try {
+            // 🚀 AUTO-SALVA NO BANCO: Transforma o cliente em prestador imediatamente nos bastidores!
+            await API.atualizarPerfilApi(usuarioAlvo);
+            mostrarToast("Parabéns! Você agora é um profissional. Já pode adicionar seus serviços abaixo.", "success");
+        } catch (error) {
+            console.error("Erro ao converter para prestador:", error);
+            mostrarToast("Erro ao ativar modo prestador. Tente salvar manualmente no fim da página.", "error");
+        }
+
         alternarModoEdicao(true);
     }
 
@@ -296,7 +320,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    function salvarAlteracoes(e) {
+    async function salvarAlteracoes(e) {
         setButtonLoading(btnSalvar);
 
         const userIndex = usuarios.findIndex(u => u.email === emailLogado);
@@ -328,16 +352,21 @@ document.addEventListener("DOMContentLoaded", function() {
             usuarioEditado.prestador = {}; // Objeto de metadados do prestador
         }
 
-        API.salvarUsuarios(usuarios);
-
-        // Adiciona um delay para o usuário perceber o loading
-        setTimeout(() => {
-            mostrarToast("Dados atualizados com sucesso!", "success");
-            novaFotoBase64 = null; // Limpa a foto temporária
-            preencherDados(usuarioEditado); // Re-renderiza os dados no modo de visualização
-            alternarModoEdicao(false); // Volta para o modo de visualização
+        try {
+            // 🚀 SALVA NO BANCO DE DADOS MYSQL
+            await API.atualizarPerfilApi(usuarioEditado);
+            
+            setTimeout(() => {
+                mostrarToast("Dados atualizados com sucesso!", "success");
+                novaFotoBase64 = null; 
+                preencherDados(usuarioEditado); 
+                alternarModoEdicao(false); 
+                removeButtonLoading(btnSalvar);
+            }, 800);
+        } catch (error) {
+            mostrarToast(error.message || "Erro ao salvar no banco de dados.", "error");
             removeButtonLoading(btnSalvar);
-        }, 800);
+        }
     }
 
     // ================= NOVAS FUNÇÕES DE GERENCIAMENTO DE SERVIÇOS =================
@@ -371,6 +400,14 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     async function abrirModalServico(servicoId = null) {
+        // 🚀 TRAVA DE SEGURANÇA: Obriga o usuário a salvar a transição para prestador primeiro!
+        const usuariosBD = await API.getUsuarios();
+        const userDB = usuariosBD.find(u => u.email === emailLogado);
+        if (!userDB || userDB.tipo !== 'prestador') {
+            mostrarToast("Por favor, clique no botão azul 'Salvar Alterações' para confirmar seu perfil antes de adicionar serviços.", "error");
+            return;
+        }
+
         formServico.reset();
         document.getElementById("servicoId").value = "";
 
@@ -378,7 +415,7 @@ document.addEventListener("DOMContentLoaded", function() {
             // Modo Edição
             servicoModalTitle.innerText = "Editar Serviço";
             const todosServicos = await API.getServicos();
-            const servico = todosServicos.find(s => s.id === servicoId);
+            const servico = todosServicos.find(s => String(s.id) === String(servicoId));
             if (servico) {
                 document.getElementById("servicoId").value = servico.id;
                 document.getElementById("servicoTitulo").value = servico.titulo;
@@ -411,47 +448,35 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         try {
-            const todosServicos = await API.getServicos();
-    
             if (id) { // Editando
-                const index = todosServicos.findIndex(s => s.id === id);
-                if (index > -1) {
-                    todosServicos[index] = { ...todosServicos[index], titulo, categoria, descricao };
-                }
+                // 🚀 Edita direto no Banco de Dados MySQL
+                await API.editarServico(id, { titulo, categoria, descricao });
             } else { // Criando
-                const novoServico = {
-                    id: "SRV-" + Date.now(),
-                    prestadorEmail: emailLogado,
-                    titulo,
-                    categoria,
-                    descricao,
-                    dataCriacao: new Date().toISOString()
-                };
-                todosServicos.push(novoServico);
+                // 🚀 Envia direto para o Banco de Dados MySQL via Node.js
+                await API.criarServico({ titulo, categoria, descricao });
             }
     
-            // Simula o tempo de salvamento com a API
-            setTimeout(async () => {
-                await API.salvarServicos(todosServicos);
-                mostrarToast("Serviço salvo com sucesso!", "success");
-                servicoModal.style.display = "none";
-                renderizarMeusServicos();
-                removeButtonLoading(submitButton);
-            }, 600);
+            mostrarToast("Serviço salvo no Banco de Dados com sucesso!", "success");
+            servicoModal.style.display = "none";
+            renderizarMeusServicos(emailLogado);
+            removeButtonLoading(submitButton);
         } catch (error) {
             console.error("Erro interno:", error);
-            mostrarToast("Ocorreu um erro ao tentar salvar o serviço.", "error");
+            mostrarToast(error.message || "Ocorreu um erro ao tentar salvar.", "error");
             removeButtonLoading(submitButton);
         }
     }
 
-    async function excluirServico(servicoId) {
-        if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
-        let todosServicos = await API.getServicos();
-        todosServicos = todosServicos.filter(s => s.id !== servicoId);
-        await API.salvarServicos(todosServicos);
-        mostrarToast("Serviço excluído.", "success");
-        renderizarMeusServicos();
+    function excluirServico(servicoId) {
+        mostrarConfirmacao("Tem certeza que deseja excluir este serviço?", async () => {
+            try {
+                await API.excluirServico(servicoId);
+                mostrarToast("Serviço excluído com sucesso!", "success");
+                renderizarMeusServicos(emailLogado);
+            } catch (error) {
+                mostrarToast(error.message || "Erro ao tentar excluir serviço.", "error");
+            }
+        });
     }
     window.excluirServico = excluirServico; // Expondo para o onclick
 
@@ -462,8 +487,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const summaryContainer = document.getElementById("avaliacoes-summary");
         const btnVerTodas = document.getElementById("btnVerTodasAvaliacoes");
         
-        const todasAvaliacoes = JSON.parse(localStorage.getItem("avaliacoes")) || [];
-        const avaliacoesDoPrestador = todasAvaliacoes.filter(a => a.prestadorEmail === usuario.email);
+        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === usuario.email);
 
         if (avaliacoesDoPrestador.length > 0) {
             containerAvaliacoes.style.display = "block";
@@ -506,7 +530,8 @@ document.addEventListener("DOMContentLoaded", function() {
                  const fotoCliente = cliente?.fotoPerfil || 'img/avatar_padrao.png';
                  const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
                  const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
-                 const dataAvaliacao = new Date(avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
+                 // 🚀 Pega a data de criação do Banco de Dados (criado_em)
+                 const dataAvaliacao = new Date(avaliacao.criado_em || avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
                  return `
                      <div class="avaliacao-card fade-up-animation">
                          <div class="avaliacao-header" style="justify-content: space-between;">
@@ -614,30 +639,29 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function excluirFotoPortfolio(indexParaExcluir) {
-        // Pede confirmação ao usuário
-        const confirmou = confirm("Tem certeza que deseja excluir esta foto do seu portfólio? Esta ação não pode ser desfeita.");
-        if (!confirmou) return;
+        mostrarConfirmacao("Tem certeza que deseja excluir esta foto do seu portfólio? Esta ação não pode ser desfeita.", async () => {
+            const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+            if (userIndex === -1) {
+                mostrarToast("Erro ao encontrar seu usuário.", "error");
+                return;
+            }
 
-        const userIndex = usuarios.findIndex(u => u.email === emailLogado);
-        if (userIndex === -1) {
-            mostrarToast("Erro ao encontrar seu usuário.", "error");
-            return;
-        }
+            const usuario = usuarios[userIndex];
+            const portfolio = usuario.prestador?.portfolio;
 
-        const usuario = usuarios[userIndex];
-        const portfolio = usuario.prestador?.portfolio;
+            if (portfolio && portfolio[indexParaExcluir] !== undefined) {
+                // Remove a imagem do array pelo índice
+                portfolio.splice(indexParaExcluir, 1);
 
-        if (portfolio && portfolio[indexParaExcluir] !== undefined) {
-            // Remove a imagem do array pelo índice
-            portfolio.splice(indexParaExcluir, 1);
-
-            // Salva o array de usuários atualizado no localStorage
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-            // Re-renderiza a seção do portfólio para refletir a mudança
-            renderizarPortfolio(usuario);
-            mostrarToast("Foto excluída com sucesso!", "success");
-        }
+                try {
+                    await API.atualizarPerfilApi(usuario);
+                    renderizarPortfolio(usuario);
+                    mostrarToast("Foto excluída com sucesso!", "success");
+                } catch (err) {
+                    mostrarToast("Erro ao excluir do banco.", "error");
+                }
+            }
+        });
     }
 
     document.getElementById('portfolio-upload')?.addEventListener('change', async function(e) {
@@ -653,8 +677,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (!usuarios[userIndex].prestador.portfolio) usuarios[userIndex].prestador.portfolio = [];
             usuarios[userIndex].prestador.portfolio.push(base64Comprimido);
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-            renderizarPortfolio(usuarios[userIndex]);
+            
+            try {
+                await API.atualizarPerfilApi(usuarios[userIndex]);
+                renderizarPortfolio(usuarios[userIndex]);
+            } catch (err) { mostrarToast("Erro ao salvar a imagem no banco.", "error"); }
         } catch (error) {
             mostrarToast("Erro ao processar a imagem.", "error");
         }
@@ -694,7 +721,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
                     if (!usuarios[userIndex].prestador.portfolio) usuarios[userIndex].prestador.portfolio = [];
                     usuarios[userIndex].prestador.portfolio.push(base64Comprimido);
-                    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+                    
+                    await API.atualizarPerfilApi(usuarios[userIndex]);
                     renderizarPortfolio(usuarios[userIndex]);
                 } catch (error) {
                     mostrarToast("Erro ao processar a imagem.", "error");
@@ -722,6 +750,30 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // ================= FUNÇÕES AUXILIARES =================
+
+    function mostrarConfirmacao(mensagem, callbackConfirmar) {
+        const existingModal = document.getElementById('customConfirmModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHtml = `
+            <div id="customConfirmModal" class="modal" style="display: flex; align-items: center; justify-content: center; z-index: 10000; background-color: rgba(0,0,0,0.7);">
+                <div class="modal-content fade-up-animation" style="max-width: 400px; height: auto; text-align: center; padding: 30px; margin: 0;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+                    <h3 style="color: #EEEEEE; margin-bottom: 15px; font-size: 20px;">Atenção</h3>
+                    <p style="color: #AAAAAA; margin-bottom: 25px; font-size: 15px;">${mensagem}</p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button id="btnConfirmCancel" class="btn-forgot" style="margin: 0; flex: 1;">Cancelar</button>
+                        <button id="btnConfirmOk" class="btn-login" style="background-color: #d9534f; color: white; margin: 0; flex: 1; box-shadow: none;">Excluir</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = document.getElementById('customConfirmModal');
+        document.getElementById('btnConfirmCancel').onclick = () => modal.remove();
+        document.getElementById('btnConfirmOk').onclick = () => { modal.remove(); callbackConfirmar(); };
+    }
 
     function setupHeader() {
         const menu = document.getElementById("menu");
@@ -775,8 +827,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function logout(e) {
         if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
+        API.fazerLogout();
         window.location.href = "index.html";
     }
 });

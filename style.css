@@ -2868,6 +2868,7 @@ body.focus-mode-active .back-to-top-btn {
     }
 }
 
+
 /* ===========================
    TEMA CLARO (LIGHT THEME)
 =========================== */
@@ -3030,7 +3031,7 @@ body.focus-mode-active .back-to-top-btn {
     color: #718096;
 }
 [data-theme="light"] .step-label {
-    color: #A0AEC0;
+    color: #4A5568 !important;
 }
 [data-theme="light"] .step-label {
     background-color: #FFFFFF !important;
@@ -3053,7 +3054,7 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] #chat-input::placeholder,
 [data-theme="light"] .profile-info-card input::placeholder,
 [data-theme="light"] .profile-info-card textarea::placeholder {
-    color: #A0AEC0 !important;
+    color: #718096 !important;
 }
 
 [data-theme="light"] .menu a,
@@ -3072,7 +3073,24 @@ body.focus-mode-active .back-to-top-btn {
 [data-theme="light"] .error-msg,
 [data-theme="light"] .empty-state p,
 [data-theme="light"] .orcamento-form .form-group label,
-[data-theme="light"] .accordion-header {
+    [data-theme="light"] .accordion-header,
+    [data-theme="light"] .form-group label,
+    [data-theme="light"] .profile-info-card .form-group label,
+    [data-theme="light"] .dashboard-card h3,
+    [data-theme="light"] .sidebar-stat-label,
+    [data-theme="light"] .footer-col a,
+    [data-theme="light"] .tx-details,
+    [data-theme="light"] .tx-info p,
+    [data-theme="light"] .servico-info p,
+    [data-theme="light"] .orcamento-details span,
+    [data-theme="light"] .close-orcamento-btn,
+    [data-theme="light"] .password-toggle-btn,
+    [data-theme="light"] .orcamento-desc strong,
+    [data-theme="light"] .orcamento-desc p,
+    [data-theme="light"] .pedido-card .card-details p,
+    [data-theme="light"] .service-card p,
+    [data-theme="light"] .meu-servico-card p,
+    [data-theme="light"] .view-mode-text {
     color: #4A5568 !important;
 }
 
@@ -3240,7 +3258,7 @@ body.focus-mode-active .back-to-top-btn {
 
 [data-theme="light"] .mini-footer {
     border-top-color: #CBD5E0 !important;
-    color: #A0AEC0 !important;
+    color: #718096 !important;
 }
 
 [data-theme="light"] .transaction-item { background-color: #FFFFFF !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important; }

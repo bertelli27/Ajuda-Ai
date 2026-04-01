@@ -1,23 +1,35 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+document.addEventListener("DOMContentLoaded", async function() {
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         window.location.href = "index.html";
         return;
     }
 
-    function renderizarCarteira() {
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        const usuarioAtual = usuarios.find(u => u.email === emailLogado);
-        
-        const saldo = usuarioAtual.saldo || 0;
-        document.getElementById("walletBalance").innerText = `R$ ${saldo.toFixed(2).replace('.', ',')}`;
-
-        const todasTransacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
-        const minhasTransacoes = todasTransacoes.filter(t => t.userEmail === emailLogado);
-        
-        minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); // Recentes primeiro
-
+    async function renderizarCarteira() {
         const list = document.getElementById("transactionList");
+        const walletBalance = document.getElementById("walletBalance");
+
+        if(list) list.innerHTML = '<div style="text-align:center; padding: 20px; color:#AAAAAA;">Carregando transações da API...</div>';
+        if(walletBalance) walletBalance.style.display = 'block';
+
+        // 🚀 Busca as transações REAIS da API
+        const minhasTransacoes = await API.getTransacoes();
+        
+        minhasTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+        // 🚀 Calcula o saldo REAL
+        // Soma apenas os recebimentos (onde ele é prestador) cujo status é CONCLUIDO (Liberado)
+        let saldoReal = 0;
+        minhasTransacoes.forEach(t => {
+            if (t.prestadorEmail === emailLogado && t.status === 'CONCLUIDO' && t.tipo === 'PAGAMENTO') {
+                saldoReal += parseFloat(t.valorPrestador);
+            }
+        });
+
+        if(walletBalance) walletBalance.innerText = `R$ ${saldoReal.toFixed(2).replace('.', ',')}`;
+
+        if (!list) return;
+
         if (minhasTransacoes.length === 0) {
             list.innerHTML = `
                 <div class="empty-state fade-up-animation transaction-item" style="justify-content: center; flex-direction: column;">
@@ -26,19 +38,28 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>`;
         } else {
             list.innerHTML = minhasTransacoes.map(t => {
-                const isEntrada = t.tipo === 'ENTRADA';
+                const isClienteNestaTx = t.clienteEmail === emailLogado;
+                const isEntrada = !isClienteNestaTx && t.tipo === 'PAGAMENTO';
                 const sinal = isEntrada ? '+' : '-';
                 const classe = isEntrada ? 'entrada' : 'saida';
                 const dataFormatada = new Date(t.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 
+                let statusTag = '';
+                if (t.status === 'RETIDO') statusTag = '<span style="background: #f0ad4e; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Retido</span>';
+                else if (t.status === 'CONCLUIDO') statusTag = '<span style="background: #5cb85c; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Liberado</span>';
+                else if (t.status === 'CANCELADO') statusTag = '<span style="background: #d9534f; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Estornado</span>';
+
+                const valorExibicao = isClienteNestaTx ? t.valorServico : t.valorPrestador;
+                const descricao = isClienteNestaTx ? `Pagamento de Serviço` : `Recebimento de Serviço`;
+
                 return `
                     <div class="transaction-item ${classe}">
                         <div class="tx-info">
-                            <h4>${t.descricao}</h4>
+                            <h4>${descricao} ${statusTag}</h4>
                             <p>${dataFormatada}</p>
                         </div>
                         <div class="tx-valor">
-                            ${sinal} R$ ${parseFloat(t.valor).toFixed(2).replace('.', ',')}
+                            ${sinal} R$ ${parseFloat(valorExibicao).toFixed(2).replace('.', ',')}
                         </div>
                     </div>
                 `;
@@ -46,87 +67,52 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    document.getElementById("btnSacar").addEventListener("click", () => {
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        const userIndex = usuarios.findIndex(u => u.email === emailLogado);
-        const saldo = usuarios[userIndex].saldo || 0;
-
-        if (saldo <= 0) {
-            mostrarToast("Você não possui saldo para sacar.", "error");
-            return;
-        }
-
-        const valorStr = prompt(`Saldo disponível: R$ ${saldo.toFixed(2)}\nDigite o valor que deseja sacar:`);
-        if (!valorStr) return;
-        
-        const valorNum = parseFloat(valorStr.replace(',', '.'));
-        if (isNaN(valorNum) || valorNum <= 0 || valorNum > saldo) {
-            mostrarToast("Valor inválido para saque.", "error");
-            return;
-        }
-
-        usuarios[userIndex].saldo -= valorNum;
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-        const transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
-        transacoes.push({ id: 'TX-' + Date.now(), userEmail: emailLogado, tipo: 'SAIDA', descricao: 'Saque para Conta Bancária', valor: valorNum, data: new Date().toISOString() });
-        localStorage.setItem("transacoes", JSON.stringify(transacoes));
-
-        mostrarToast("Saque realizado com sucesso!", "success");
-        renderizarCarteira();
+    // Botões temporariamente desativados/mockados para a fase do TCC
+    document.getElementById("btnSacar")?.addEventListener("click", () => {
+        mostrarToast("A funcionalidade de saque real (API) será integrada no futuro.", "error");
     });
-
-    // Botão auxiliar para testes do TCC
-    document.getElementById("btnDepositar").addEventListener("click", () => {
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-        const userIndex = usuarios.findIndex(u => u.email === emailLogado);
-        usuarios[userIndex].saldo = (usuarios[userIndex].saldo || 0) + 500; // Adiciona R$500 fictícios
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        
-        const transacoes = JSON.parse(localStorage.getItem("transacoes")) || [];
-        transacoes.push({ id: 'TX-' + Date.now(), userEmail: emailLogado, tipo: 'ENTRADA', descricao: 'Depósito via Pix (Teste)', valor: 500, data: new Date().toISOString() });
-        localStorage.setItem("transacoes", JSON.stringify(transacoes));
-
-        mostrarToast("Saldo de teste adicionado!", "success");
-        renderizarCarteira();
+    document.getElementById("btnDepositar")?.addEventListener("click", () => {
+        mostrarToast("Depósitos de teste desativados nesta fase.", "error");
     });
 
     renderizarCarteira();
     setupHeader();
 
     // ================= HEADER E LOGOUT =================
-    function logout(e) {
+    window.logout = function(e) {
         if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
+        API.fazerLogout();
         window.location.href = "index.html";
     }
 
-    function setupHeader() {
+    async function setupHeader() {
         const menu = document.getElementById("menu");
         if (!menu) return;
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+        const usuarios = await API.getUsuarios(); // Mantendo mock por enquanto
         const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+        if(!usuarioLogado) return;
+        
         const fotoPerfil = usuarioLogado?.fotoPerfil || 'img/avatar_padrao.png';
         const primeiroNome = usuarioLogado.nome.split(' ')[0];
         const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
+        
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html">${textoPedidos}</a>
             <a href="carteira.html" class="active-nav">Finanças</a>
             <div class="profile-menu-container">
-                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" atar">
+                <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
+                    <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                     <span>${primeiroNome}</span>
                 </a>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
-                    <a href="#" id="btnLogout">Sair</a>
+                    <a href="#" onclick="logout(event)">Sair</a>
                 </div>
             </div>
         `;
-        document.getElementById("btnLogout").addEventListener("click", logout);
         document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
             e.stopPropagation();
             document.getElementById("profileDropdown").classList.toggle("show-dropdown");

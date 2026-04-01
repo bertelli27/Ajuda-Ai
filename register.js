@@ -241,7 +241,7 @@ cepInput?.addEventListener('blur', async function() {
 });
 
 // Submissão do Formulário
-registerForm?.addEventListener("submit", function(e){
+registerForm?.addEventListener("submit", async function(e){
     e.preventDefault();
 
     const submitButton = e.submitter;
@@ -274,55 +274,40 @@ registerForm?.addEventListener("submit", function(e){
     }
 
     const email = emailInput.value.trim();
-    const usuarioExistente = usuarios.find(u => u.email === email);
-    if(usuarioExistente){
-        mostrarToast("Usuário já cadastrado com este e-mail!", "error");
-        setInputError(emailInput, "Este e-mail já está em uso.");
-        removeButtonLoading(submitButton);
-        return;
-    }
-
-    const novoUsuario = { 
-        nome: nomeInput.value.trim(), 
-        cpf: cpfInput.value.trim(), 
-        email: email, 
-        telefone: telefoneInput.value.trim(), 
-        endereco: { 
-            cep: cepInput.value.trim(), 
-            rua: ruaInput.value.trim(), 
-            numero: numeroInput.value.trim(), 
-            complemento: complementoInput.value.trim(), 
-            bairro: bairroInput.value.trim(), 
-            cidade: cidadeInput.value.trim(), 
-            estado: estadoInput.value.trim() 
-        },
-        fotoPerfil: null, 
-        senha: senhaInput.value.trim(), 
-        tipo: tipoUsuario 
-    };
     
-    if (tipoUsuario === "prestador") {
-        novoUsuario.prestador = { 
-            categoria: categoriaInput.value, 
-            servico: servicoInput.value.trim(), 
-            descricao: descricaoInput.value.trim(), 
-            valor: limparMascaraDinheiro(valorInput.value.trim()), 
-            disponibilidade: disponibilidadeInput.value.trim() 
-        };
+    // Prepara os dados exatos que o nosso Node.js espera
+    const dadosBack = {
+        nome: nomeInput.value.trim(),
+        email: email,
+        senha: senhaInput.value.trim(),
+        telefone: telefoneInput.value.trim(),
+        tipo: tipoUsuario,
+        descricao_perfil: tipoUsuario === 'prestador' ? descricaoInput.value.trim() : null,
+        categoria: tipoUsuario === 'prestador' ? categoriaInput.value : null,
+        titulo_servico: tipoUsuario === 'prestador' ? servicoInput.value.trim() : null,
+        preco_base: tipoUsuario === 'prestador' ? limparMascaraDinheiro(valorInput.value.trim()) : null,
+        cpf: cpfInput.value.trim(),
+        cep: cepInput.value.trim(),
+        rua: ruaInput.value.trim(),
+        numero: numeroInput.value.trim(),
+        complemento: complementoInput.value.trim(),
+        bairro: bairroInput.value.trim(),
+        cidade: cidadeInput.value.trim(),
+        estado: estadoInput.value.trim()
+    };
+
+    try {
+        // 🚀 SALVA NO BANCO DE DADOS MYSQL VIA API!
+        await API.cadastrar(dadosBack);
+        
+        mostrarToast("Conta criada com sucesso! Faça o login.", "success");
+        setTimeout(() => {
+            window.location.href = "index.html"; // Joga ele pra tela de login
+        }, 1500);
+
+    } catch (error) {
+        // O e-mail já existe no banco? Vai cair aqui!
+        mostrarToast(error.message, "error");
+        removeButtonLoading(submitButton);
     }
-
-    usuarios.push(novoUsuario);
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-    const lembrar = document.getElementById("lembrarContaRegister").checked;
-    if(lembrar){
-        localStorage.setItem("usuarioLogado", email);
-    } else {
-        sessionStorage.setItem("usuarioLogado", email);
-    }
-
-    mostrarToast("Cadastro realizado com sucesso!", "success");
-    setTimeout(() => {
-        window.location.href = "dashboard.html";
-    }, 1500);
 });

@@ -1,115 +1,99 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO DE USUÁRIO LOGADO =================
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
-    
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 1500);
+        setTimeout(() => { window.location.href = "index.html"; }, 1500);
         return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const clienteAtual = usuarios.find(u => u.email === emailLogado);
-
-    // ================= PEGAR PRESTADOR DA URL =================
+    // ================= CARREGAMENTO DE DADOS =================
     const params = new URLSearchParams(window.location.search);
-    const servicoId = params.get("servicoId");
-    const todosServicos = JSON.parse(localStorage.getItem("servicos")) || [];
-    const servicoSolicitado = todosServicos.find(s => s.id === servicoId);
+    const servicoId = parseInt(params.get("servicoId"), 10);
 
-    if (!servicoSolicitado) {
-        mostrarToast("Serviço não encontrado.", "error");
-        setTimeout(() => {
-            window.location.href = "servicos.html";
-        }, 1500);
+    if (!servicoId) {
+        mostrarToast("ID do serviço não fornecido.", "error");
+        setTimeout(() => { window.location.href = "servicos.html"; }, 1500);
         return;
     }
 
-    const prestador = usuarios.find(u => u.email === servicoSolicitado.prestadorEmail);
+    try {
+        // Busca todos os dados necessários da API
+        // Usamos o mock de getUsuarios por enquanto para pegar os dados do cliente
+        const [usuarios, servicoSolicitado] = await Promise.all([
+            API.getUsuarios(), 
+            API.getServicoById(servicoId)
+        ]);
 
-    if (!prestador) {
-        mostrarToast("Este usuário não é um prestador válido.", "error");
-        setTimeout(() => {
-            window.location.href = "servicos.html";
-        }, 1500);
-        return;
+        const clienteAtual = usuarios.find(u => u.email === emailLogado);
+
+        if (servicoSolicitado.prestador_email === emailLogado) {
+            mostrarToast("Você não pode solicitar um serviço a si mesmo.", "error");
+            setTimeout(() => { window.location.href = "servicos.html"; }, 1500);
+            return;
+        }
+
+        // Se tudo estiver OK, preenche a tela e configura o formulário
+        preencherDadosTela(servicoSolicitado, clienteAtual);
+        configurarFormulario(servicoId);
+
+    } catch (error) {
+        mostrarToast(error.message, "error");
+        setTimeout(() => { window.location.href = "servicos.html"; }, 1500);
     }
 
-    // Regra: Usuário não pode contratar a si mesmo
-    if (servicoSolicitado.prestadorEmail === emailLogado) {
-        mostrarToast("Você não pode solicitar um serviço a si mesmo.", "error");
-        setTimeout(() => {
-            window.location.href = "servicos.html";
-        }, 1500);
-        return;
+    // ================= FUNÇÕES DE UI E LÓGICA =================
+    function preencherDadosTela(servico, cliente) {
+        document.getElementById("infoPrestador").innerHTML = `
+            <h3 style="color: #00ADB5; margin-bottom: 5px;">${servico.titulo}</h3>
+            <p style="margin-bottom: 5px;"><strong>Profissional:</strong> ${servico.prestador_nome}</p>
+        `;
+
+        if (cliente && cliente.endereco) {
+            const end = cliente.endereco;
+            const enderecoFormatado = `${end.rua}, ${end.numero} ${end.complemento ? '- ' + end.complemento : ''} - ${end.bairro}, ${end.cidade} - ${end.estado}`;
+            document.getElementById("enderecoLocal").value = enderecoFormatado;
+        }
+        setupHeader(cliente);
     }
 
-    // ================= EXIBIR DADOS =================
-    const infoDiv = document.getElementById("infoPrestador");
-    infoDiv.innerHTML = `
-        <h3 style="color: #00ADB5; margin-bottom: 5px;">${servicoSolicitado.titulo}</h3>
-        <p style="margin-bottom: 5px;"><strong>Profissional:</strong> ${prestador.nome}</p>
-    `;
+    function configurarFormulario(idServico) {
+        document.getElementById("formSolicitacao").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const btnSubmit = e.submitter;
+            setButtonLoading(btnSubmit);
 
-    // Preenche o endereço do cliente como sugestão inicial
-    if (clienteAtual && clienteAtual.endereco) {
-        const end = clienteAtual.endereco;
-        const enderecoFormatado = `${end.rua}, ${end.numero} ${end.complemento ? '- ' + end.complemento : ''} - ${end.bairro}, ${end.cidade} - ${end.estado}`;
-        document.getElementById("enderecoLocal").value = enderecoFormatado;
+            const dadosSolicitacao = {
+                servicoId: idServico,
+                descricaoProblema: document.getElementById("descricaoProblema").value.trim(),
+                dataDesejada: document.getElementById("dataDesejada").value,
+                enderecoRealizacao: document.getElementById("enderecoLocal").value.trim()
+            };
+
+            try {
+                await API.criarSolicitacao(dadosSolicitacao);
+                mostrarToast("Solicitação enviada com sucesso! Acompanhe em 'Meus Pedidos'.", "success");
+                setTimeout(() => { window.location.href = "pedidos.html"; }, 2000);
+            } catch (error) {
+                mostrarToast(error.message, "error");
+                removeButtonLoading(btnSubmit);
+            }
+        });
     }
-
-    // ================= SALVAR SOLICITAÇÃO =================
-    document.getElementById("formSolicitacao").addEventListener("submit", function(e) {
-        e.preventDefault();
-
-        const descricao = document.getElementById("descricaoProblema").value.trim();
-        const data = document.getElementById("dataDesejada").value;
-        const endereco = document.getElementById("enderecoLocal").value.trim();
-
-        const novaSolicitacao = {
-            id: "SOL-" + Date.now(), // Gera um ID único simulado
-            servicoId: servicoSolicitado.id, // VINCULA AO SERVIÇO
-            clienteEmail: clienteAtual.email,
-            prestadorEmail: prestador.email,
-            servico: servicoSolicitado.titulo, // Nome do serviço para exibição rápida
-            descricao: descricao,
-            dataSelecionada: data,
-            enderecoRealizacao: endereco,
-            status: "PENDENTE", // Exatamente como na sua documentação de BD
-            statusPagamento: "PENDENTE",
-            dataSolicitacao: new Date().toISOString(),
-            valorCombinado: null,
-            valorStatus: 'INICIAL', // 'INICIAL', 'PROPOSTO', 'ACEITO'
-            descricaoProposta: ''
-        };
-
-        // Salva na "Tabela" de solicitações no LocalStorage
-        const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-        solicitacoes.push(novaSolicitacao);
-        localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
-
-        mostrarToast("Solicitação bem sucedida! Aguardando resposta do prestador.", "success");
-        setTimeout(() => {
-            window.location.href = "pedidos.html";
-        }, 2000);
-    });
 
     // ================= HEADER E LOGOUT =================
     function logout(e) {
         if (e) e.preventDefault();
-        localStorage.removeItem("usuarioLogado");
-        sessionStorage.removeItem("usuarioLogado");
+        API.fazerLogout();
         window.location.href = "index.html";
     }
 
-    function setupHeader() {
+    function setupHeader(usuarioAtual) {
         const menu = document.getElementById("menu");
         if (!menu) return;
-        const fotoPerfil = clienteAtual?.fotoPerfil || 'img/avatar_padrao.png';
-        const primeiroNome = clienteAtual.nome.split(' ')[0];
-        const textoPedidos = clienteAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
+        const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
+        const primeiroNome = usuarioAtual.nome.split(' ')[0];
+        const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
             <a href="home.html">Início</a>
             <a href="servicos.html" class="active-nav">Serviços</a>
@@ -139,6 +123,4 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
     }
-
-    setupHeader();
 });

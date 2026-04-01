@@ -29,42 +29,47 @@ const validateLoginSenha = () => {
 emailInput.addEventListener('blur', validateLoginEmail);
 senhaInput.addEventListener('blur', validateLoginSenha);
 
-loginForm.addEventListener("submit", function(e){
+loginForm.addEventListener("submit", async function(e){
     e.preventDefault();
+    const btnSubmit = e.submitter || document.querySelector('#loginForm button[type="submit"]');
+    setButtonLoading(btnSubmit);
 
     const isEmailValid = validateLoginEmail();
     const isSenhaValid = validateLoginSenha();
 
     if (!isEmailValid || !isSenhaValid) {
         mostrarToast("Por favor, corrija os campos em vermelho.", "error");
+        removeButtonLoading(btnSubmit);
         return;
     }
 
-    const usuario = emailInput.value.trim();
+    const email = emailInput.value.trim();
     const senha = senhaInput.value.trim();
     const lembrar = document.getElementById("lembrarConta").checked;
 
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const usuarioEncontrado = usuarios.find(u => u.email === usuario && u.senha === senha);
+    try {
+        // 🚀 FAZ O LOGIN REAL CHAMANDO A API EM NODE.JS!
+        const resposta = await API.login(email, senha);
+        
+        // Se a API não deu erro, decidimos onde salvar (Local ou Session)
+        const storage = lembrar ? localStorage : sessionStorage;
+        
+        // 1. Salva o Token de Segurança Verdadeiro
+        storage.setItem("token", resposta.token);
+        
+        // 2. Mantém o e-mail logado para não quebrar o Front-end antigo por enquanto
+        storage.setItem("usuarioLogado", resposta.usuario.email);
 
-    if(!usuarioEncontrado){
-        mostrarToast("E-mail ou senha incorretos!", "error");
-        setInputError(emailInput, " "); // Marca os campos para indicar o erro
-        setInputError(senhaInput, "E-mail ou senha incorretos.");
-        return;
+        mostrarToast("Login bem-sucedido! Redirecionando...", "success");
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 1000);
+        
+    } catch (error) {
+        // Se a senha for errada, a API vai disparar o erro até aqui!
+        mostrarToast(error.message, "error");
+        removeButtonLoading(btnSubmit);
     }
-
-    if(lembrar){
-        localStorage.setItem("usuarioLogado", usuario);
-    } else {
-        sessionStorage.setItem("usuarioLogado", usuario);
-    }
-
-    // Redireciona para a home
-    mostrarToast("Login bem-sucedido!", "success");
-    setTimeout(() => {
-        window.location.href = "dashboard.html";
-    }, 1000);
 });
 
 // ESQUECI SENHA

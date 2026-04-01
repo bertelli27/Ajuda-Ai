@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     // Verifica se o usuário já está logado
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+    const emailLogado = API.getSessaoAtual();
     const btnComecar = document.querySelector("button[onclick=\"window.location.href='register.html'\"]");
 
     if (emailLogado && btnComecar) {

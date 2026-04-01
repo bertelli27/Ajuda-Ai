@@ -80,29 +80,17 @@ function clearInputError(inputElement) {
 
 let lastNotificationCount = 0; // Guarda o último número de notificações
 
-function atualizarBadgeNotificacao() {
-    const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
+async function atualizarBadgeNotificacao() {
+    // Agora usamos a API para garantir que pegamos do MySQL (100% seguro)
+    if (typeof API === 'undefined') return;
+    const emailLogado = API.getSessaoAtual();
     if (!emailLogado) return;
-
-    const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-    const usuarioAtual = usuarios.find(u => u.email === emailLogado);
-    if (!usuarioAtual) return;
-
-    const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-    const mensagens = JSON.parse(localStorage.getItem("mensagens")) || [];
-
+    
     let numNotificacoes = 0;
 
-    // 1. Pedidos pendentes (para prestador)
-    if (usuarioAtual.tipo === 'prestador') {
-        const pendentes = solicitacoes.filter(s => s.prestadorEmail === emailLogado && s.status === 'PENDENTE').length;
-        numNotificacoes += pendentes;
-    }
-
-    // 2. Mensagens não lidas (para qualquer usuário logado)
-    const meusPedidosIds = solicitacoes.filter(s => s.clienteEmail === emailLogado || s.prestadorEmail === emailLogado).map(s => s.id);
-    const mensagensNaoLidas = mensagens.filter(m => meusPedidosIds.includes(m.id_solicitacao) && m.remetenteEmail !== emailLogado && m.lida !== true).length;
-    numNotificacoes += mensagensNaoLidas;
+    try {
+        numNotificacoes = await API.getNotificacoes();
+    } catch (e) { return; /* fail silently para não piscar erros */ }
 
     // Se o número de notificações aumentou, dispara uma notificação real no sistema operacional!
     if (numNotificacoes > lastNotificationCount) {

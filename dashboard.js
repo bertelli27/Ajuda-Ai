@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     // 🚀 Consumindo a Camada de Serviços (Prepara para a API)
     const usuarios = await API.getUsuarios();
     const solicitacoes = await API.getSolicitacoes();
-    const mensagens = await API.getMensagens();
     const avaliacoes = await API.getAvaliacoes();
     const servicos = await API.getServicos();
     const transacoes = await API.getTransacoes();
@@ -20,8 +19,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         return;
     }
 
-    setupHeader(usuarioAtual);
-    carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos, transacoes);
+    setupHeader(usuarioAtual, usuarios);
+    carregarDashboard(usuarioAtual, solicitacoes, avaliacoes, usuarios, servicos, transacoes);
     await renderizarHistoricoFinanceiro(emailLogado);
 
     // Só renderiza o gráfico financeiro se a seção for visível
@@ -38,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 });
 
-function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, usuarios, servicos, transacoes) {
+function carregarDashboard(usuarioAtual, solicitacoes, avaliacoes, usuarios, servicos, transacoes) {
     // ================= 0. CABEÇALHO =================
     if (usuarioAtual.nome) document.getElementById('dash-user-name').innerText = usuarioAtual.nome.split(' ')[0];
 
@@ -51,8 +50,9 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
         document.getElementById("financeiro-section").style.display = "block";
     }
 
-    const meusPedidosComoCliente = solicitacoes.filter(s => s.clienteEmail === emailLogado);
-    const meusPedidosComoPrestador = solicitacoes.filter(s => s.prestadorEmail === emailLogado);
+    // Fallbacks para garantir que lê do BD (snake_case) ou do Cache
+    const meusPedidosComoCliente = solicitacoes.filter(s => (s.clienteEmail || s.cliente_email) === emailLogado);
+    const meusPedidosComoPrestador = solicitacoes.filter(s => (s.prestadorEmail || s.prestador_email) === emailLogado);
     const todasMinhasSolicitacoes = [...meusPedidosComoCliente, ...meusPedidosComoPrestador];
 
     // Cálculos Gerais para Gráfico e Conquistas
@@ -84,16 +84,17 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
         let servicoPopular = 'N/A';
         if (meusPedidosComoPrestador.length > 0) {
             const contagem = meusPedidosComoPrestador.reduce((acc, pedido) => {
-                acc[pedido.servicoId] = (acc[pedido.servicoId] || 0) + 1;
+                const sId = pedido.servicoId || pedido.servico_id;
+                acc[sId] = (acc[sId] || 0) + 1;
                 return acc;
             }, {});
             const idMaisPedido = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0];
-            const servicoEncontrado = servicos.find(s => s.id === idMaisPedido);
+            const servicoEncontrado = servicos.find(s => s.id == idMaisPedido); // Usa == para ignorar String vs Number
             if (servicoEncontrado) servicoPopular = servicoEncontrado.titulo;
         }
 
-        const minhasTransacoesConcluidas = transacoes.filter(t => t.prestadorEmail === emailLogado && t.status === 'CONCLUIDO');
-        const totalRecebido = minhasTransacoesConcluidas.reduce((acc, t) => acc + t.valorPrestador, 0);
+        const minhasTransacoesConcluidas = transacoes.filter(t => (t.prestadorEmail || t.prestador_email) === emailLogado && t.status === 'CONCLUIDO');
+        const totalRecebido = minhasTransacoesConcluidas.reduce((acc, t) => acc + parseFloat(t.valorPrestador || t.valor_prestador || 0), 0);
         document.getElementById("card-total-recebido").innerText = `R$ ${totalRecebido.toFixed(2).replace('.', ',')}`;
 
         document.getElementById("card-conversas-ativas-prestador").innerText = conversasAtivasPrestador;
@@ -124,15 +125,15 @@ function carregarDashboard(usuarioAtual, solicitacoes, mensagens, avaliacoes, us
             </div>`;
     } else {
         activityList.innerHTML = todasMinhasSolicitacoes.slice(0, 5).map(pedido => {
-            const euSouCliente = pedido.clienteEmail === emailLogado;
-            const outraPessoaEmail = euSouCliente ? pedido.prestadorEmail : pedido.clienteEmail;
+            const euSouCliente = (pedido.clienteEmail || pedido.cliente_email) === emailLogado;
+            const outraPessoaEmail = euSouCliente ? (pedido.prestadorEmail || pedido.prestador_email) : (pedido.clienteEmail || pedido.cliente_email);
             const outraPessoa = usuarios.find(u => u.email === outraPessoaEmail);
             const nomeOutraPessoa = outraPessoa ? outraPessoa.nome.split(' ')[0] : 'Usuário';
             
             const textoPessoa = euSouCliente ? `Prestador: ${nomeOutraPessoa}` : `Cliente: ${nomeOutraPessoa}`;
             const dataFormatada = new Date(pedido.dataSolicitacao).toLocaleDateString('pt-BR');
             
-            const statusFormatado = formatarStatus(pedido.status, pedido.valorStatus);
+            const statusFormatado = formatarStatus(pedido.status, pedido.valorStatus, !euSouCliente);
             let badgeClass = `status-${pedido.status.toLowerCase()}`;
 
             return `
@@ -240,7 +241,7 @@ async function renderizarHistoricoFinanceiro(emailLogado) {
 
             let detalhesHtml = '';
             if (isEntrada && t.status !== 'CANCELADO') {
-                detalhesHtml = `<div class="tx-details">Valor do Serviço: R$ ${t.valorServico.toFixed(2).replace('.', ',')} | Taxa da Plataforma: R$ ${t.taxaPlataforma.toFixed(2).replace('.', ',')}</div>`;
+                detalhesHtml = `<div class="tx-details">Valor do Serviço: R$ ${parseFloat(t.valorServico || 0).toFixed(2).replace('.', ',')} | Taxa da Plataforma: R$ ${parseFloat(t.taxaPlataforma || 0).toFixed(2).replace('.', ',')}</div>`;
             }
 
             return `
@@ -251,7 +252,7 @@ async function renderizarHistoricoFinanceiro(emailLogado) {
                         ${detalhesHtml}
                     </div>
                     <div class="tx-valor">
-                        ${sinal} R$ ${valorExibicao.toFixed(2).replace('.', ',')}
+                        ${sinal} R$ ${parseFloat(valorExibicao || 0).toFixed(2).replace('.', ',')}
                     </div>
                 </div>
             `;
@@ -290,7 +291,7 @@ async function exportarParaPDF() {
         const isEntrada = !isCliente;
         const sinal = isEntrada ? '+' : '-';
         const valorExibicao = isCliente ? t.valorServico : t.valorPrestador;
-        const valorFormatado = `${sinal} ${valorExibicao.toFixed(2).replace('.', ',')}`;
+        const valorFormatado = `${sinal} ${parseFloat(valorExibicao || 0).toFixed(2).replace('.', ',')}`;
         const dataFormatada = new Date(t.data).toLocaleString('pt-BR', { timeZone: 'UTC' });
         const descricao = isCliente ? `Pagamento de Serviço` : `Recebimento de Serviço`;
         const tipo = isEntrada ? 'Entrada' : 'Saída';
@@ -316,28 +317,39 @@ async function exportarParaPDF() {
 async function renderEvolucaoFinanceiraChart(emailLogado) {
     const todasTransacoes = await API.getTransacoes();
     const transacoesConcluidas = todasTransacoes.filter(t => 
-        (t.clienteEmail === emailLogado || t.prestadorEmail === emailLogado) && t.status === 'CONCLUIDO'
+        ((t.clienteEmail || t.cliente_email) === emailLogado || (t.prestadorEmail || t.prestador_email) === emailLogado) && t.status === 'CONCLUIDO'
     );
 
     const dataPorMes = {};
 
+    // 1. Preenche previamente os últimos 6 meses para o gráfico nunca ficar "invisível"
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mesAno = d.toISOString().slice(0, 7);
+        dataPorMes[mesAno] = { ganhos: 0, gastos: 0 };
+    }
+
     // Agrupa ganhos e gastos por mês
     transacoesConcluidas.forEach(t => {
-        const mesAno = new Date(t.data).toISOString().slice(0, 7); // Formato "YYYY-MM"
-        if (!dataPorMes[mesAno]) {
-            dataPorMes[mesAno] = { ganhos: 0, gastos: 0 };
-        }
-
-        if (t.prestadorEmail === emailLogado) {
-            dataPorMes[mesAno].ganhos += t.valorPrestador;
-        } else if (t.clienteEmail === emailLogado) {
-            dataPorMes[mesAno].gastos += t.valorServico;
+        const dataVal = t.data || t.criado_em;
+        if (!dataVal) return;
+        
+        const mesAno = new Date(dataVal).toISOString().slice(0, 7); 
+        
+        if (dataPorMes[mesAno]) { // Só soma se a transação estiver dentro dos últimos 6 meses
+            const pEmail = t.prestadorEmail || t.prestador_email;
+            const cEmail = t.clienteEmail || t.cliente_email;
+            
+            if (pEmail === emailLogado) {
+                dataPorMes[mesAno].ganhos += parseFloat(t.valorPrestador || t.valor_prestador || 0);
+            } else if (cEmail === emailLogado) {
+                dataPorMes[mesAno].gastos += parseFloat(t.valorServico || t.valor_total || 0);
+            }
         }
     });
 
-    // Ordena os meses e pega os últimos 6
-    const mesesOrdenados = Object.keys(dataPorMes).sort();
-    const ultimos6Meses = mesesOrdenados.slice(-6);
+    const ultimos6Meses = Object.keys(dataPorMes).sort();
 
     const labels = ultimos6Meses.map(mes => {
         const [ano, mesNum] = mes.split('-');
@@ -442,23 +454,42 @@ function renderStatusChart(counts) {
     });
 }
 
-function formatarStatus(status, valorStatus) {
+function formatarStatus(status, valorStatus, isPrestador = false) {
     if (status === 'PENDENTE') {
-        if (valorStatus === 'PROPOSTO') return 'Orçamento Enviado';
-        return 'Aguardando Orçamento';
+        if (valorStatus === 'PROPOSTO') return isPrestador ? 'Orçamento Enviado' : 'Orçamento Recebido';
+        return 'Aguardando Resposta';
     }
-    if (status === 'ACEITO') return 'Em Andamento';
+    if (status === 'ACEITO') {
+        if (valorStatus === 'ACEITO') return 'Em Andamento';
+        return 'Serviço Aceito';
+    }
     if (status === 'AGUARDANDO_CONFIRMACAO') return 'Aguard. Confirmação';
-    if (status === 'CONCLUIDO') return 'Finalizado';
+    if (status === 'CONCLUIDO') return 'Serviço Concluído';
     if (status === 'CANCELADO') return 'Cancelado';
     return status;
 }
 
 // ================= HEADER E LOGOUT =================
-function setupHeader(usuarioAtual) {
+function setupHeader(usuarioAtual, usuarios) {
     const menu = document.getElementById("menu");
     if (!menu) return;
-    const fotoPerfil = usuarioAtual?.fotoPerfil || 'img/avatar_padrao.png';
+
+    const emailLogado = API.getSessaoAtual();
+    if (!emailLogado) return;
+
+    const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+    if (!usuarioLogado) {
+        // Fallback caso o usuário não seja encontrado na lista principal
+        menu.innerHTML = `
+            <a href="home.html">Início</a>
+            <a href="servicos.html">Serviços</a>
+            <a href="index.html">Entrar</a>
+            <a href="register.html">Cadastrar</a>
+        `;
+        return;
+    }
+
+    const fotoPerfil = usuarioLogado.fotoPerfil || 'img/avatar_padrao.png';
     const primeiroNome = usuarioAtual.nome.split(' ')[0];
     const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
     
@@ -467,7 +498,7 @@ function setupHeader(usuarioAtual) {
         <a href="servicos.html">Serviços</a>
         <a href="pedidos.html">${textoPedidos}</a>
         <div class="profile-menu-container">
-            <a href="#" class="menu-avatar-link" onclick="document.getElementById('profileDropdown').classList.toggle('show-dropdown'); return false;" data-tooltip="Opções da Conta" data-tooltip-dir="down">
+            <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                 <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
                 <span>${primeiroNome}</span>
             </a>
@@ -478,6 +509,16 @@ function setupHeader(usuarioAtual) {
             </div>
         </div>
     `;
+    document.getElementById("avatarMenuBtn").addEventListener("click", function(e) {
+        e.stopPropagation();
+        document.getElementById("profileDropdown").classList.toggle("show-dropdown");
+    });
+    window.addEventListener("click", function() {
+        const dropdown = document.getElementById("profileDropdown");
+        if (dropdown && dropdown.classList.contains("show-dropdown")) {
+            dropdown.classList.remove("show-dropdown");
+        }
+    });
     if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
 }
 

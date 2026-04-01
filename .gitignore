@@ -1,0 +1,10 @@
+# Ignorar pastas pesadas do Node.js
+node_modules/
+backend/node_modules/
+
+# Ignorar arquivos de senhas e variáveis de ambiente
+.env
+backend/.env
+
+# Ignorar arquivos de log de erros
+npm-debug.log*
