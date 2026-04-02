@@ -9,7 +9,8 @@
  * NENHUM arquivo visual (dashboard.js, pedidos.js, etc) precisará ser alterado!
  */
 
-const BASE_URL = 'http://localhost:3000/api';
+// const BASE_URL = 'http://localhost:3000/api'; // Ambiente Local
+const BASE_URL = 'https://ajuda-ai-gz4a.onrender.com/api'; // Ambiente de Produção
 
 const API = {
     // ================= AUTENTICAÇÃO REAL (NODE.JS) =================
