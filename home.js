@@ -52,6 +52,17 @@ async function carregarUsuario() {
             });
 
             if (typeof atualizarBadgeNotificacao === 'function') atualizarBadgeNotificacao();
+            
+            // 🚀 Ajusta o botão "Quero Trabalhar" para quem JÁ ESTÁ LOGADO
+            const btnQueroTrabalhar = document.getElementById("btnQueroTrabalhar");
+            if (btnQueroTrabalhar) {
+                if (usuarioAtual.tipo === 'prestador') {
+                    btnQueroTrabalhar.innerText = "Ir para o Dashboard";
+                    btnQueroTrabalhar.onclick = () => window.location.href = 'dashboard.html';
+                } else {
+                    btnQueroTrabalhar.onclick = () => window.location.href = 'perfil.html?action=become_provider';
+                }
+            }
         } else {
             // Caso não encontre o usuário (p.e., localStorage limpo), mostra o menu padrão de não logado
             mostrarMenuDeslogado(menu);
@@ -70,6 +81,12 @@ function mostrarMenuDeslogado(menu) {
         <a href="index.html">Entrar</a>
         <a href="register.html">Cadastrar</a>
     `;
+    
+    // 🚀 Ajusta o botão "Quero Trabalhar" para quem NÃO ESTÁ LOGADO
+    const btnQueroTrabalhar = document.getElementById("btnQueroTrabalhar");
+    if (btnQueroTrabalhar) {
+        btnQueroTrabalhar.onclick = () => window.location.href = 'trabalhe-conosco.html';
+    }
 }
 
 // ================= LOGOUT =================

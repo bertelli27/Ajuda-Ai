@@ -4,19 +4,22 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/Status-Conclu%C3%ADdo_|_Deploy_Online-brightgreen?style=flat-square" alt="Status" />
   <img src="https://img.shields.io/badge/Tipo-Projeto_Acadêmico_(TCC)-blue?style=flat-square" alt="TCC" />
   <img src="https://img.shields.io/badge/Back--end-Node.js-339933?style=flat-square&logo=node.js" alt="Node.js" />
   <img src="https://img.shields.io/badge/Banco_de_Dados-MySQL-4479A1?style=flat-square&logo=mysql" alt="MySQL" />
+  <a href="https://ajuda-ai-one.vercel.app"><img src="https://img.shields.io/badge/Live_Demo-Acessar_Plataforma-00ADB5?style=flat-square&logo=vercel" alt="Live Demo" /></a>
 </p>
 
 <hr>
 
 ## 📖 Sobre o Projeto
 
-O **AjudaAí** é uma solução tecnológica web desenvolvida como **Trabalho de Conclusão de Curso (TCC)**. Atuando como um intermediador digital moderno, o sistema visa solucionar a dificuldade de encontrar mão de obra qualificada e de confiança para serviços cotidianos (como limpeza, manutenção, TI, reformas, etc.), além de proporcionar uma vitrine digital profissional para prestadores autônomos.
+O **AjudaAí** é uma plataforma web desenvolvida como **Trabalho de Conclusão de Curso (TCC)**. Atuando como um intermediador digital moderno, o sistema visa solucionar a dificuldade de encontrar mão de obra qualificada para serviços cotidianos (limpeza, manutenção, TI, reformas, etc.), proporcionando ao mesmo tempo uma vitrine digital profissional para prestadores autônomos.
 
 O grande diferencial da plataforma é o seu fluxo centralizado: desde a busca (com auxílio de inteligência artificial simples) até a negociação de orçamentos e chat com envio de imagens em tempo real.
+
+**🔗 Acesse a plataforma online:** [ajuda-ai-one.vercel.app](https://ajuda-ai-one.vercel.app)
 
 ## 🎯 Objetivos
 
@@ -34,19 +37,21 @@ Desenvolver uma plataforma web responsiva, segura e escalável que conecte deman
 
 ## 💻 Arquitetura e Tecnologias
 
-O projeto foi concebido seguindo o padrão de separação de responsabilidades (API RESTful), permitindo que o Front-end e o Back-end operem de forma independente.
+O projeto foi concebido com uma arquitetura **desacoplada (API RESTful)** e implantado 100% em nuvem (*Cloud Computing*), permitindo altíssima disponibilidade e escalabilidade.
 
 ### 🎨 Front-end
-- **HTML5 & CSS3:** Estruturação semântica e estilização completa *from scratch* (sem frameworks de UI pesados), com suporte a **Dark/Light Mode**.
-- **JavaScript (Vanilla):** Controle de DOM, consumo assíncrono da API (Fetch) e lógicas de UX.
-- **Bibliotecas Auxiliares:** `Chart.js` (Evolução Financeira) e `jsPDF` (Exportação de relatórios).
+- **HTML5 & CSS3 Vanilla:** Design responsivo, estilização *from scratch* e suporte nativo a **Dark/Light Mode**.
+- **JavaScript ES6+:** Consumo assíncrono (Fetch API), *Short Polling* para notificações em tempo real e processamento de imagens (Canvas/Base64).
+- **Bibliotecas Auxiliares:** `Chart.js` (Gráficos) e `jsPDF` (Exportação de relatórios financeiros).
 
-### ⚙️ Back-end (API)
-- **Node.js & Express.js:** Criação das rotas RESTful, middlewares de segurança e controle de payload (até 10MB para imagens).
-- **CORS:** Liberação controlada para integração com o cliente web.
+### ⚙️ Back-end / API (Hospedado no Render)
+- **Node.js & Express:** Roteamento REST, controle de payload e Middlewares.
+- **Segurança:** Autenticação via **JWT** (JSON Web Tokens) e criptografia de senhas com **Bcrypt**.
+- **E-mails:** Envio de e-mails reais para recuperação de senha utilizando **Nodemailer** (via SMTP Gmail).
 
-### 🗄️ Banco de Dados
-- **MySQL:** Banco de dados relacional que garante integridade referencial nas tabelas de usuários, serviços, solicitações, transações e mensagens. O driver `mysql2/promise` é utilizado no Node para queries assíncronas de alta performance.
+### 🗄️ Banco de Dados (Hospedado no TiDB Serverless)
+- **MySQL (TiDB):** Banco de dados relacional em nuvem com conexão segura via **SSL/TLS**. 
+- Utilização de chaves estrangeiras (Foreign Keys), `ON DELETE CASCADE`, validações (`CHECK`) e armazenamento de imagens diretamente via `LONGTEXT` (Base64).
 
 ---
 
@@ -54,15 +59,16 @@ O projeto foi concebido seguindo o padrão de separação de responsabilidades (
 
 ```text
 📁 AjudaAi/
-├── 📁 backend/                # Motor da aplicação (API REST)
+├── 📁 backend/                # Back-end Node.js
 │   └── 📁 src/
 │       ├── 📁 config/         # Configurações do Banco de Dados (db.js)
-│       ├── 📁 controllers/    # Lógica de Negócios (auth, chat, solicitações)
+│       ├── 📁 controllers/    # Lógica de Negócios (auth, chat, serviços)
 │       ├── 📁 database/       # Scripts SQL (schema.sql para criação das tabelas)
 │       ├── 📁 middlewares/    # Interceptadores (validação de JWT)
 │       ├── 📁 routes/         # Definição dos endpoints da API
-│       └── 📄 server.js       # Arquivo de entrada do Node.js
-├── 📄 api.js                  # Camada DTO e Fetch API do Front-end (A Ponte)
+│       └──  utils/          # Ferramentas auxiliares (logger.js)
+├── 📄 server.js               # Arquivo de inicialização do Servidor (Express)
+├── 📄 api.js                  # Camada DTO e Fetch HTTP do Front-end
 ├── 📄 index.html / home.html  # Páginas de aterrissagem e autenticação
 ├── 📄 servicos.html           # Vitrine e busca de profissionais
 ├── 📄 pedidos.html            # Área de gerenciamento de serviços e Chat
@@ -77,52 +83,52 @@ O projeto foi concebido seguindo o padrão de separação de responsabilidades (
 2. **Solicitação:** O cliente descreve o escopo, endereço e data desejada e envia o pedido ao prestador.
 3. **Negociação (Chat API):** O prestador recebe a notificação, abre o chat e envia um **Orçamento Oficial** no valor acordado (dados salvos via *Short Polling* para sincronia instantânea).
 4. **Pagamento (Retenção):** O cliente aceita e realiza o pagamento simulado. A plataforma retém o valor de forma segura e notifica ambos no chat.
-5. **Execução:** O serviço entra em andamento e é realizado fisicamente.
+5. **Execução:** O serviço é marcado como "Em Andamento".
 6. **Conclusão:** O prestador sinaliza o fim do serviço, o cliente aprova, o saldo líquido (menos taxas da plataforma) é creditado na carteira do prestador e a tela de Avaliações é liberada.
 
 ---
 
-## ✅ Funcionalidades Atuais Implementadas
+## ✅ Principais Funcionalidades
 
-* **Autenticação:** Login, Cadastro e proteção de rotas (Sessões).
-* **Interface:** Responsividade completa, Dark/Light Mode adaptativo e micro-interações.
-* **Dashboard Pessoal:** Gráficos interativos (Chart.js), resumo numérico e métricas separadas por tipo de perfil (Cliente vs Profissional).
+* **Autenticação Segura:** Cadastro, Login (com JWT) e Recuperação de Senha automatizada com disparo de e-mail real.
+* **UI/UX Moderna:** Acessibilidade, Modal interativo de confirmação, Toast Notifications, Dark/Light Mode e Skeleton Loaders.
+* **Dashboards (Cliente e Prestador):** Gráficos financeiros, exportação de extrato para PDF, resumo de atividades e vitrine de conquistas.
 * **Listagem e Busca:** Filtros dinâmicos de categorias e barra de pesquisa textual inteligente.
-* **Gestão de Perfil:** Atualização de dados pessoais, foto de perfil, portfólio de imagens e cadastro de serviços oferecidos.
-* **Integração Front-end & Back-end (API Própria):**
-  * Criação, visualização e atualização de Pedidos e Serviços diretamente no MySQL.
-  * Envio e recebimento de Orçamentos dinâmicos.
+* **Perfil Duplo:** Um cliente pode se "Tornar Prestador" de forma nativa e sem necessidade de recadastro.
+* **Gestão de Perfil e Portfólio:** Edição de dados e upload de imagens *Drag & Drop* (compactação via Canvas API antes do Base64).
 * **Sistema de Chat Completo:**
   * Mensagens em formato de texto e imagem (Base64 salva via `LONGTEXT`).
-  * Atualização automática em tela (*Short Polling* integrado).
+  * Atualização em tempo real nativa (*Short Polling*).
   * Mensagens automáticas do sistema para avisos financeiros.
-
-## 🚧 Próximas Fases do TCC
-
-* **Fase 7 (Financeiro):** Conexão das rotas de transações e atualização real do extrato e saldos de usuários na API.
-* **Fase 8 (Avaliações):** Persistência do sistema de *rating* de 1 a 5 estrelas atrelados aos usuários no banco de dados, compondo a média pública.
-* **Fase 9 (Polimento e Deploy):** Remoção de dados mockados residuais, auditoria de segurança (JWTs) e hospedagem em nuvem (ex: Vercel/Render).
+  * Notificações (Bolinha de badge dinâmica em ícones e abas).
+* **Fluxo Financeiro:** Simulação de pagamento, controle de status (Retido, Liberado, Cancelado) e cálculo de taxas operacionais.
+* **Sistema de Avaliação:** Notas (1 a 5 estrelas), comentários e exibição da média na vitrine pública do perfil.
+* **Auditoria e Logs:** Tabela `logs_usuario` que rastreia ações vitais de uso no back-end.
 
 ---
 
-## 🧪 Guia Rápido para Testes e Desenvolvimento
+## 🧪 Guia para Execução Local (Desenvolvimento)
 
-Para executar a aplicação e testar todas as funcionalidades desenvolvidas:
+Caso um avaliador ou desenvolvedor deseje rodar a aplicação localmente em seu próprio computador, siga os passos:
 
 1. **Banco de Dados:**
-   * Inicie seu servidor MySQL (ex: XAMPP).
-   * Crie o banco `ajuda_ai_db`.
+   * Utilize um servidor MySQL local (XAMPP/WAMP) ou em nuvem.
    * Execute o script localizado em `/backend/src/database/schema.sql` para gerar todas as tabelas perfeitamente tipadas.
 
 2. **Back-end:**
-   * Navegue até a pasta raiz no terminal.
-   * Verifique a string de conexão no `db.js`.
-   * Execute `node backend/src/server.js` (O servidor iniciará na porta 3000).
+   * Navegue até a pasta `/backend` no terminal.
+   * Execute `npm install` para instalar as dependências.
+   * Crie um arquivo `.env` com suas credenciais de banco e JWT (use o formato indicado em código).
+   * Execute `npm run dev` para iniciar a API.
 
-3. **Testando o Chat (Dica de Avaliação):**
-   * Abra o Front-end (`index.html`) em uma janela normal do navegador e faça login como Cliente.
+3. **Front-end:**
+   * Abra o arquivo `api.js` e altere a constante `BASE_URL` para o endereço do seu backend local (`http://localhost:3000/api`).
+   * Abra a página `index.html` e utilize a plataforma livremente.
+
+### 💡 Dica para Testar o Chat em Tempo Real:
+* Abra a aplicação em uma aba normal e faça login como Cliente.
    * Abra o mesmo endereço em uma **Aba Anônima (Incógnita)** e faça login como Prestador.
-   * Solicite um serviço na janela normal e aceite na anônima. O chat atualizará sozinho nas duas abas!
+* Negocie o orçamento e converse. Ambas as abas refletirão as mensagens instantaneamente!
 
 ---
 
@@ -140,7 +146,5 @@ Este projeto está sendo desenvolvido pelos alunos:
 ---
 
 <p align="center">
-  <b>Status Atual:</b> 🚧 Integrando a Fase 7 de Desenvolvimento Back-end (Financeiro).
-  <br>
-  <i>Nota: Este é um projeto de caráter estritamente acadêmico para avaliação de Trabalhos de Conclusão de Curso. Novas camadas de regras de negócios estão sendo adicionadas periodicamente.</i>
+  <b>Status:</b> 🚀 Deploy realizado com sucesso e arquitetura totalmente finalizada.
 </p>
