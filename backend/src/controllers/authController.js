@@ -86,6 +86,11 @@ const login = async (req, res) => {
 
         const user = users[0];
 
+        // Trava: Impede login de contas excluídas logicamente
+        if (user.ativo === 0) {
+            return res.status(403).json({ error: 'Sua conta foi desativada. Entre em contato com o suporte.' });
+        }
+
         const senhaValida = await bcrypt.compare(senha, user.senha_hash);
         if (!senhaValida) {
             return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
@@ -172,6 +177,7 @@ const listarUsuarios = async (req, res) => {
             SELECT u.*, p.id AS prestador_id, p.descricao_perfil 
             FROM usuarios u 
             LEFT JOIN prestadores p ON u.id = p.usuario_id
+            WHERE u.ativo = TRUE
         `);
         const [portfolio] = await db.execute('SELECT prestador_id, imagem_url FROM portfolio');
         
@@ -224,4 +230,18 @@ const getNotificacoes = async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro ao buscar notificações.' }); }
 };
 
-module.exports = { register, login, atualizarPerfil, listarUsuarios, getNotificacoes };
+const desativarConta = async (req, res) => {
+    try {
+        const usuarioId = req.user.id;
+        
+        await db.execute('UPDATE usuarios SET ativo = FALSE WHERE id = ?', [usuarioId]);
+        await registrarLog(usuarioId, 'EXCLUSAO_LOGICA', 'Usuário excluiu a própria conta pelo painel.', req.ip);
+        
+        res.status(200).json({ message: 'Conta desativada com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao desativar conta:', error);
+        res.status(500).json({ error: 'Erro ao desativar conta.' });
+    }
+};
+
+module.exports = { register, login, atualizarPerfil, listarUsuarios, getNotificacoes, desativarConta };

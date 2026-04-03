@@ -505,6 +505,7 @@ function setupHeader(usuarioAtual, usuarios) {
             <div class="profile-dropdown" id="profileDropdown">
                 <a href="dashboard.html" class="active-nav">Dashboard</a>
                 <a href="perfil.html">Meu Perfil</a>
+                <a href="configuracoes.html">Configurações</a>
                 <a href="#" onclick="logout(event)">Sair</a>
             </div>
         </div>

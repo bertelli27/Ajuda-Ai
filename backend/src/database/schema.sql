@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     cidade VARCHAR(100),
     estado VARCHAR(2),
     tipo ENUM('cliente', 'prestador') NOT NULL,
+    ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -851,6 +851,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
+                    <a href="configuracoes.html">Configurações</a>
                     <a href="#" onclick="logout(event)">Sair</a>
                 </div>
             </div>

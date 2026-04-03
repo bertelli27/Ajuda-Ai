@@ -1,0 +1,42 @@
+--- /dev/null
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='home.html'">
+        <img src="img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+    <nav class="menu" id="menu"></nav>
+</header>
+
+<section class="services-section" style="padding-top: 40px; max-width: 800px;">
+    <h2 class="dashboard-header-title" style="text-align: left; margin-bottom: 30px;">Configurações</h2>
+
+    <div class="profile-info-card" style="border-left: 4px solid #d9534f;">
+        <h3 class="section-title" style="color: #d9534f; border-bottom: none; margin-top: 0;">Zona de Perigo</h3>
+        <p style="color: #AAAAAA; font-size: 15px; margin-bottom: 25px;">Ao desativar sua conta, seu perfil, portfólio e serviços não aparecerão mais nas buscas. Essa ação não afeta o histórico de conversas e pagamentos com outros usuários.</p>
+        
+        <button id="btnDesativarConta" class="btn-login" style="background-color: transparent; border: 2px solid #d9534f; color: #d9534f; width: auto; padding: 12px 30px;">
+            Excluir Minha Conta
+        </button>
+    </div>
+</section>
+
+<footer class="mini-footer">
+    &copy; 2026 AjudaAí. Todos os direitos reservados.
+</footer>
+
+<script src="utils.js"></script>
+<script src="api.js"></script>
+<script src="configuracoes.js"></script>
+</body>
+</html>

@@ -25,4 +25,7 @@ router.put('/perfil', verificarToken, authController.atualizarPerfil);
 // Rota: GET /api/auth/notificacoes (Protegida - Retorna o número do badge)
 router.get('/notificacoes', verificarToken, authController.getNotificacoes);
 
+// Rota: DELETE /api/auth/conta (Protegida - Exclusão lógica do usuário)
+router.delete('/conta', verificarToken, authController.desativarConta);
+
 module.exports = router;
