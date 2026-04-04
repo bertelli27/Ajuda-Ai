@@ -40,18 +40,26 @@ const solicitarRecuperacao = async (req, res) => {
 
         const linkRecuperacao = `${baseUrl}?token=${token}`;
 
-        let info = await transporter.sendMail({
-            from: `"Equipe AjudaAí" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: "Redefinição de Senha - AjudaAí",
-            html: `<h3>Olá, ${usuario.nome}!</h3><p>Recebemos um pedido para redefinir a sua senha.</p><br><a href="${linkRecuperacao}" style="padding: 10px 20px; background: #00ADB5; color: white; text-decoration: none; border-radius: 5px;">Criar Nova Senha</a><br><br><p>Se você não pediu isso, ignore este e-mail. Este link expira em 15 minutos.</p>`
-        });
+        try {
+            await transporter.sendMail({
+                from: `"Equipe AjudaAí" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: "Redefinição de Senha - AjudaAí",
+                html: `<h3>Olá, ${usuario.nome}!</h3><p>Recebemos um pedido para redefinir a sua senha.</p><br><a href="${linkRecuperacao}" style="padding: 10px 20px; background: #00ADB5; color: white; text-decoration: none; border-radius: 5px;">Criar Nova Senha</a><br><br><p>Se você não pediu isso, ignore este e-mail. Este link expira em 15 minutos.</p>`
+            });
+            console.log("\n==============================================");
+            console.log(`📧 E-MAIL REAL ENVIADO COM SUCESSO PARA: ${email}`);
+            console.log("==============================================\n");
+        } catch (emailError) {
+            console.log("\n==============================================");
+            console.log(`⚠️ ALERTA DO RENDER (PLANO GRATUITO)`);
+            console.log(`O Render bloqueia envios de e-mail no plano gratuito.`);
+            console.log(`Para testar a recuperação, copie o link abaixo e cole no navegador:`);
+            console.log(`➡️  ${linkRecuperacao}`);
+            console.log("==============================================\n");
+        }
 
-        console.log("\n==============================================");
-        console.log(`📧 E-MAIL REAL ENVIADO COM SUCESSO PARA: ${email}`);
-        console.log("==============================================\n");
-
-        res.status(200).json({ message: 'E-mail enviado! Verifique seu console.' });
+        res.status(200).json({ message: 'Processo concluído! Verifique seu e-mail (ou o console do Render).' });
     } catch (error) {
         console.error('Erro na recuperação:', error);
         res.status(500).json({ error: 'Erro interno ao processar a solicitação.' });
