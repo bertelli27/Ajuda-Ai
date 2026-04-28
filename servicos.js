@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
             // Usuário Logado
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="index.html">Início</a>
                 <a href="servicos.html" class="active-nav">Serviços</a>
                 <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
@@ -46,9 +46,9 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             // Usuário Deslogado
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="index.html">Início</a>
                 <a href="servicos.html" class="active-nav">Serviços</a>
-                <a href="index.html">Entrar</a>
+                <a href="login.html">Entrar</a>
                 <a href="register.html">Cadastrar</a>
             `;
         }
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function logout(e) {
         if (e) e.preventDefault();
         API.fazerLogout();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 
     // ================= VARIÁVEIS DE PAGINAÇÃO =================
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (!emailLogado) {
                     mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");
                     setTimeout(() => {
-                        window.location.href = "index.html";
+                        window.location.href = "login.html";
                     }, 1500);
                 } else {
                     const servicoId = e.target.getAttribute('data-servico-id');

@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         // --- MODO MEU PERFIL (EDITÁVEL) ---
         if (!emailLogado) {
             mostrarToast("Você precisa fazer login para acessar esta página!", "error");
-            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+            setTimeout(() => { window.location.href = "login.html"; }, 1500);
             return;
         }
         isOwnProfile = true;
@@ -787,7 +787,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
             // Usuário Logado
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="index.html">Início</a>
                 <a href="servicos.html">Serviços</a>
                 <a href="pedidos.html">${textoPedidos}</a>
                 <div class="profile-menu-container">
@@ -818,9 +818,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         } else {
             // Usuário Deslogado (só pode acontecer vendo um perfil público)
             menu.innerHTML = `
-                <a href="home.html">Início</a>
+                <a href="index.html">Início</a>
                 <a href="servicos.html">Serviços</a>
-                <a href="index.html">Entrar</a>
+                <a href="login.html">Entrar</a>
                 <a href="register.html">Cadastrar</a>
             `;
         }
@@ -829,6 +829,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     function logout(e) {
         if (e) e.preventDefault();
         API.fazerLogout();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 });

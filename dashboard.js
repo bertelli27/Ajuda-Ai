@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO DE LOGIN =================
     const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
-        window.location.href = "index.html";
+        window.location.href = "login.html";
         return;
     }
 
@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     
     const usuarioAtual = usuarios.find(u => u.email === emailLogado);
     if (!usuarioAtual) {
-        window.location.href = "index.html";
+        window.location.href = "login.html";
         return;
     }
 
@@ -481,9 +481,9 @@ function setupHeader(usuarioAtual, usuarios) {
     if (!usuarioLogado) {
         // Fallback caso o usuário não seja encontrado na lista principal
         menu.innerHTML = `
-            <a href="home.html">Início</a>
+            <a href="index.html">Início</a>
             <a href="servicos.html">Serviços</a>
-            <a href="index.html">Entrar</a>
+            <a href="login.html">Entrar</a>
             <a href="register.html">Cadastrar</a>
         `;
         return;
@@ -494,7 +494,7 @@ function setupHeader(usuarioAtual, usuarios) {
     const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
     
     menu.innerHTML = `
-        <a href="home.html">Início</a>
+        <a href="index.html">Início</a>
         <a href="servicos.html">Serviços</a>
         <a href="pedidos.html">${textoPedidos}</a>
         <div class="profile-menu-container">
@@ -526,5 +526,5 @@ function setupHeader(usuarioAtual, usuarios) {
 function logout(e) {
     if (e) e.preventDefault();
     API.fazerLogout();
-    window.location.href = "index.html";
+    window.location.href = "login.html";
 }

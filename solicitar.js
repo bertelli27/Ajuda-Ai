@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
         mostrarToast("Você precisa fazer login para solicitar um serviço!", "error");
-        setTimeout(() => { window.location.href = "index.html"; }, 1500);
+        setTimeout(() => { window.location.href = "login.html"; }, 1500);
         return;
     }
 
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     function logout(e) {
         if (e) e.preventDefault();
         API.fazerLogout();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 
     function setupHeader(usuarioAtual) {
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         const primeiroNome = usuarioAtual.nome.split(' ')[0];
         const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         menu.innerHTML = `
-            <a href="home.html">Início</a>
+            <a href="index.html">Início</a>
             <a href="servicos.html" class="active-nav">Serviços</a>
             <a href="pedidos.html">${textoPedidos}</a>
             <div class="profile-menu-container">

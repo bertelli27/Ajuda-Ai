@@ -302,7 +302,7 @@ registerForm?.addEventListener("submit", async function(e){
         
         mostrarToast("Conta criada com sucesso! Faça o login.", "success");
         setTimeout(() => {
-            window.location.href = "index.html"; // Joga ele pra tela de login
+            window.location.href = "login.html"; // Joga ele pra tela de login
         }, 1500);
 
     } catch (error) {

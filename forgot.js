@@ -35,7 +35,7 @@ forgotForm.addEventListener("submit", async function(e){
     try {
         await API.solicitarRecuperacaoSenha(email, resetUrlBase);
         mostrarToast("E-mail enviado! Verifique sua caixa de entrada.", "success");
-        setTimeout(() => { window.location.href = "index.html"; }, 2500);
+        setTimeout(() => { window.location.href = "login.html"; }, 2500);
     } catch (error) {
         mostrarToast(error.message, "error");
         removeButtonLoading(btnSubmit);

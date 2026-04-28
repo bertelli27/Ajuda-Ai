@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             await API.redefinirSenhaApi(tokenUrl, novaSenhaInput.value.trim());
             mostrarToast("Senha redefinida com sucesso!", "success");
-            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+            setTimeout(() => { window.location.href = "login.html"; }, 1500);
         } catch (error) {
             mostrarToast(error.message, "error");
             removeButtonLoading(btnSubmit);

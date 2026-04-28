@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (!emailLogado) {
         mostrarToast("Você precisa fazer login para avaliar um serviço!", "error");
         setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = "login.html";
         }, 1500);
         return;
     }
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     window.logout = function(e) {
         if (e) e.preventDefault();
         API.fazerLogout();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 
     function setupHeader() {
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         
         menu.innerHTML = `
-            <a href="home.html">Início</a>
+            <a href="index.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html" class="active-nav">${textoPedidos}</a>
             <div class="profile-menu-container">

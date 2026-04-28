@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", async function() {
     const emailLogado = API.getSessaoAtual();
     if (!emailLogado) {
-        window.location.href = "index.html";
+        window.location.href = "login.html";
         return;
     }
 
@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         
         menu.innerHTML = `
-            <a href="home.html">Início</a>
+            <a href="index.html">Início</a>
             <a href="servicos.html">Serviços</a>
             <a href="pedidos.html">${textoPedidos}</a>
             <div class="profile-menu-container">
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 mostrarToast("Conta excluída com sucesso. Redirecionando...", "success");
                 setTimeout(() => {
                     API.fazerLogout();
-                    window.location.href = "index.html";
+                    window.location.href = "login.html";
                 }, 2000);
             } catch (error) {
                 mostrarToast(error.message, "error");
@@ -87,6 +87,6 @@ document.addEventListener("DOMContentLoaded", async function() {
     window.logout = function(e) {
         if (e) e.preventDefault();
         API.fazerLogout();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 });

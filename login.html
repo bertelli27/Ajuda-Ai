@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AjudaAí</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo.png" type="image/png">
+</head>
+<body>
+
+<section class="main-container">
+
+    <!-- LADO ESQUERDO: LOGO + DESCRIÇÃO -->
+    <div class="info-section">
+        <img src="img/logo.png" alt="AjudaAí Logo" class="logo-side">
+        <h1>AjudaAí</h1>
+        <p class="site-desc">
+            Conectamos você rapidamente a prestadores de serviços confiáveis  
+            como limpeza, manutenção e assistência técnica.  
+            Avaliações reais ajudam você a escolher o profissional ideal,  
+            garantindo segurança e qualidade.
+        </p>
+    </div>
+
+    <!-- LADO DIREITO: LOGIN -->
+    <div class="login-section">
+        <div class="login-card">
+            <h2>Bem-vindo de volta!</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <input type="email" id="usuario" placeholder="E-mail" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="senha" placeholder="Senha" required>
+                </div>
+                <div class="remember">
+                    <label>
+                        <input type="checkbox" id="lembrarConta">
+                        Lembrar da conta
+                    </label>
+                </div>
+                <button type="submit" class="btn-login">Entrar</button>
+            </form>
+            <button class="btn-forgot" id="esqueciSenha">Esqueci minha senha</button>
+            <p class="create-account">
+                Ainda não tem uma conta? <a href="register.html">Cadastre-se</a>
+            </p>
+        </div>
+    </div>
+
+</section>
+
+<script src="utils.js"></script>
+<script src="api.js"></script>
+<script src="login.js"></script>
+</body>
+</html>
