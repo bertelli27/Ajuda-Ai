@@ -4,9 +4,12 @@ const adminController = {
     // 1. Listar todos os usuários da plataforma
     listarUsuarios: async (req, res) => {
         try {
-            const [usuarios] = await db.execute(
-                'SELECT id, nome, email, telefone, tipo, ativo, criado_em FROM usuarios ORDER BY criado_em DESC'
-            );
+            const [usuarios] = await db.execute(`
+                SELECT u.id, u.nome, u.email, u.telefone, u.tipo, u.ativo, u.criado_em,
+                (SELECT COUNT(*) FROM logs_usuario WHERE usuario_id = u.id AND acao = 'EXCLUSAO_LOGICA') AS exclusao_logica
+                FROM usuarios u 
+                ORDER BY u.criado_em DESC
+            `);
             
             // 🚀 NOVO: Busca estatísticas globais (KPIs)
             const [statsServicos] = await db.execute(

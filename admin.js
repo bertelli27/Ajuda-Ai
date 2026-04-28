@@ -101,7 +101,11 @@ document.addEventListener("DOMContentLoaded", async function() {
                 if (u.ativo && u.tipo !== 'admin') {
                     btnBanir = `<button class="btn-danger-small" onclick="abrirModalBanir('${u.id}', '${u.nome}')">Banir</button>`;
                 } else if (!u.ativo) {
-                    btnBanir = `<span style="font-size: 12px; color: #AAAAAA;">Banido</span>`;
+                    if (u.exclusao_logica > 0) {
+                        btnBanir = `<span style="font-size: 12px; color: #AAAAAA;" data-tooltip="Conta desativada pelo próprio usuário." data-tooltip-dir="left">Auto-excluído</span>`;
+                    } else {
+                        btnBanir = `<span style="font-size: 12px; color: #d9534f;" data-tooltip="Conta banida por um Administrador." data-tooltip-dir="left">Banido</span>`;
+                    }
                 }
 
                 return `
