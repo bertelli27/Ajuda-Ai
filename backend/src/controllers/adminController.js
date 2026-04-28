@@ -18,7 +18,7 @@ const adminController = {
     banirUsuario: async (req, res) => {
         const { id } = req.params;
         const { motivo } = req.body; // O admin digita por que está banindo
-        const adminId = req.usuario.id; // Quem está fazendo a ação
+        const adminId = req.user.id; // Quem está fazendo a ação
 
         try {
             // Desativa o usuário (Soft Delete)

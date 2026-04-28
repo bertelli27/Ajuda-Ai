@@ -3,8 +3,8 @@
  * Deve ser usado APÓS o middleware padrão de verificação de Token (JWT).
  */
 const verificarAdmin = (req, res, next) => {
-    // Assumimos que o seu authMiddleware já decodificou o Token e colocou os dados em req.usuario
-    if (!req.usuario || req.usuario.tipo !== 'admin') {
+    // O authMiddleware decodifica o Token e coloca os dados em req.user
+    if (!req.user || req.user.tipo !== 'admin') {
         return res.status(403).json({ 
             error: 'Acesso negado. Esta rota requer privilégios de administrador.' 
         });
