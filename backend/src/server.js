@@ -8,6 +8,7 @@ const solicitationRoutes = require('./routes/solicitationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api/solicitacoes', solicitationRoutes);
 app.use('/api/mensagens', messageRoutes);
 app.use('/api/transacoes', transactionRoutes);
 app.use('/api/avaliacoes', reviewRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Rota de teste (Health Check)
 app.get('/api/status', (req, res) => {
