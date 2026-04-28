@@ -21,6 +21,10 @@ app.get('/api/status', (req, res) => {
 const messageRoutes = require('./backend/src/routes/messageRoutes');
 app.use('/api/mensagens', messageRoutes);
 
+// Rotas Administrativas (Protegidas)
+const adminRoutes = require('./backend/src/routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
 // Rota de fallback (Erro 404 para rotas inexistentes)
 app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint não encontrado na API.' });

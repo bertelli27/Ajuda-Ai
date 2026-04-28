@@ -503,6 +503,7 @@ function setupHeader(usuarioAtual, usuarios) {
                 <span>${primeiroNome}</span>
             </a>
             <div class="profile-dropdown" id="profileDropdown">
+                ${usuarioLogado.tipo === 'admin' ? '<a href="admin.html" style="color: #d9534f; font-weight: bold;">👑 Painel Admin</a>' : ''}
                 <a href="dashboard.html" class="active-nav">Dashboard</a>
                 <a href="perfil.html">Meu Perfil</a>
                 <a href="configuracoes.html">Configurações</a>

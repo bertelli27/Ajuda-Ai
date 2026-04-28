@@ -152,6 +152,21 @@ const atualizarSolicitacao = async (req, res) => {
             );
         }
 
+            // 🚀 NOVIDADE V2.0: Gravar a Trilha de Auditoria (Log de Serviço)
+            let acaoLog = 'ATUALIZACAO_SERVICO';
+            let detalhesLog = 'Atualização de dados da solicitação.';
+            
+            if (status === 'CANCELADO') { acaoLog = 'SERVICO_CANCELADO'; detalhesLog = 'O serviço foi cancelado ou estornado.'; }
+            else if (status === 'ACEITO') { acaoLog = 'SERVICO_ACEITO'; detalhesLog = 'O cliente aceitou o serviço e pagou.'; }
+            else if (status === 'AGUARDANDO_CONFIRMACAO') { acaoLog = 'SERVICO_FINALIZADO_PRESTADOR'; detalhesLog = 'O prestador indicou que concluiu o trabalho.'; }
+            else if (status === 'CONCLUIDO') { acaoLog = 'SERVICO_CONCLUIDO'; detalhesLog = 'O cliente confirmou a conclusão.'; }
+            else if (valor_status === 'PROPOSTO') { acaoLog = 'ORCAMENTO_ENVIADO'; detalhesLog = `Orçamento de R$ ${valor_combinado || 'N/A'} enviado.`; }
+
+            await connection.execute(
+                `INSERT INTO logs_servico (solicitacao_id, usuario_id, acao, detalhes) VALUES (?, ?, ?, ?)`,
+                [id, req.user.id, acaoLog, detalhesLog]
+            );
+
         await connection.commit(); // Confirma as alterações
         connection.release(); // Libera a conexão
 

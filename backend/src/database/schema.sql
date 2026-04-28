@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     bairro VARCHAR(100),
     cidade VARCHAR(100),
     estado VARCHAR(2),
-    tipo ENUM('cliente', 'prestador') NOT NULL,
+    tipo ENUM('cliente', 'prestador', 'admin') NOT NULL,
     ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -147,4 +147,32 @@ CREATE TABLE IF NOT EXISTS logs_usuario (
     ip_endereco VARCHAR(45),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+-- 12. TABELA DE LOGS DE SERVIÇO (Audit Trail de Negócio)
+CREATE TABLE IF NOT EXISTS logs_servico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    solicitacao_id INT NOT NULL,
+    usuario_id INT, -- Quem realizou a ação (cliente, prestador ou o próprio sistema)
+    acao VARCHAR(255) NOT NULL, -- Ex: 'ORCAMENTO_ENVIADO', 'PAGAMENTO_RETIDO'
+    detalhes TEXT, -- Detalhes extras, como valores ou motivos de cancelamento
+    ip_endereco VARCHAR(45),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (solicitacao_id) REFERENCES solicitacoes(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+-- 13. TABELA DE LOGS DE ADMINISTRADOR (Governança)
+CREATE TABLE IF NOT EXISTS logs_administrador (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT NOT NULL,                      
+    acao VARCHAR(255) NOT NULL,                 -- Ex: 'BANIMENTO_USUARIO'
+    alvo_tipo VARCHAR(50),                      -- Ex: 'usuario', 'servico', 'configuracao'
+    alvo_id VARCHAR(255),                       -- O ID de quem sofreu a ação
+    valor_antigo TEXT,                          -- O valor ANTES da mudança
+    valor_novo TEXT,                            -- O valor DEPOIS da mudança
+    justificativa TEXT,                         -- Motivo da alteração feita pelo admin
+    ip_endereco VARCHAR(45),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES usuarios(id) ON DELETE RESTRICT
 );

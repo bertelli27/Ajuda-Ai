@@ -849,6 +849,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     <span>${primeiroNome}</span>
                 </a>
                 <div class="profile-dropdown" id="profileDropdown">
+                    ${usuarioAtual.tipo === 'admin' ? '<a href="admin.html" style="color: #d9534f; font-weight: bold;">👑 Painel Admin</a>' : ''}
                     <a href="dashboard.html">Dashboard</a>
                     <a href="perfil.html">Meu Perfil</a>
                     <a href="configuracoes.html">Configurações</a>

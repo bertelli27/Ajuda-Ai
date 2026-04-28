@@ -352,6 +352,45 @@ const API = {
         return data;
     },
 
+    // ================= ADMINISTRAÇÃO (BACKOFFICE) =================
+    async getTodosUsuariosAdmin() {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/admin/usuarios`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao buscar usuários');
+        return data;
+    },
+
+    async getLogsAdmin() {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/admin/logs`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao buscar logs');
+        return data;
+    },
+
+    async banirUsuarioAdmin(id, motivo) {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/admin/usuarios/${id}/banir`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ motivo })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao banir usuário');
+        return data;
+    },
+
     // ================= SESSÃO E AUTENTICAÇÃO =================
     getSessaoAtual() {
         // Síncrono, pois apenas verifica o token/email salvo localmente
