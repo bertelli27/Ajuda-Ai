@@ -2,6 +2,7 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const registrarLog = require('../utils/logger');
 
 const solicitarRecuperacao = async (req, res) => {
     try {
@@ -77,6 +78,9 @@ const redefinirSenha = async (req, res) => {
         const senhaHash = await bcrypt.hash(novaSenha, 10);
         await db.execute('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [senhaHash, tokens[0].usuario_id]);
         await db.execute('UPDATE recuperacao_senha SET usado = TRUE WHERE id = ?', [tokens[0].id]);
+
+        // 🚀 Registra a troca de senha na auditoria
+        await registrarLog(tokens[0].usuario_id, 'REDEFINICAO_SENHA', 'Usuário criou uma senha nova usando o link de recuperação.', req.ip);
 
         res.status(200).json({ message: 'Senha redefinida com sucesso!' });
     } catch (error) { res.status(500).json({ error: 'Erro ao redefinir senha.' }); }

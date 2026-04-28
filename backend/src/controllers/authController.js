@@ -123,6 +123,19 @@ const atualizarPerfil = async (req, res) => {
         connection = await db.getConnection();
         await connection.beginTransaction();
 
+        // 📸 FOTOGRAFIA DO "ANTES" (Para gerar o log inteligente de auditoria)
+        const [oldUserRows] = await connection.execute('SELECT nome, telefone, foto_perfil, cep, tipo FROM usuarios WHERE id = ?', [usuarioId]);
+        const oldUser = oldUserRows[0];
+
+        let mudancas = [];
+        if (oldUser.nome !== nome) mudancas.push("Alterou o nome");
+        if ((oldUser.telefone || '') !== (telefone || '')) mudancas.push("Alterou o telefone");
+        if ((oldUser.cep || '') !== (endereco?.cep || '')) mudancas.push("Atualizou o endereço");
+        if ((oldUser.foto_perfil || '') !== (fotoPerfil || '')) mudancas.push("Atualizou a foto de perfil");
+        if (oldUser.tipo !== tipo) mudancas.push(`Mudou a finalidade da conta para ${tipo}`);
+        
+        let detalhesLog = mudancas.length > 0 ? `Atualizações feitas: ${mudancas.join(', ')}.` : `Perfil salvo sem alterações nos dados principais.`;
+
         // 1. Atualiza dados na tabela usuarios
         await connection.execute(
             'UPDATE usuarios SET nome = ?, telefone = ?, foto_perfil = ?, cep = ?, rua = ?, numero = ?, complemento = ?, bairro = ?, cidade = ?, estado = ?, tipo = ? WHERE id = ?',
@@ -159,7 +172,7 @@ const atualizarPerfil = async (req, res) => {
         );
 
         // 🚀 Registra a atualização no banco
-        await registrarLog(usuarioId, 'ATUALIZAR_PERFIL', `Perfil editado. Tornou-se/É: ${tipo}.`, req.ip);
+        await registrarLog(usuarioId, 'ATUALIZAR_PERFIL', detalhesLog, req.ip);
 
         res.status(200).json({ message: 'Perfil atualizado com sucesso!', token: novoToken });
     } catch (error) {

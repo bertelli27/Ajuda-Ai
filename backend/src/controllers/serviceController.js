@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const registrarLog = require('../utils/logger');
 
 const criarServico = async (req, res) => {
     try {
@@ -28,6 +29,9 @@ const criarServico = async (req, res) => {
             'INSERT INTO servicos (prestador_id, categoria_id, titulo, descricao) VALUES (?, ?, ?, ?)',
             [prestadorId, categoriaId, titulo, descricao || '']
         );
+
+        // 🚀 Grava na auditoria que um novo serviço foi publicado
+        await registrarLog(req.user.id, 'SERVICO_CRIADO', `Publicou o serviço: "${titulo}".`, req.ip);
 
         res.status(201).json({ message: 'Serviço salvo com sucesso!', id: result.insertId });
     } catch (error) {
@@ -135,6 +139,10 @@ const atualizarServico = async (req, res) => {
         );
 
         console.log(`[SUCESSO] Serviço ${servicoId} atualizado no banco! Novo Título: "${titulo}"`);
+        
+        // 🚀 Grava na auditoria que o serviço foi editado
+        await registrarLog(req.user.id, 'SERVICO_EDITADO', `Alterou os dados da publicação: "${titulo}".`, req.ip);
+        
         res.status(200).json({ message: 'Serviço atualizado com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar serviço:', error);
@@ -161,6 +169,10 @@ const deletarServico = async (req, res) => {
         await db.execute('DELETE FROM servicos WHERE id = ?', [servicoId]);
         
         console.log(`[SUCESSO] Serviço ${servicoId} excluído perfeitamente!`);
+        
+        // 🚀 Grava na auditoria que o serviço foi apagado
+        await registrarLog(req.user.id, 'SERVICO_EXCLUIDO', `Removeu o serviço ID #${servicoId} da vitrine.`, req.ip);
+
         res.status(200).json({ message: 'Serviço excluído com sucesso!' });
     } catch (error) {
         console.error('Erro ao excluir serviço:', error);
