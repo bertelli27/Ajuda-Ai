@@ -40,6 +40,35 @@ document.addEventListener("DOMContentLoaded", async function() {
         carregarLogs(); // Carrega os logs ao clicar na aba
     });
 
+    // ================= LÓGICA DAS SUB-ABAS DE LOGS E MODAL =================
+    const btnSubTabServicos = document.getElementById("btnSubTabServicos");
+    const btnSubTabContas = document.getElementById("btnSubTabContas");
+    const btnAuditoriaAvancada = document.getElementById("btnAuditoriaAvancada");
+    const adminLogsModal = document.getElementById("adminLogsModal");
+
+    btnSubTabServicos?.addEventListener("click", () => {
+        btnSubTabServicos.classList.add("active");
+        btnSubTabContas.classList.remove("active");
+        renderizarAbaAtivaLogs();
+    });
+
+    btnSubTabContas?.addEventListener("click", () => {
+        btnSubTabContas.classList.add("active");
+        btnSubTabServicos.classList.remove("active");
+        renderizarAbaAtivaLogs();
+    });
+
+    btnAuditoriaAvancada?.addEventListener("click", () => {
+        adminLogsModal.style.display = "flex";
+        renderizarModalLogsAdmin();
+    });
+
+    document.getElementById("closeAdminLogsModal")?.addEventListener("click", () => adminLogsModal.style.display = "none");
+    window.addEventListener("click", (e) => { if (e.target === adminLogsModal) adminLogsModal.style.display = "none"; });
+
+    // Variável para guardar os logs sem precisar ficar chamando a API toda hora
+    let cacheLogsData = null;
+
     // ================= 3. CARREGAR DADOS =================
     carregarUsuarios();
 
@@ -88,55 +117,70 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     async function carregarLogs() {
-        const tbody = document.getElementById("tabela-logs-body");
         try {
-            const dados = await API.getLogsAdmin();
-            const logs = dados.logsAdministradores;
-            const logsSrv = dados.logsServicos;
-
-            if ((!logs || logs.length === 0) && (!logsSrv || logsSrv.length === 0)) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhum log de auditoria registrado.</td></tr>`;
-                return;
+            // Busca da API só na primeira vez ou se estiver forçando recarregamento
+            if (!cacheLogsData) {
+                cacheLogsData = await API.getLogsAdmin();
             }
-
-            let html = '';
-
-            if (logs && logs.length > 0) {
-                html += `<tr><td colspan="5" style="background-color: #2A343D; color: #d9534f; font-weight: bold; text-align: center;">--- AÇÕES DE ADMINISTRADORES ---</td></tr>`;
-                html += logs.map(log => {
-                    const dataCriacao = new Date(log.criado_em).toLocaleString('pt-BR');
-                    return `
-                        <tr>
-                            <td style="white-space: nowrap;">${dataCriacao}</td>
-                            <td>${log.admin_nome || 'Sistema'}</td>
-                            <td><strong style="color: #d9534f;">${log.acao}</strong></td>
-                            <td>${log.alvo_tipo.toUpperCase()} #${log.alvo_id}</td>
-                            <td style="color: #AAAAAA; font-size: 12px;">${log.justificativa}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            if (logsSrv && logsSrv.length > 0) {
-                html += `<tr><td colspan="5" style="background-color: #2A343D; color: #f0ad4e; font-weight: bold; text-align: center;">--- CICLO DE VIDA DOS SERVIÇOS ---</td></tr>`;
-                html += logsSrv.map(log => {
-                    const dataCriacao = new Date(log.criado_em).toLocaleString('pt-BR');
-                    return `
-                        <tr>
-                            <td style="white-space: nowrap;">${dataCriacao}</td>
-                            <td>${log.usuario_nome || 'Sistema'} (${log.usuario_tipo || 'N/A'})</td>
-                            <td><strong style="color: #f0ad4e;">${log.acao}</strong></td>
-                            <td>PEDIDO #${log.solicitacao_id}</td>
-                            <td style="color: #AAAAAA; font-size: 12px;">${log.detalhes}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            tbody.innerHTML = html;
+            renderizarAbaAtivaLogs();
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #d9534f;">Erro ao carregar logs: ${error.message}</td></tr>`;
+            document.getElementById("tabela-logs-body").innerHTML = `<tr><td colspan="5" style="text-align: center; color: #d9534f;">Erro ao carregar logs: ${error.message}</td></tr>`;
         }
+    }
+
+    function renderizarAbaAtivaLogs() {
+        const tbody = document.getElementById("tabela-logs-body");
+        if (!cacheLogsData) return;
+
+        const isTabServicos = document.getElementById("btnSubTabServicos").classList.contains("active");
+        const logsParaMostrar = isTabServicos ? cacheLogsData.logsServicos : cacheLogsData.logsUsuarios;
+        const corDestaque = isTabServicos ? '#f0ad4e' : '#00ADB5';
+
+        if (!logsParaMostrar || logsParaMostrar.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Nenhum registro encontrado nesta categoria.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logsParaMostrar.map(log => {
+            const dataCriacao = new Date(log.criado_em).toLocaleString('pt-BR');
+            const nomeUser = log.usuario_nome || 'Desconhecido';
+            const emailUser = log.usuario_email || 'Sistema';
+            
+            let alvoInfo = isTabServicos ? `<strong>Pedido #${log.solicitacao_id}</strong><br>${log.detalhes}` : log.detalhes;
+
+            return `
+                <tr>
+                    <td style="white-space: nowrap;">${dataCriacao}</td>
+                    <td><strong>${nomeUser}</strong><br><span style="font-size: 11px; color: #AAAAAA;">${emailUser}</span></td>
+                    <td><strong style="color: ${corDestaque}; font-size: 13px;">${log.acao}</strong></td>
+                    <td style="color: #CCCCCC; font-size: 13px;">${alvoInfo}</td>
+                    <td style="font-size: 11px; color: #888888;">${log.ip_endereco || 'N/A'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderizarModalLogsAdmin() {
+        const tbody = document.getElementById("tabela-admin-logs-body");
+        const logsAdmin = cacheLogsData?.logsAdministradores;
+
+        if (!logsAdmin || logsAdmin.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">O Livro Preto está vazio.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logsAdmin.map(log => {
+            const dataCriacao = new Date(log.criado_em).toLocaleString('pt-BR');
+            return `
+                <tr>
+                    <td style="white-space: nowrap; font-size: 13px;">${dataCriacao}</td>
+                    <td><strong style="color: #EEEEEE;">${log.admin_nome || 'Sistema'}</strong></td>
+                    <td><span style="background: rgba(217, 83, 79, 0.2); color: #d9534f; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">${log.acao}</span></td>
+                    <td style="color: #00ADB5; font-size: 13px;">${log.alvo_tipo.toUpperCase()} #${log.alvo_id}</td>
+                    <td style="color: #AAAAAA; font-size: 13px; font-style: italic;">"${log.justificativa}"</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // ================= 4. AÇÕES DO MODAL DE BANIMENTO =================

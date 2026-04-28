@@ -55,10 +55,18 @@ const adminController = {
                 ORDER BY l.criado_em DESC LIMIT 100
             `);
 
+            const [logsUsuario] = await db.execute(`
+                SELECT l.*, u.nome as usuario_nome, u.email as usuario_email, u.tipo as usuario_tipo
+                FROM logs_usuario l 
+                LEFT JOIN usuarios u ON l.usuario_id = u.id 
+                ORDER BY l.criado_em DESC LIMIT 100
+            `);
+
             // Retornamos os logs de governança para o Front-end desenhar a tabela
             res.json({
                 logsAdministradores: logsAdmin,
-                logsServicos: logsServico
+                logsServicos: logsServico,
+                logsUsuarios: logsUsuario
             });
         } catch (error) {
             console.error("Erro ao listar logs:", error);
