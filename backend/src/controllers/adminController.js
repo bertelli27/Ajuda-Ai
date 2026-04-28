@@ -7,7 +7,26 @@ const adminController = {
             const [usuarios] = await db.execute(
                 'SELECT id, nome, email, telefone, tipo, ativo, criado_em FROM usuarios ORDER BY criado_em DESC'
             );
-            res.json(usuarios);
+            
+            // 🚀 NOVO: Busca estatísticas globais (KPIs)
+            const [statsServicos] = await db.execute(
+                'SELECT COUNT(*) as total_andamento FROM solicitacoes WHERE status = "ACEITO"'
+            );
+            
+            const [statsFinanceiro] = await db.execute(
+                'SELECT SUM(valor_total) as gmv, SUM(taxa_plataforma) as receita FROM transacoes WHERE status = "CONCLUIDO"'
+            );
+
+            // Empacota tudo e envia para o front-end
+            res.json({
+                usuarios: usuarios,
+                kpis: {
+                    totalUsuarios: usuarios.filter(u => u.ativo).length,
+                    servicosAndamento: statsServicos[0].total_andamento || 0,
+                    gmv: statsFinanceiro[0].gmv || 0,
+                    receita: statsFinanceiro[0].receita || 0
+                }
+            });
         } catch (error) {
             console.error("Erro ao listar usuários:", error);
             res.status(500).json({ error: "Erro interno ao buscar usuários." });

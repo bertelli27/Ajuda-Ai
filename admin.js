@@ -75,8 +75,16 @@ document.addEventListener("DOMContentLoaded", async function() {
     async function carregarUsuarios() {
         const tbody = document.getElementById("tabela-usuarios-body");
         try {
-            const listaUsuarios = await API.getTodosUsuariosAdmin();
+            const resposta = await API.getTodosUsuariosAdmin();
+            const listaUsuarios = resposta.usuarios;
+            const kpis = resposta.kpis;
             
+            // 🚀 Preenche os Cards de KPIs no topo da página
+            document.getElementById("kpi-usuarios").innerText = kpis.totalUsuarios;
+            document.getElementById("kpi-servicos").innerText = kpis.servicosAndamento;
+            document.getElementById("kpi-gmv").innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.gmv);
+            document.getElementById("kpi-receita").innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.receita);
+
             if (listaUsuarios.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Nenhum usuário encontrado.</td></tr>`;
                 return;
@@ -145,6 +153,11 @@ document.addEventListener("DOMContentLoaded", async function() {
             const dataCriacao = new Date(log.criado_em).toLocaleString('pt-BR');
             const nomeUser = log.usuario_nome || 'Desconhecido';
             const emailUser = log.usuario_email || 'Sistema';
+            const tipoUser = log.usuario_tipo || 'N/A';
+            
+            // Cria a badge visual para o tipo
+            const badgeClass = tipoUser === 'prestador' ? 'badge-prestador' : (tipoUser === 'cliente' ? 'badge-cliente' : '');
+            const badgeHTML = tipoUser !== 'N/A' ? `<span class="badge ${badgeClass}">${tipoUser}</span>` : `<span style="color: #888;">${tipoUser}</span>`;
             
             let alvoInfo = isTabServicos ? `<strong>Pedido #${log.solicitacao_id}</strong><br>${log.detalhes}` : log.detalhes;
 
@@ -152,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 <tr>
                     <td style="white-space: nowrap;">${dataCriacao}</td>
                     <td><strong>${nomeUser}</strong><br><span style="font-size: 11px; color: #AAAAAA;">${emailUser}</span></td>
+                    <td>${badgeHTML}</td>
                     <td><strong style="color: ${corDestaque}; font-size: 13px;">${log.acao}</strong></td>
                     <td style="color: #CCCCCC; font-size: 13px;">${alvoInfo}</td>
                     <td style="font-size: 11px; color: #888888;">${log.ip_endereco || 'N/A'}</td>

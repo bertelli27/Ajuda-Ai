@@ -45,6 +45,30 @@
         <p class="site-desc" style="font-size: 16px; margin-bottom: 0;">Gestão da plataforma, controle de usuários e trilhas de auditoria (LGPD).</p>
     </div>
 
+    <!-- KPIs GLOBAIS DA PLATAFORMA -->
+    <div class="dashboard-container fade-up-animation" style="margin-bottom: 40px; grid-template-columns: repeat(4, 1fr);">
+        <div class="dashboard-card" style="border-left-color: #007bff;">
+            <span class="dashboard-icon" style="color: #007bff;">👥</span>
+            <h3>Total de Usuários Ativos</h3>
+            <div class="dashboard-value" id="kpi-usuarios" style="color: #007bff;">0</div>
+        </div>
+        <div class="dashboard-card" style="border-left-color: #f0ad4e;">
+            <span class="dashboard-icon" style="color: #f0ad4e;">🛠️</span>
+            <h3>Serviços em Andamento</h3>
+            <div class="dashboard-value" id="kpi-servicos" style="color: #f0ad4e;">0</div>
+        </div>
+        <div class="dashboard-card" style="border-left-color: #00ADB5;">
+            <span class="dashboard-icon" style="color: #00ADB5;">💰</span>
+            <h3>GMV (Volume Bruto)</h3>
+            <div class="dashboard-value" id="kpi-gmv">R$ 0,00</div>
+        </div>
+        <div class="dashboard-card" style="border-left-color: #5cb85c;">
+            <span class="dashboard-icon" style="color: #5cb85c;">📈</span>
+            <h3>Receita AjudaAí (10%)</h3>
+            <div class="dashboard-value" id="kpi-receita" style="color: #5cb85c;">R$ 0,00</div>
+        </div>
+    </div>
+
     <div class="tabs-container fade-up-animation">
         <button class="tab-btn active" id="btnTabUsuarios">Gestão de Usuários</button>
         <button class="tab-btn" id="btnTabLogs">Auditoria Interna (Logs)</button>
@@ -93,6 +117,7 @@
                     <tr>
                         <th>Data/Hora</th>
                         <th>Usuário Envolvido</th>
+                        <th>Tipo</th>
                         <th>Ação</th>
                         <th>Detalhes do Evento</th>
                         <th>IP</th>
