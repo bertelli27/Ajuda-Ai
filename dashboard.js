@@ -1,3 +1,6 @@
+let funilChartInstance = null;
+let receitaCatChartInstance = null;
+
 document.addEventListener("DOMContentLoaded", async function() {
     // ================= VALIDAÇÃO DE LOGIN =================
     const emailLogado = API.getSessaoAtual();
@@ -35,6 +38,35 @@ document.addEventListener("DOMContentLoaded", async function() {
     document.getElementById("filtroPeriodoTransacoes").addEventListener("change", () => {
         renderizarHistoricoFinanceiro(emailLogado);
     });
+
+    // ================= LÓGICA DAS ABAS DE BI =================
+    if (usuarioAtual.tipo === 'prestador') {
+        document.getElementById("prestador-tabs").style.display = "flex";
+        
+        const btnTabVisaoGeral = document.getElementById("btnTabVisaoGeral");
+        const btnTabRelatorios = document.getElementById("btnTabRelatorios");
+        const areaVisaoGeral = document.getElementById("area-visao-geral");
+        const areaRelatorios = document.getElementById("area-relatorios");
+
+        btnTabVisaoGeral.addEventListener("click", () => {
+            btnTabVisaoGeral.classList.add("active");
+            btnTabRelatorios.classList.remove("active");
+            areaVisaoGeral.style.display = "block";
+            areaRelatorios.style.display = "none";
+        });
+
+        btnTabRelatorios.addEventListener("click", () => {
+            btnTabRelatorios.classList.add("active");
+            btnTabVisaoGeral.classList.remove("active");
+            areaRelatorios.style.display = "block";
+            areaVisaoGeral.style.display = "none";
+            carregarRelatoriosBI(); 
+        });
+
+        document.getElementById("filtroPeriodoRelatorios").addEventListener("change", () => {
+            carregarRelatoriosBI();
+        });
+    }
 });
 
 function carregarDashboard(usuarioAtual, solicitacoes, avaliacoes, usuarios, servicos, transacoes) {
@@ -467,6 +499,77 @@ function formatarStatus(status, valorStatus, isPrestador = false) {
     if (status === 'CONCLUIDO') return 'Serviço Concluído';
     if (status === 'CANCELADO') return 'Cancelado';
     return status;
+}
+
+// ================= RELATÓRIOS (BI) =================
+async function carregarRelatoriosBI() {
+    const periodo = document.getElementById("filtroPeriodoRelatorios").value;
+    try {
+        const dadosBI = await API.getRelatoriosPrestador(periodo);
+        
+        // Ticket Médio
+        document.getElementById("relatorio-ticket-medio").innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dadosBI.ticketMedio);
+
+        // Gráficos
+        renderFunilChart(dadosBI.funil);
+        renderReceitaCategoriaChart(dadosBI.receitasPorCategoria);
+
+        // Clientes Recorrentes
+        const tbodyRecorrentes = document.getElementById("tabela-clientes-recorrentes");
+        if (!dadosBI.clientesRecorrentes || dadosBI.clientesRecorrentes.length === 0) {
+            tbodyRecorrentes.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #AAAAAA;">Nenhum cliente recorrente neste período.</td></tr>`;
+        } else {
+            tbodyRecorrentes.innerHTML = dadosBI.clientesRecorrentes.map(c => `
+                <tr>
+                    <td><strong>${c.nome.split(' ')[0]}</strong><br><span style="font-size: 11px; color: #AAAAAA;">${c.email}</span></td>
+                    <td><span class="badge badge-prestador">${c.qtd_servicos}</span></td>
+                    <td style="color: #5cb85c; font-weight: bold;">R$ ${parseFloat(c.valor_gasto).toFixed(2).replace('.', ',')}</td>
+                </tr>
+            `).join('');
+        }
+    } catch (error) {
+        console.error("Erro ao carregar BI:", error);
+        mostrarToast("Erro ao carregar relatórios.", "error");
+    }
+}
+
+function renderFunilChart(funil) {
+    const ctx = document.getElementById('funilConversaoChart');
+    if (!ctx) return;
+    if (funilChartInstance) funilChartInstance.destroy();
+
+    const fontColor = document.documentElement.getAttribute('data-theme') === 'light' ? '#4A5568' : '#EEEEEE';
+
+    funilChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Pedidos Recebidos', 'Orçamentos Enviados', 'Serviços Fechados', 'Concluídos'],
+            datasets: [{
+                label: 'Volume',
+                data: [funil.recebidos || 0, funil.orcamentos_enviados || 0, funil.servicos_fechados || 0, funil.servicos_concluidos || 0],
+                backgroundColor: ['#007bff', '#f0ad4e', '#17a2b8', '#5cb85c'],
+                borderRadius: 4
+            }]
+        },
+        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { stepSize: 1, color: fontColor } }, y: { ticks: { color: fontColor } } } }
+    });
+}
+
+function renderReceitaCategoriaChart(receitas) {
+    const ctx = document.getElementById('receitaCategoriaChart');
+    if (!ctx) return;
+    if (receitaCatChartInstance) receitaCatChartInstance.destroy();
+
+    const fontColor = document.documentElement.getAttribute('data-theme') === 'light' ? '#4A5568' : '#EEEEEE';
+
+    receitaCatChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: receitas.map(r => r.categoria),
+            datasets: [{ data: receitas.map(r => r.receita_total), backgroundColor: ['#00ADB5', '#f0ad4e', '#5cb85c', '#d9534f', '#9c27b0'], borderWidth: 2, borderColor: '#222A31' }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: fontColor } } } }
+    });
 }
 
 // ================= HEADER E LOGOUT =================

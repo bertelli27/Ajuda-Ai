@@ -28,6 +28,13 @@
         <p class="site-desc" style="font-size: 16px; margin-bottom: 0;">Bem-vindo ao seu painel. Aqui você pode acompanhar seus serviços, finanças e atividades de forma organizada.</p>
     </div>
 
+    <!-- TABS DO PRESTADOR -->
+    <div id="prestador-tabs" class="tabs-container fade-up-animation" style="display: none; justify-content: flex-start; margin-bottom: 30px;">
+        <button class="tab-btn active" id="btnTabVisaoGeral">Visão Geral</button>
+        <button class="tab-btn" id="btnTabRelatorios">Relatórios Avançados (BI)</button>
+    </div>
+
+    <div id="area-visao-geral">
     <!-- 2. SEÇÃO DE RESUMO (CARDS) -->
     <div class="dashboard-section fade-up-animation" style="margin-bottom: 50px;">
         <h3 class="section-title" style="font-size: 22px; margin-bottom: 20px;">Resumo Geral</h3>
@@ -173,6 +180,55 @@
             </div>
         </div>
     </div>
+    </div> <!-- Fim area-visao-geral -->
+
+    <!-- AREA DE RELATÓRIOS (BI) -->
+    <div id="area-relatorios" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <h3 class="section-title" style="font-size: 22px; margin: 0; border: none; padding: 0;">Inteligência de Negócios (BI)</h3>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <select id="filtroPeriodoRelatorios" class="filtros-pedidos" style="margin-bottom: 0; padding: 9px 16px;">
+                    <option value="todos">Todo o período</option>
+                    <option value="mes_atual">Este Mês</option>
+                    <option value="ultimos_3_meses">Últimos 3 Meses</option>
+                    <option value="ano_atual">Este Ano</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TICKET MEDIO CARD -->
+        <div class="dashboard-container fade-up-animation" style="grid-template-columns: 1fr; margin-bottom: 30px;">
+            <div class="dashboard-card" style="border-left-color: #9c27b0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+                <span class="dashboard-icon" style="color: #9c27b0;">🏷️</span>
+                <h3>Ticket Médio por Serviço</h3>
+                <div class="dashboard-value" id="relatorio-ticket-medio" style="font-size: 42px; color: #EEEEEE;">R$ 0,00</div>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="dashboard-split fade-up-animation" style="align-items: stretch; margin-bottom: 30px;">
+            <div class="chart-container" style="margin: 0; max-width: 100%; width: 100%;">
+                <h3 style="margin-bottom: 15px; font-size: 18px; text-align: center;">Funil de Conversão (Eficácia)</h3>
+                <canvas id="funilConversaoChart"></canvas>
+            </div>
+            <div class="chart-container" style="margin: 0; max-width: 100%; width: 100%;">
+                <h3 style="margin-bottom: 15px; font-size: 18px; text-align: center;">Receita por Categoria</h3>
+                <canvas id="receitaCategoriaChart"></canvas>
+            </div>
+        </div>
+
+        <!-- CLIENTES RECORRENTES -->
+        <div class="profile-info-card fade-up-animation" style="padding: 25px;">
+            <h3 class="section-title" style="margin-top: 0; border: none; color: #f0ad4e;">⭐ Clientes Fidelizados (Recorrentes)</h3>
+            <div class="admin-table-wrapper" style="margin-top: 0;">
+                <table class="admin-table">
+                    <thead><tr><th>Cliente</th><th>Serviços Concluídos</th><th>Total Gasto com Você</th></tr></thead>
+                    <tbody id="tabela-clientes-recorrentes"><tr><td colspan="3" style="text-align: center;">Carregando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- Fim area-relatorios -->
+
 </section>
 
 <footer class="mini-footer">

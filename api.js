@@ -1,12 +1,8 @@
 /**
- * AJUDA AÍ - CAMADA DE DADOS E API (MOCK)
- * Este arquivo centraliza todas as chamadas de dados do sistema.
- * Atualmente ele interage com o LocalStorage (Simulando o Banco de Dados).
- * 
- * 🚀 PREPARAÇÃO PARA O BACK-END:
- * Quando a API da equipe estiver pronta, basta substituir o conteúdo destas 
- * funções por chamadas reais (ex: fetch('http://localhost:3000/api/usuarios')).
- * NENHUM arquivo visual (dashboard.js, pedidos.js, etc) precisará ser alterado!
+ * AJUDA AÍ - CAMADA DE INTEGRAÇÃO (API CLIENT)
+ * Este arquivo atua como o coração da comunicação entre o Front-end e o Back-end (Node.js).
+ * Ele centraliza todas as requisições HTTP (Fetch API), gerencia a injeção de Tokens JWT nas rotas protegidas
+ * e atua como uma camada DTO (Data Transfer Object), normalizando os dados do banco de dados para a tela.
  */
 
 // const BASE_URL = 'http://localhost:3000/api'; // Ambiente Local
@@ -198,6 +194,18 @@ const API = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Erro ao excluir serviço');
+        return data;
+    },
+
+    // ================= RELATÓRIOS (BI) =================
+    async getRelatoriosPrestador(periodo = 'todos') {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/relatorios?periodo=${periodo}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao buscar relatórios');
         return data;
     },
 
