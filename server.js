@@ -25,6 +25,10 @@ app.use('/api/mensagens', messageRoutes);
 const adminRoutes = require('./backend/src/routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
 
+// Rotas de Relatórios do Prestador (BI)
+const providerReportRoutes = require('./backend/src/routes/providerReportRoutes');
+app.use('/api/relatorios', providerReportRoutes);
+
 // Rota de fallback (Erro 404 para rotas inexistentes)
 app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint não encontrado na API.' });
