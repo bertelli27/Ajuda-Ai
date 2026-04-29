@@ -62,7 +62,7 @@ const getRelatorios = async (req, res) => {
             JOIN usuarios u ON sol.cliente_id = u.id
             JOIN servicos s ON sol.servico_id = s.id
             WHERE s.prestador_id = ? ${dateFilter}
-            GROUP BY sol.cliente_id
+            GROUP BY sol.cliente_id, u.nome, u.email
             HAVING COUNT(sol.id) > 1
             ORDER BY qtd_servicos DESC
         `;
