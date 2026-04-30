@@ -386,8 +386,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             } else if (target.classList.contains('btn-avaliar')) {
                 window.location.href = `avaliar.html?pedido=${pedidoIdStr}`;
             } else if (target.classList.contains('btn-chat')) {
-                const autoOpenOrcamento = target.classList.contains('btn-negociar');
-                abrirChat(pedidoIdStr, autoOpenOrcamento);
+                abrirChat(pedidoIdStr, false); // Garante que o prestador sempre caia no chat primeiro
             } else if (target.classList.contains('ver-orcamento')) {
                 abrirChat(pedidoIdStr, true); // O 'true' avisa a função para já abrir a caixa de orçamento!
             }
