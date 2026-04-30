@@ -281,7 +281,10 @@ document.addEventListener("DOMContentLoaded", async function() {
             const valorFormatado = valorCombinado ? `R$ ${parseFloat(valorCombinado).toFixed(2).replace('.', ',')}` : 'A combinar';
             const statusBadgeHTML = formatarStatusBadge(pedido, emailLogado);
             const timelineHTML = gerarTimelineHTML(pedido);
-            const textoBotaoChat = pedido.status === 'CANCELADO' ? 'Ver Histórico' : 'Ver Conversa';
+            
+            let textoBotaoChat = 'Ver Conversa';
+            if (pedido.status === 'CANCELADO') textoBotaoChat = 'Ver Histórico';
+            else if (pedido.status === 'PENDENTE' && valorStatusAtual !== 'PROPOSTO') textoBotaoChat = '💬 Negociar Orçamento';
             
             return `
                 <div class="pedido-card">
@@ -299,9 +302,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                         <p><strong>Pagamento:</strong> <span style="color: ${statusPagamento === 'RETIDO' ? '#f0ad4e' : statusPagamento === 'LIBERADO' ? '#5cb85c' : '#AAAAAA'};">${statusPagamento.replace('_', ' ')}</span></p>
                     </div>
                     <div class="botoes-acao">
-                        <button class="btn-acao btn-chat" data-pedido-id="${pedido.id}" style="position: relative;">${textoBotaoChat}${badgeHTML}</button>
+                        <button class="btn-acao btn-chat ${pedido.status === 'PENDENTE' && valorStatusAtual !== 'PROPOSTO' ? 'btn-negociar' : ''}" data-pedido-id="${pedido.id}" style="position: relative; ${pedido.status === 'PENDENTE' && valorStatusAtual !== 'PROPOSTO' ? 'background-color: #f0ad4e; color: #222A31;' : ''}">${textoBotaoChat}${badgeHTML}</button>
                     ${(pedido.status === 'PENDENTE' && valorStatusAtual !== 'PROPOSTO') ? `
-                            <button class="btn-acao aceitar" data-pedido-id="${pedido.id}">Aceitar</button>
                             <button class="btn-acao recusar" data-pedido-id="${pedido.id}">Recusar</button>
                         ` : ''}
                         ${pedido.status === 'ACEITO' ? `
@@ -384,7 +386,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             } else if (target.classList.contains('btn-avaliar')) {
                 window.location.href = `avaliar.html?pedido=${pedidoIdStr}`;
             } else if (target.classList.contains('btn-chat')) {
-                abrirChat(pedidoIdStr);
+                const autoOpenOrcamento = target.classList.contains('btn-negociar');
+                abrirChat(pedidoIdStr, autoOpenOrcamento);
             } else if (target.classList.contains('ver-orcamento')) {
                 abrirChat(pedidoIdStr, true); // O 'true' avisa a função para já abrir a caixa de orçamento!
             }
