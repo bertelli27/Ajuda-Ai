@@ -169,12 +169,19 @@
                     <!-- TERMOS LGPD -->
                     <div class="lgpd-consent-box">
                         <label class="checkbox-container">
-                            <input type="checkbox" id="aceiteLGPD">
+                            <input type="checkbox" id="aceiteTermos">
                             <span class="checkmark"></span>
                             <div class="consent-text">
                                 Confirmo que sou maior de 18 anos e que li e concordo com os 
-                                <a href="#" target="_blank">Termos de Uso</a> e com a 
-                                <a href="#" target="_blank">Política de Privacidade</a> do AjudaAí.
+                                <a href="#" id="linkTermos">Termos de Uso</a>.
+                            </div>
+                        </label>
+                        <label class="checkbox-container" style="margin-top: 10px;">
+                            <input type="checkbox" id="aceitePrivacidade">
+                            <span class="checkmark"></span>
+                            <div class="consent-text">
+                                Li e concordo com a 
+                                <a href="#" id="linkPrivacidade">Política de Privacidade</a> do AjudaAí.
                             </div>
                         </label>
                     </div>
@@ -196,6 +203,44 @@
     </div>
 
 </section>
+
+<!-- MODAL TERMOS DE USO -->
+<div id="modalTermos" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: 80vh; padding: 30px;">
+        <span class="close-button" id="closeTermos">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Termos de Uso</h3>
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px; color: #EEEEEE; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            <h4>1. Aceitação dos Termos</h4>
+            <p>Ao acessar e utilizar o AjudaAí, você concorda com estes termos de serviço e condições de uso aplicáveis à plataforma.</p>
+            <br>
+            <h4>2. Responsabilidades</h4>
+            <p>O AjudaAí atua exclusivamente como intermediador entre clientes e prestadores de serviços, não possuindo vínculo empregatício com os profissionais.</p>
+            <br>
+            <h4>3. Pagamentos e Taxas</h4>
+            <p>Os pagamentos são retidos de forma segura pela plataforma. Uma taxa de intermediação de 10% é descontada do valor final do prestador após a conclusão.</p>
+        </div>
+        <button type="button" id="btnAceitarTermos" class="btn-login" style="width: 100%; margin: 0; background: #5cb85c; color: white;">Li e Aceito os Termos</button>
+    </div>
+</div>
+
+<!-- MODAL POLÍTICA DE PRIVACIDADE -->
+<div id="modalPrivacidade" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: 80vh; padding: 30px;">
+        <span class="close-button" id="closePrivacidade">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Política de Privacidade</h3>
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px; color: #EEEEEE; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            <h4>1. Coleta de Dados</h4>
+            <p>Coletamos informações essenciais como nome, CPF, e-mail e endereço para garantir a segurança das negociações na plataforma.</p>
+            <br>
+            <h4>2. Tratamento e Uso</h4>
+            <p>Seus dados são utilizados estritamente para o funcionamento da plataforma e nunca serão comercializados para terceiros.</p>
+            <br>
+            <h4>3. Criptografia</h4>
+            <p>Empregamos protocolos de criptografia (Bcrypt) e segurança de dados padrão de mercado para proteger as suas informações pessoais e senhas.</p>
+        </div>
+        <button type="button" id="btnAceitarPrivacidade" class="btn-login" style="width: 100%; margin: 0; background: #5cb85c; color: white;">Li e Aceito a Política</button>
+    </div>
+</div>
 
 <script src="utils.js"></script>
 <script src="api.js"></script>

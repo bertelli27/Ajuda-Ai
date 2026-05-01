@@ -32,6 +32,17 @@ const API = {
         return data;
     },
 
+    async verificarCpf(cpf) {
+        const response = await fetch(`${BASE_URL}/auth/verificar-cpf/${cpf.replace(/\D/g, '')}`);
+        const data = await response.json();
+        return data.existe;
+    },
+    async verificarEmail(email) {
+        const response = await fetch(`${BASE_URL}/auth/verificar-email/${encodeURIComponent(email)}`);
+        const data = await response.json();
+        return data.existe;
+    },
+
     // ================= USUÁRIOS =================
     async getUsuarios() {
         try {

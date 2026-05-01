@@ -1,4 +1,22 @@
+function validarCPF(cpf) {
+    cpf = cpf.replace(/[^\d]+/g, '');
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+    let soma = 0, resto;
+    for (let i = 1; i <= 9; i++) soma = soma + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    resto = (soma * 10) % 11;
+    if ((resto === 10) || (resto === 11)) resto = 0;
+    if (resto !== parseInt(cpf.substring(9, 10))) return false;
+    soma = 0;
+    for (let i = 1; i <= 10; i++) soma = soma + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    resto = (soma * 10) % 11;
+    if ((resto === 10) || (resto === 11)) resto = 0;
+    if (resto !== parseInt(cpf.substring(10, 11))) return false;
+    return true;
+}
+
 document.addEventListener("DOMContentLoaded", function() {
+    let cpfEmUso = false;
+    let emailEmUso = false;
 
     // ================= MÁSCARAS E INTEGRAÇÕES =================
     const cpfInput = document.getElementById('cpf');
@@ -42,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 clearInputError(document.getElementById("rua"));
                 document.getElementById("numero").focus();
             } else {
-                mostrarToast("CEP não encontrado.", "error");
+                setInputError(cepInput, "CEP não encontrado.");
                 document.getElementById("rua").value = ''; 
                 document.getElementById("bairro").value = ''; 
                 document.getElementById("cidade").value = ''; 
@@ -51,17 +69,75 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+    // ================= VALIDAÇÕES INLINE (TEMPO REAL) =================
+    document.getElementById('nome').addEventListener('blur', function(e) {
+        if (e.target.value.trim().split(' ').length < 2) setInputError(e.target, "Por favor, insira seu nome e sobrenome.");
+        else clearInputError(e.target);
+    });
+
+    cpfInput?.addEventListener('blur', async function(e) {
+        const cpf = e.target.value.replace(/\D/g, '');
+        if (cpf.length !== 11 || !validarCPF(cpf)) {
+            setInputError(e.target, "CPF inválido.");
+            return;
+        }
+        clearInputError(e.target);
+        try {
+            cpfEmUso = await API.verificarCpf(cpf);
+            if (cpfEmUso) setInputError(e.target, "Este CPF já está vinculado a uma conta.");
+        } catch (err) { console.error(err); }
+    });
+
+    document.getElementById('telefone').addEventListener('blur', function(e) {
+        if (e.target.value.replace(/\D/g, '').length < 10) setInputError(e.target, "Telefone incompleto.");
+        else clearInputError(e.target);
+    });
+
+    document.getElementById('email').addEventListener('blur', async function(e) {
+        const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!reEmail.test(e.target.value.trim())) {
+            setInputError(e.target, "E-mail inválido.");
+            return;
+        }
+        clearInputError(e.target);
+        try {
+            emailEmUso = await API.verificarEmail(e.target.value.trim());
+            if (emailEmUso) setInputError(e.target, "Este e-mail já está cadastrado. Deseja fazer login?");
+        } catch (err) { console.error(err); }
+    });
+
+    document.getElementById('confirmSenha').addEventListener('blur', function(e) {
+        const senha = document.getElementById('senha').value;
+        if (e.target.value !== senha && e.target.value !== "") setInputError(e.target, "As senhas não são iguais.");
+        else clearInputError(e.target);
+    });
+
     // ================= LÓGICA DO WIZARD (MULTI-STEP) =================
     let passoAtual = 1;
-    const totalPassos = 4;
     
     const btnProximo = document.getElementById("btnProximo");
     const btnVoltar = document.getElementById("btnVoltar");
     const btnFinalizar = document.getElementById("btnFinalizar");
 
     function atualizarVisorWizard() {
+        const tipoUsuario = document.querySelector('input[name="tipoUsuario"]:checked').value;
+        const ehCliente = tipoUsuario === 'cliente';
+        const passosReais = ehCliente ? 3 : 4;
+        
+        // Esconde/Mostra a bolinha 3 e ajusta a numeração da 4
+        const dot3 = document.getElementById('dot3');
+        const dot4 = document.getElementById('dot4');
+        
+        if (ehCliente) {
+            if (dot3) dot3.style.display = 'none';
+            if (dot4) dot4.innerText = '3';
+        } else {
+            if (dot3) dot3.style.display = 'flex';
+            if (dot4) dot4.innerText = '4';
+        }
+
         // Esconde todos os passos e mostra só o atual
-        for (let i = 1; i <= totalPassos; i++) {
+        for (let i = 1; i <= 4; i++) {
             const stepDiv = document.getElementById(`step-${i}`);
             if (stepDiv) {
                 stepDiv.classList.remove('active');
@@ -71,18 +147,24 @@ document.addEventListener("DOMContentLoaded", function() {
             // Atualiza bolinhas (dots)
             const dot = document.getElementById(`dot${i}`);
             if (dot) {
-                if (i <= passoAtual) dot.classList.add('active');
+                if (i < passoAtual || (ehCliente && i === 4 && passoAtual === 4) || (!ehCliente && i <= passoAtual)) {
+                    dot.classList.add('active');
+                } else if (i === passoAtual && ehCliente && passoAtual === 4) {
+                    dot.classList.add('active');
+                } else {
                 else dot.classList.remove('active');
+                }
             }
         }
 
+        const passoVisual = (ehCliente && passoAtual === 4) ? 3 : passoAtual;
         // Atualiza Barra de Progresso Verde
-        document.getElementById('wizardProgressFill').style.width = `${(passoAtual / totalPassos) * 100}%`;
+        document.getElementById('wizardProgressFill').style.width = `${(passoVisual / passosReais) * 100}%`;
 
         // Controle de Botões (Voltar/Próximo/Finalizar)
         btnVoltar.style.display = passoAtual === 1 ? 'none' : 'block';
         
-        if (passoAtual === totalPassos) {
+        if (passoAtual === 4) {
             btnProximo.style.display = 'none';
             btnFinalizar.style.display = 'block';
             // Alarga o botão voltar para manter o design bonito
@@ -95,12 +177,16 @@ document.addEventListener("DOMContentLoaded", function() {
             // Muda o texto do "Próximo" para dar previsibilidade
             if (passoAtual === 1) btnProximo.innerText = "Avançar para Endereço";
             else if (passoAtual === 2) {
-                const ehPrestador = document.querySelector('input[name="tipoUsuario"]:checked').value === 'prestador';
-                btnProximo.innerText = ehPrestador ? "Avançar para Perfil Profissional" : "Avançar para Segurança";
+                btnProximo.innerText = ehCliente ? "Avançar para Segurança" : "Avançar para Perfil Profissional";
             }
             else if (passoAtual === 3) btnProximo.innerText = "Avançar para Segurança";
         }
     }
+
+    // Recalcula o Wizard sempre que o usuário trocar Cliente <-> Prestador
+    document.querySelectorAll('input[name="tipoUsuario"]').forEach(radio => {
+        radio.addEventListener('change', () => atualizarVisorWizard());
+    });
 
     // ================= VALIDAÇÕES POR ETAPA =================
     function validarPasso1() {
@@ -110,12 +196,19 @@ document.addEventListener("DOMContentLoaded", function() {
         const telefone = document.getElementById('telefone');
         const email = document.getElementById('email');
         
-        if (!nome.value.trim()) { setInputError(nome, "O nome é obrigatório."); valido = false; } else { clearInputError(nome); }
-        if (cpf.value.replace(/\D/g, '').length !== 11) { setInputError(cpf, "CPF inválido."); valido = false; } else { clearInputError(cpf); }
-        if (telefone.value.replace(/\D/g, '').length < 10) { setInputError(telefone, "Telefone inválido."); valido = false; } else { clearInputError(telefone); }
+        if (nome.value.trim().split(' ').length < 2) { setInputError(nome, "Por favor, insira seu nome e sobrenome."); valido = false; } else { clearInputError(nome); }
+        
+        const cpfNum = cpf.value.replace(/\D/g, '');
+        if (cpfNum.length !== 11 || !validarCPF(cpfNum)) { setInputError(cpf, "CPF inválido."); valido = false; }
+        else if (cpfEmUso) { setInputError(cpf, "Este CPF já está vinculado a uma conta."); valido = false; }
+        else { clearInputError(cpf); }
+        
+        if (telefone.value.replace(/\D/g, '').length < 10) { setInputError(telefone, "Telefone incompleto."); valido = false; } else { clearInputError(telefone); }
         
         const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!reEmail.test(email.value.trim())) { setInputError(email, "E-mail inválido."); valido = false; } else { clearInputError(email); }
+        if (!reEmail.test(email.value.trim())) { setInputError(email, "E-mail inválido."); valido = false; } 
+        else if (emailEmUso) { setInputError(email, "Este e-mail já está cadastrado."); valido = false; }
+        else { clearInputError(email); }
         
         return valido;
     }
@@ -214,6 +307,29 @@ document.addEventListener("DOMContentLoaded", function() {
         atualizarVisorWizard();
     });
 
+    // ================= MODAIS LGPD =================
+    const modalTermos = document.getElementById("modalTermos");
+    const modalPrivacidade = document.getElementById("modalPrivacidade");
+    
+    document.getElementById("linkTermos").addEventListener("click", (e) => { e.preventDefault(); modalTermos.style.display = "block"; });
+    document.getElementById("closeTermos").addEventListener("click", () => { modalTermos.style.display = "none"; });
+    document.getElementById("btnAceitarTermos").addEventListener("click", () => {
+        document.getElementById("aceiteTermos").checked = true;
+        modalTermos.style.display = "none";
+    });
+
+    document.getElementById("linkPrivacidade").addEventListener("click", (e) => { e.preventDefault(); modalPrivacidade.style.display = "block"; });
+    document.getElementById("closePrivacidade").addEventListener("click", () => { modalPrivacidade.style.display = "none"; });
+    document.getElementById("btnAceitarPrivacidade").addEventListener("click", () => {
+        document.getElementById("aceitePrivacidade").checked = true;
+        modalPrivacidade.style.display = "none";
+    });
+
+    window.addEventListener("click", (e) => {
+        if (e.target === modalTermos) modalTermos.style.display = "none";
+        if (e.target === modalPrivacidade) modalPrivacidade.style.display = "none";
+    });
+
     // ================= SUBMIT FINAL (COM LGPD) =================
     document.getElementById("registerForm").addEventListener("submit", async function(e) {
         e.preventDefault();
@@ -224,9 +340,13 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // ⚖️ TRAVA DA LGPD E TERMOS
-        if (!document.getElementById("aceiteLGPD").checked) {
-            mostrarToast("Você precisa aceitar os Termos de Uso e Política de Privacidade para continuar.", "error");
-            document.querySelector('.lgpd-consent-box').style.borderColor = "#d9534f";
+        const aceiteTermos = document.getElementById("aceiteTermos").checked;
+        const aceitePrivacidade = document.getElementById("aceitePrivacidade").checked;
+
+        if (!aceiteTermos || !aceitePrivacidade) {
+            mostrarToast("Você precisa aceitar os Termos e Políticas da plataforma.", "error");
+            if (!aceiteTermos) document.getElementById("aceiteTermos").parentElement.style.color = "#d9534f";
+            if (!aceitePrivacidade) document.getElementById("aceitePrivacidade").parentElement.style.color = "#d9534f";
             return;
         }
 
