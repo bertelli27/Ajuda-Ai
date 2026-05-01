@@ -81,8 +81,8 @@ O projeto foi concebido com uma arquitetura **desacoplada (API RESTful)** e impl
 
 1. **Descoberta:** O cliente navega pelos profissionais ou utiliza a IA para classificar seu problema (ex: *"Minha torneira está vazando"* -> Sugestão: Categoria Manutenção).
 2. **Solicitação:** O cliente descreve o escopo, endereço e data desejada e envia o pedido ao prestador.
-3. **Negociação (Chat API):** O prestador recebe a notificação, abre o chat e envia um **Orçamento Oficial** no valor acordado (dados salvos via *Short Polling* para sincronia instantânea).
-4. **Pagamento (Retenção):** O cliente aceita e realiza o pagamento simulado. A plataforma retém o valor de forma segura e notifica ambos no chat.
+3. **Negociação Forçada (Chat API):** Substituindo o antigo "Aceite Cego", o prestador agora é obrigado a interagir no chat e enviar um **Orçamento Oficial (Contrato de Escopo)**, garantindo alinhamento antes de fechar o serviço.
+4. **Aprovação e Pagamento (Retenção):** O poder de aceite é transferido ao cliente, que aprova o orçamento e realiza o pagamento simulado. A plataforma retém o valor de forma segura e notifica ambos.
 5. **Execução:** O serviço é marcado como "Em Andamento".
 6. **Conclusão:** O prestador sinaliza o fim do serviço, o cliente aprova, o saldo líquido (menos taxas da plataforma) é creditado na carteira do prestador e a tela de Avaliações é liberada.
 
@@ -90,9 +90,17 @@ O projeto foi concebido com uma arquitetura **desacoplada (API RESTful)** e impl
 
 ## ✅ Principais Funcionalidades
 
-* **Autenticação Segura:** Cadastro, Login (com JWT) e Recuperação de Senha automatizada com disparo de e-mail real.
+* **Onboarding Premium (Cadastro Multi-step):**
+  * Assistente de cadastro dinâmico em 4 etapas (Wizard).
+  * Validação *Inline* via API (verifica duplicidade de CPF e E-mail em tempo real).
+  * Gamificação de Segurança (Checklist interativo de senha com Regex).
+  * **Compliance LGPD:** Consentimento explícito e isolado via modais para Termos de Uso e Política de Privacidade.
+* **Inteligência de Negócios (BI Avançado):**
+  * **Smart Insights:** Algoritmo que atua como consultor automatizado, lendo o Funil de Vendas do prestador e sugerindo ações estratégicas de melhoria.
+  * Métricas exclusivas: Funil de Conversão (Eficácia), Ticket Médio, Receita por Categoria e ranking de Clientes Fidelizados.
+  * Exportação de Relatório Gerencial em PDF com estruturação robusta via `jsPDF-AutoTable`.
+* **Autenticação Segura:** Login (com JWT) e Recuperação de Senha automatizada com disparo de e-mail real.
 * **UI/UX Moderna:** Acessibilidade, Modal interativo de confirmação, Toast Notifications, Dark/Light Mode e Skeleton Loaders.
-* **Dashboards (Cliente e Prestador):** Gráficos financeiros, exportação de extrato para PDF, resumo de atividades e vitrine de conquistas.
 * **Listagem e Busca:** Filtros dinâmicos de categorias e barra de pesquisa textual inteligente.
 * **Perfil Duplo:** Um cliente pode se "Tornar Prestador" de forma nativa e sem necessidade de recadastro.
 * **Gestão de Perfil e Portfólio:** Edição de dados e upload de imagens *Drag & Drop* (compactação via Canvas API antes do Base64).
