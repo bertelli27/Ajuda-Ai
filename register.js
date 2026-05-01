@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 } else if (i === passoAtual && ehCliente && passoAtual === 4) {
                     dot.classList.add('active');
                 } else {
-                else dot.classList.remove('active');
+                    dot.classList.remove('active');
                 }
             }
         }
