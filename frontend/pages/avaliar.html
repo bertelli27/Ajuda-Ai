@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Serviço | AjudaAí</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='index.html'">
+        <img src="../img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+    <nav class="menu" id="menu">
+        <!-- O menu será preenchido pelo JS -->
+    </nav>
+</header>
+
+<section class="main-container" style="min-height: auto; padding-top: 40px;">
+    <div class="login-section register-section">
+        <div class="login-card">
+            <h2>Avaliar Serviço Concluído</h2>
+            
+            <h3 class="section-title">Detalhes do Serviço</h3>
+            <div id="infoServicoAvaliacao" style="background: #222A31; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid #00ADB5;">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <form id="formAvaliacao">
+                <h3 class="section-title">Sua Avaliação</h3>
+                
+                <div class="form-group full-width" style="margin-top: 15px;">
+                    <label>Nota do Serviço (Estrelas)</label>
+                    <div class="rating-container" style="justify-content: flex-start; margin-top: 0;">
+                        <div class="rating-stars">
+                            <span class="star" data-value="1">&#9733;</span>
+                            <span class="star" data-value="2">&#9733;</span>
+                            <span class="star" data-value="3">&#9733;</span>
+                            <span class="star" data-value="4">&#9733;</span>
+                            <span class="star" data-value="5">&#9733;</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group full-width" style="margin-top: 15px;">
+                    <label for="comentario">Comentário (Opcional)</label>
+                    <textarea id="comentario" placeholder="Deixe um comentário sobre o serviço prestado..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-login" style="margin-top: 20px;">Enviar Avaliação</button>
+                <button type="button" class="btn-forgot" onclick="window.history.back()" style="margin-top: 10px;">Cancelar e Voltar</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script defer src="../js/api.js"></script>
+<script defer src="../js/utils.js"></script>
+<script defer src="../js/avaliar.js"></script>
+
+</body>
+</html>

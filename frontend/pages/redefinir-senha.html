@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha | AjudaAí</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/logo.png" type="image/png">
+</head>
+<body>
+
+<section class="main-container">
+
+    <div class="info-section">
+        <img src="../img/logo.png" alt="AjudaAí Logo" class="logo-side">
+        <h1>AjudaAí</h1>
+        <p class="site-desc">
+            Crie uma nova senha segura para acessar sua conta.
+        </p>
+    </div>
+
+    <div class="login-section">
+        <div class="login-card">
+            <h2>Nova Senha</h2>
+            <form id="resetPasswordForm">
+                <div class="form-group">
+                    <input type="password" id="novaSenha" placeholder="Digite sua nova senha" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="confirmarSenha" placeholder="Repita a nova senha" required>
+                </div>
+                <button type="submit" class="btn-login" style="margin-top: 10px;">Salvar nova senha</button>
+            </form>
+            <p class="create-account">
+                Lembrou a senha? <a href="login.html">Voltar ao login</a>
+            </p>
+        </div>
+    </div>
+
+</section>
+
+<script defer src="../js/api.js"></script>
+<script defer src="../js/utils.js"></script>
+<script defer src="../js/redefinir-senha.js"></script>
+</body>
+</html>

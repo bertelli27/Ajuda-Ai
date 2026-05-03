@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serviços | AjudaAí</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='index.html'">
+        <img src="../img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+
+    <!-- HEADER DINÂMICO -->
+    <nav class="menu" id="menu">
+        <!-- O menu será preenchido pelo JS -->
+    </nav>
+</header>
+
+<section class="search-section">
+    <input type="text" placeholder="Pesquisar por serviço, nome ou cidade..." id="searchInput">
+    <button id="searchBtn">Buscar</button>
+</section>
+
+<!-- Assistente de IA Separado -->
+<section class="search-section" style="display: block; margin: -20px auto 40px auto; border: 1px solid rgba(0, 173, 181, 0.2); box-shadow: 0 10px 30px rgba(0, 173, 181, 0.25);">
+    <h4 style="color: #00ADB5; margin-bottom: 10px; font-size: 18px;">✨ Assistente Inteligente</h4>
+    <p style="opacity: 0.8; font-size: 14px; margin-bottom: 15px;">Não sabe de qual profissional precisa? Descreva o seu problema abaixo que a IA encontra a categoria certa:</p>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <input type="text" id="ia-descricao-problema" placeholder="Ex: Minha torneira não para de pingar água..." style="flex-grow: 1;">
+        <button type="button" id="btnSugerirServico" class="btn-service" style="padding: 14px 28px; width: auto;">Analisar Problema</button>
+    </div>
+    
+    <div id="ia-resultado" style="display: none; background: rgba(0, 173, 181, 0.1); border-left: 4px solid #00ADB5; padding: 15px; margin-top: 15px; border-radius: 8px;">
+        <p style="margin-bottom: 10px; font-weight: 500;">Categoria sugerida: <strong id="ia-sugestao-texto" style="color: #00ADB5; font-size: 18px;"></strong></p>
+        <button type="button" id="btnUsarSugestao" class="btn-login" style="padding: 10px 20px; font-size: 14px; width: auto;">Filtrar Profissionais</button>
+    </div>
+</section>
+
+<section class="services-section">
+    <div class="categorias-container" id="filtrosCategoria">
+        <button class="btn-categoria active" data-cat="Todos">Todos</button>
+        <button class="btn-categoria" data-cat="Limpeza">Limpeza</button>
+        <button class="btn-categoria" data-cat="Manutenção">Manutenção</button>
+        <button class="btn-categoria" data-cat="Reformas">Reformas</button>
+        <button class="btn-categoria" data-cat="Tecnologia">Tecnologia</button>
+        <button class="btn-categoria" data-cat="Saúde e Beleza">Saúde e Beleza</button>
+        <button class="btn-categoria" data-cat="Outros">Outros</button>
+    </div>
+
+    <h2>Todos os Serviços Disponíveis</h2>
+    <div class="services-grid">
+        <!-- OS CARDS SERÃO INSERIDOS AQUI VIA JAVASCRIPT -->
+    </div>
+    <div id="paginacao-servicos" class="pagination-controls"></div>
+</section>
+
+<footer class="mini-footer">
+    &copy; 2026 AjudaAí. Todos os direitos reservados.
+</footer>
+
+<script defer src="../js/api.js"></script>
+<script defer src="../js/utils.js"></script>
+<script defer src="../js/servicos.js"></script>
+</body>
+</html>

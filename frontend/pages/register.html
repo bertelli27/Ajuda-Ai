@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta | AjudaAí</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/logo.png" type="image/png">
+</head>
+<body>
+
+<section class="main-container">
+
+    <div class="login-section register-section">
+        <div class="login-card">
+            <h2>Criar Conta</h2>
+            
+            <!-- BARRA DE PROGRESSO DO WIZARD -->
+            <div class="wizard-progress-container" style="margin-bottom: 30px;">
+                <div class="wizard-progress-bar-bg">
+                    <div class="wizard-progress-bar-fill" id="wizardProgressFill" style="width: 25%;"></div>
+                </div>
+                <div class="wizard-steps-dots">
+                    <div class="wizard-dot active" id="dot1">1</div>
+                    <div class="wizard-dot" id="dot2">2</div>
+                    <div class="wizard-dot" id="dot3">3</div>
+                    <div class="wizard-dot" id="dot4">4</div>
+                </div>
+            </div>
+
+            <form id="registerForm">
+                <!-- ETAPA 1: TIPO DE CONTA E IDENTIFICAÇÃO -->
+                <div class="wizard-step active" id="step-1">
+                    <h3 class="section-title" style="margin-top: 0;">Como você deseja usar o AjudaAí?</h3>
+                    <div class="wizard-account-type-container">
+                        <label class="wizard-radio-card">
+                            <input type="radio" name="tipoUsuario" value="cliente" checked>
+                            <div class="radio-card-content">
+                                <span class="radio-icon">👤</span>
+                                <h4>Quero Contratar</h4>
+                                <p>Busco profissionais para serviços.</p>
+                            </div>
+                        </label>
+                        <label class="wizard-radio-card">
+                            <input type="radio" name="tipoUsuario" value="prestador">
+                            <div class="radio-card-content">
+                                <span class="radio-icon">💼</span>
+                                <h4>Quero Trabalhar</h4>
+                                <p>Ofereço meus serviços e habilidades.</p>
+                            </div>
+                        </label>
+                    </div>
+                    <h3 class="section-title">Informações Pessoais</h3>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="nome">Nome Completo</label>
+                            <input type="text" id="nome" placeholder="Ex: João da Silva">
+                        </div>
+                        <div class="form-group">
+                            <label for="cpf">CPF</label>
+                            <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14">
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone">Telefone / WhatsApp</label>
+                            <input type="tel" id="telefone" placeholder="(11) 90000-0000" maxlength="15">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="email">E-mail</label>
+                            <input type="email" id="email" placeholder="seu@email.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 2: LOCALIZAÇÃO -->
+                <div class="wizard-step" id="step-2">
+                    <h3 class="section-title" style="margin-top: 0;">Onde você mora?</h3>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 20px;">Isso nos ajuda a encontrar serviços perto de você.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cep">CEP</label>
+                            <input type="text" id="cep" placeholder="00000-000" maxlength="9">
+                        </div>
+                        <div class="form-group">
+                            <label for="rua">Logradouro / Rua</label>
+                            <input type="text" id="rua" placeholder="Rua" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="numero">Número</label>
+                            <input type="text" id="numero" placeholder="Ex: 123">
+                        </div>
+                        <div class="form-group">
+                            <label for="complemento">Complemento (Opcional)</label>
+                            <input type="text" id="complemento" placeholder="Apto, Bloco, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label for="bairro">Bairro</label>
+                            <input type="text" id="bairro" placeholder="Bairro" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="cidade">Cidade</label>
+                            <input type="text" id="cidade" placeholder="Cidade" readonly>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="estado">Estado</label>
+                            <input type="text" id="estado" placeholder="Estado" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 3: PERFIL PROFISSIONAL (Apenas Prestador) -->
+                <div class="wizard-step" id="step-3">
+                    <h3 class="section-title" style="margin-top: 0;">Seu Perfil Profissional</h3>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 20px;">Detalhe o que você faz para os clientes te acharem.</p>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="categoria">Categoria Principal</label>
+                            <select id="categoria">
+                                <option value="" disabled selected>Selecione uma Categoria...</option>
+                                <option value="Limpeza">Limpeza</option>
+                                <option value="Manutenção">Manutenção</option>
+                                <option value="Reformas">Reformas</option>
+                                <option value="Tecnologia">Tecnologia</option>
+                                <option value="Saúde e Beleza">Saúde e Beleza</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="servico">Qual é a sua especialidade?</label>
+                            <input type="text" id="servico" placeholder="Ex: Eletricista Residencial, Manicure...">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="descricao">Resumo da sua experiência</label>
+                            <input type="text" id="descricao" placeholder="Ex: Trabalho há 5 anos com manutenção...">
+                        </div>
+                        <div class="form-group">
+                            <label for="valor">Valor Médio do Serviço</label>
+                            <input type="text" id="valor" placeholder="R$ 0,00">
+                        </div>
+                        <div class="form-group">
+                            <label for="disponibilidade">Dias e Horários</label>
+                            <input type="text" id="disponibilidade" placeholder="Ex: Seg a Sex, das 8h às 18h">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 4: SEGURANÇA E FINALIZAÇÃO -->
+                <div class="wizard-step" id="step-4">
+                    <h3 class="section-title" style="margin-top: 0;">Segurança da Conta</h3>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 20px;">Crie uma senha forte para proteger seus dados.</p>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="senha">Crie sua Senha</label>
+                            <input type="password" id="senha" placeholder="Digite uma senha forte">
+                            
+                            <!-- CHECKLIST DE SENHA GAMIFICADO -->
+                            <div class="password-checklist" id="passwordChecklist">
+                                <div class="checklist-item" id="rule-length">❌ Mínimo de 8 caracteres</div>
+                                <div class="checklist-item" id="rule-upper">❌ Pelo menos uma letra maiúscula</div>
+                                <div class="checklist-item" id="rule-number">❌ Pelo menos um número</div>
+                                <div class="checklist-item" id="rule-special">❌ Um caractere especial (@, #, !, etc.)</div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="confirmSenha">Confirme sua Senha</label>
+                            <input type="password" id="confirmSenha" placeholder="Repita a senha">
+                        </div>
+                    </div>
+                    
+                    <!-- TERMOS LGPD -->
+                    <div class="lgpd-consent-box">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="aceiteTermos">
+                            <span class="checkmark"></span>
+                            <div class="consent-text">
+                                Confirmo que sou maior de 18 anos e que li e concordo com os 
+                                <a href="#" id="linkTermos">Termos de Uso</a>.
+                            </div>
+                        </label>
+                        <label class="checkbox-container" style="margin-top: 10px;">
+                            <input type="checkbox" id="aceitePrivacidade">
+                            <span class="checkmark"></span>
+                            <div class="consent-text">
+                                Li e concordo com a 
+                                <a href="#" id="linkPrivacidade">Política de Privacidade</a> do AjudaAí.
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BOTÕES DE NAVEGAÇÃO DO WIZARD -->
+                <div class="wizard-buttons">
+                    <button type="button" id="btnVoltar" class="btn-forgot" style="display: none; width: auto; padding: 12px 25px; margin: 0;">Voltar</button>
+                    <button type="button" id="btnProximo" class="btn-login" style="width: 100%; margin: 0;">Próximo Passo</button>
+                    <button type="submit" id="btnFinalizar" class="btn-login" style="display: none; background: #5cb85c; color: #fff; margin: 0;">Criar Conta</button>
+                </div>
+
+            </form>
+
+            <p class="create-account">
+                Já tem uma conta? <a href="login.html">Faça login</a>
+            </p>
+        </div>
+    </div>
+
+</section>
+
+<!-- MODAL TERMOS DE USO -->
+<div id="modalTermos" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: 80vh; padding: 30px;">
+        <span class="close-button" id="closeTermos">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Termos de Uso</h3>
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px; color: #EEEEEE; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            <h4>1. Aceitação dos Termos</h4>
+            <p>Ao acessar e utilizar o AjudaAí, você concorda com estes termos de serviço e condições de uso aplicáveis à plataforma.</p>
+            <br>
+            <h4>2. Responsabilidades</h4>
+            <p>O AjudaAí atua exclusivamente como intermediador entre clientes e prestadores de serviços, não possuindo vínculo empregatício com os profissionais.</p>
+            <br>
+            <h4>3. Pagamentos e Taxas</h4>
+            <p>Os pagamentos são retidos de forma segura pela plataforma. Uma taxa de intermediação de 10% é descontada do valor final do prestador após a conclusão.</p>
+        </div>
+        <button type="button" id="btnAceitarTermos" class="btn-login" style="width: 100%; margin: 0; background: #5cb85c; color: white;">Li e Aceito os Termos</button>
+    </div>
+</div>
+
+<!-- MODAL POLÍTICA DE PRIVACIDADE -->
+<div id="modalPrivacidade" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: 80vh; padding: 30px;">
+        <span class="close-button" id="closePrivacidade">&times;</span>
+        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 24px;">Política de Privacidade</h3>
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px; color: #EEEEEE; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            <h4>1. Coleta de Dados</h4>
+            <p>Coletamos informações essenciais como nome, CPF, e-mail e endereço para garantir a segurança das negociações na plataforma.</p>
+            <br>
+            <h4>2. Tratamento e Uso</h4>
+            <p>Seus dados são utilizados estritamente para o funcionamento da plataforma e nunca serão comercializados para terceiros.</p>
+            <br>
+            <h4>3. Criptografia</h4>
+            <p>Empregamos protocolos de criptografia (Bcrypt) e segurança de dados padrão de mercado para proteger as suas informações pessoais e senhas.</p>
+        </div>
+        <button type="button" id="btnAceitarPrivacidade" class="btn-login" style="width: 100%; margin: 0; background: #5cb85c; color: white;">Li e Aceito a Política</button>
+    </div>
+</div>
+
+<script defer src="../js/api.js"></script>
+<script defer src="../js/utils.js"></script>
+<script defer src="../js/register.js"></script>
+</body>
+</html>

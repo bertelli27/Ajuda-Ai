@@ -59,21 +59,25 @@ O projeto foi concebido com uma arquitetura **desacoplada (API RESTful)** e impl
 
 ```text
 📁 AjudaAi/
-├── 📁 backend/                # Back-end Node.js
+├── 📁 backend/                # Back-end Node.js (API Express)
 │   └── 📁 src/
 │       ├── 📁 config/         # Configurações do Banco de Dados (db.js)
 │       ├── 📁 controllers/    # Lógica de Negócios (auth, chat, serviços)
 │       ├── 📁 database/       # Scripts SQL (schema.sql para criação das tabelas)
 │       ├── 📁 middlewares/    # Interceptadores (validação de JWT)
 │       ├── 📁 routes/         # Definição dos endpoints da API
-│       └──  utils/          # Ferramentas auxiliares (logger.js)
-├── 📄 server.js               # Arquivo de inicialização do Servidor (Express)
-├── 📄 api.js                  # Camada DTO e Fetch HTTP do Front-end
-├── 📄 index.html / home.html  # Páginas de aterrissagem e autenticação
-├── 📄 servicos.html           # Vitrine e busca de profissionais
-├── 📄 pedidos.html            # Área de gerenciamento de serviços e Chat
-└── 📄 style.css               # Estilos globais e componentes visuais
+│       └── 📁 utils/          # Ferramentas auxiliares (logger.js)
+├── 📁 frontend/               # Front-end estático (HTML, CSS, JS puro)
+│   ├── 📁 pages/              # Páginas HTML (ex.: index.html, login.html)
+│   ├── 📁 js/                 # Scripts (api.js, utils.js, páginas *.js)
+│   ├── 📁 css/                # style.css (estilos globais)
+│   └── 📁 img/                # Imagens estáticas (logo, avatar padrão, etc.)
+├── 📄 server.js               # Entrada da API na raiz (Express — apenas /api)
+├── 📄 package.json            # Dependências do projeto (raiz)
+└── 📄 README.md
 ```
+
+**Nota:** O `server.js` na raiz expõe somente a API REST. O front-end não é servido por esse arquivo; para desenvolvimento local, abra os HTML em `frontend/pages/` com um servidor estático ou diretamente no navegador (respeitando os caminhos relativos `../css`, `../js`, `../img`).
 
 ---
 
@@ -130,8 +134,8 @@ Caso um avaliador ou desenvolvedor deseje rodar a aplicação localmente em seu 
    * Execute `npm run dev` para iniciar a API.
 
 3. **Front-end:**
-   * Abra o arquivo `api.js` e altere a constante `BASE_URL` para o endereço do seu backend local (`http://localhost:3000/api`).
-   * Abra a página `index.html` e utilize a plataforma livremente.
+   * Abra o arquivo `frontend/js/api.js` e altere a constante `BASE_URL` para o endereço do seu backend local (ex.: `http://localhost:3000/api`).
+   * Abra a página `frontend/pages/index.html` no navegador (recomenda-se usar a extensão *Live Server* ou `npx serve frontend` na raiz do repositório para evitar bloqueios de CORS/recursos em alguns navegadores).
 
 ### 💡 Dica para Testar o Chat em Tempo Real:
 * Abra a aplicação em uma aba normal e faça login como Cliente.

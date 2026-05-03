@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças | AjudaAí</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/logo.png" type="image/png">
+</head>
+<body>
+
+<header class="header">
+    <div class="logo-container" style="cursor: pointer;" onclick="window.location.href='index.html'">
+        <img src="../img/logo.png" alt="AjudaAí Logo" class="logo-side" style="width: 50px; margin-bottom: 0;">
+        <h1>AjudaAí</h1>
+    </div>
+    <nav class="menu" id="menu"></nav>
+</header>
+
+<section class="services-section" style="padding-top: 40px; max-width: 800px;">
+    
+    <div class="wallet-card">
+        <h3>Resumo Financeiro</h3>
+        <p style="font-size: 15px; opacity: 0.9; margin-bottom: 20px;">As transações são processadas e enviadas diretamente para a sua conta bancária cadastrada.</p>
+        <div class="balance" id="walletBalance" style="display: none;">R$ 0,00</div>
+        <div style="display: none; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-login" id="btnSacar" style="width: auto; padding: 10px 20px; background: #393E46; color: #EEEEEE;">Saque / Transferência</button>
+            <button class="btn-login" id="btnDepositar" style="width: auto; padding: 10px 20px; background: #222A31; color: #EEEEEE;">Adicionar Saldo (Teste)</button>
+        </div>
+    </div>
+
+    <h2 class="dashboard-header-title" style="text-align: left; font-size: 22px;">Histórico de Transações</h2>
+    
+    <div class="transaction-list" id="transactionList">
+        <!-- Preenchido via JS -->
+    </div>
+
+</section>
+
+<footer class="mini-footer">
+    &copy; 2026 AjudaAí. Todos os direitos reservados.
+</footer>
+
+<script defer src="../js/api.js"></script>
+<script defer src="../js/utils.js"></script>
+<script defer src="../js/carteira.js"></script>
+</body>
+</html>
