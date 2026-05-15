@@ -148,12 +148,12 @@ Caso um avaliador ou desenvolvedor deseje rodar a aplicação localmente em seu 
 
 Este projeto está sendo desenvolvido pelos alunos:
 
-* Pedro Augusto Friesen Hartmann
-* Leonardo Buchman Coelho
-* Wesley Felipe Siqueira
-* Geovanni Santos Ribeiro Chaves
 * Bruno Bertelli Rabelo
+* Geovanni Santos Ribeiro Chaves
 * Kauan Henrique Marques da Rosa
+* Leonardo Buchman Coelho
+* Pedro Augusto Friesen Hartmann
+* Wesley Felipe Siqueira
 
 ---
 
