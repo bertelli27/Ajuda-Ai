@@ -82,7 +82,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         btnEditar.style.display = "none";
         btnSalvar.style.display = "none";
         document.getElementById("editPicLabel").style.display = "none";
-        document.getElementById("areaTornarPrestador").style.display = "none";
+        const areaTornar = document.getElementById("areaTornarPrestador");
+        if (areaTornar) areaTornar.style.display = "none";
 
         // Altera o título da página e do card
         document.title = `Perfil de ${usuarioAlvo.nome.split(' ')[0]} | AjudaAí`;
@@ -219,7 +220,22 @@ document.addEventListener("DOMContentLoaded", async function() {
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
         } else if (isOwnProfile) {
             // Se o usuário é um cliente vendo o próprio perfil, mostra o botão para virar prestador
-            document.getElementById("areaTornarPrestador").style.display = "block";
+            let areaTornarPrestador = document.getElementById("areaTornarPrestador");
+            if (areaTornarPrestador) {
+                areaTornarPrestador.style.display = "block";
+            } else {
+                const viewMode = document.getElementById("view-mode");
+                if (viewMode) {
+                    viewMode.insertAdjacentHTML('beforeend', `
+                        <div id="areaTornarPrestador" class="become-provider-banner fade-up-animation" style="margin-top: 30px;">
+                            <h3>Quer oferecer seus serviços no AjudaAí?</h3>
+                            <p>Torne-se um profissional da plataforma e comece a receber pedidos de milhares de clientes.</p>
+                            <button id="btnTornarPrestadorDin" class="btn-login" style="max-width: 300px; margin: 0 auto; background: #222A31; color: #00ADB5;">Tornar-se Prestador</button>
+                        </div>
+                    `);
+                    document.getElementById("btnTornarPrestadorDin").addEventListener("click", tornarPrestador);
+                }
+            }
         }
 
         // Configura o botão de Copiar Link (apenas para prestadores)
@@ -306,7 +322,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                 usuarioAlvo.tipo = "cliente";
                 await API.atualizarPerfilApi(usuarioAlvo);
                 document.getElementById("secao-prestador").style.display = "none";
-                document.getElementById("areaTornarPrestador").style.display = "block";
+                const areaTornar = document.getElementById("areaTornarPrestador");
+                if (areaTornar) areaTornar.style.display = "block";
                 
                 verificarModoCliente();
                 mostrarToast("Conta revertida para cliente.", "success");
@@ -358,7 +375,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             try {
                 await API.atualizarPerfilApi(usuarioAlvo);
                 document.getElementById('modalTornarPrestador').remove();
-                document.getElementById("areaTornarPrestador").style.display = "none";
+                const areaTornar = document.getElementById("areaTornarPrestador");
+                if (areaTornar) areaTornar.style.display = "none";
                 document.getElementById("secao-prestador").style.display = "block";
                 
                 mostrarToast("Parabéns! Você agora é um profissional.", "success");
