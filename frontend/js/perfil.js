@@ -523,11 +523,12 @@ document.addEventListener("DOMContentLoaded", async function() {
 
         listaContainer.innerHTML = meusServicos.map(servico => {
             const precoFormatado = servico.preco_base ? `R$ ${parseFloat(servico.preco_base).toFixed(2).replace('.', ',')}` : 'A combinar';
+            const mediaServico = servico.totalAvaliacoes > 0 ? `★ ${parseFloat(servico.mediaAvaliacao).toFixed(1)} (${servico.totalAvaliacoes})` : 'Novo';
             return `
             <div class="meu-servico-card">
                 <div class="servico-info">
                     <h4>${servico.titulo}</h4>
-                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria} | Preço Base: <span style="color:#00ADB5;">${precoFormatado}</span></p>
+                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria} | Preço Base: <span style="color:#00ADB5;">${precoFormatado}</span> | Avaliação: <span style="color:#ffc107; font-weight:bold;">${mediaServico}</span></p>
                 </div>
                 <div class="botoes-acao" style="margin-top: 0;">
                     ${isOwnProfile 
@@ -650,14 +651,49 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
     window.excluirServico = excluirServico; // Expondo para o onclick
 
-    function carregarAvaliacoes(usuario) {
+    async function carregarAvaliacoes(usuario, servicoIdFiltro = 'todos') {
         const containerAvaliacoes = document.getElementById("avaliacoesRecebidas");
         const dashboard = document.getElementById("avaliacoesDashboard");
         const listaAvaliacoes = document.getElementById("listaAvaliacoes");
         const summaryContainer = document.getElementById("avaliacoes-summary");
         const btnVerTodas = document.getElementById("btnVerTodasAvaliacoes");
         
-        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === usuario.email);
+        // 🚀 Busca serviços para montar o filtro e as tags
+        const todosServicos = await API.getServicos();
+        const servicosDoPrestador = todosServicos.filter(s => s.prestadorEmail === usuario.email);
+
+        // 🚀 Injeta o dropdown de filtro dinamicamente
+        let filtroContainer = document.getElementById('filtroAvaliacoesContainer');
+        if (!filtroContainer && containerAvaliacoes) {
+            filtroContainer = document.createElement('div');
+            filtroContainer.id = 'filtroAvaliacoesContainer';
+            filtroContainer.style.marginBottom = '20px';
+            filtroContainer.style.display = 'flex';
+            filtroContainer.style.alignItems = 'center';
+            filtroContainer.style.justifyContent = 'flex-end';
+            if (dashboard) dashboard.parentNode.insertBefore(filtroContainer, dashboard);
+        }
+
+        if (filtroContainer) {
+            filtroContainer.innerHTML = `
+                <label style="color: #AAAAAA; font-size: 13px; margin-right: 10px;">Filtrar por Serviço:</label>
+                <select id="selectFiltroAvaliacoes" style="background: #2A343D; border: 1px solid #4F5B66; color: #EEE; padding: 8px 15px; border-radius: 8px; outline: none; cursor: pointer; font-size: 13px;">
+                    <option value="todos" ${servicoIdFiltro === 'todos' ? 'selected' : ''}>Todos os Serviços</option>
+                    ${servicosDoPrestador.map(s => `<option value="${s.id}" ${String(servicoIdFiltro) === String(s.id) ? 'selected' : ''}>${s.titulo}</option>`).join('')}
+                </select>
+            `;
+            
+            document.getElementById("selectFiltroAvaliacoes").addEventListener("change", (e) => {
+                carregarAvaliacoes(usuario, e.target.value);
+            });
+        }
+        
+        let avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === usuario.email);
+        
+        // Aplica o filtro
+        if (servicoIdFiltro !== 'todos') {
+            avaliacoesDoPrestador = avaliacoesDoPrestador.filter(a => String(a.servico_id) === String(servicoIdFiltro));
+        }
 
         if (avaliacoesDoPrestador.length > 0) {
             containerAvaliacoes.style.display = "block";
@@ -702,6 +738,11 @@ document.addEventListener("DOMContentLoaded", async function() {
                  const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
                  // 🚀 Pega a data de criação do Banco de Dados (criado_em)
                  const dataAvaliacao = new Date(avaliacao.criado_em || avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
+                 
+                 // 🚀 Busca o nome do serviço para a TAG
+                 const servicoAvaliado = servicosDoPrestador.find(s => String(s.id) === String(avaliacao.servico_id));
+                 const nomeServicoTag = servicoAvaliado ? servicoAvaliado.titulo : 'Serviço Excluído';
+
                  return `
                      <div class="avaliacao-card fade-up-animation">
                          <div class="avaliacao-header" style="justify-content: space-between;">
@@ -711,7 +752,10 @@ document.addEventListener("DOMContentLoaded", async function() {
                              </div>
                              <span style="font-size: 12px; color: #AAAAAA;">${dataAvaliacao}</span>
                          </div>
-                         <div style="margin-bottom: 10px;"><span class="rating-display">${estrelas}</span></div>
+                         <div style="margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <span class="rating-display">${estrelas}</span>
+                            <span style="font-size: 11px; background: rgba(0, 173, 181, 0.1); color: #00ADB5; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(0, 173, 181, 0.3);">🔧 ${nomeServicoTag}</span>
+                         </div>
                          ${avaliacao.comentario ? `<p class="avaliacao-comentario">"${avaliacao.comentario}"</p>` : ''}
                      </div>
                  `;
@@ -725,14 +769,17 @@ document.addEventListener("DOMContentLoaded", async function() {
                 btnVerTodas.style.display = 'block';
                 btnVerTodas.innerText = `Ver todas as ${total} avaliações`;
                 btnVerTodas.onclick = () => abrirModalAvaliacoes(avaliacoesInvertidas, renderReview);
+            } else if (btnVerTodas) {
+                btnVerTodas.style.display = 'none';
             }
         } else {
             containerAvaliacoes.style.display = "block";
             dashboard.style.display = "none"; // Esconde a grade se não houver avaliações
+            if (btnVerTodas) btnVerTodas.style.display = 'none';
             listaAvaliacoes.innerHTML = `
                 <div class="empty-state fade-up-animation avaliacao-card" style="text-align: center;">
                     <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">⭐</div>
-                    <p style="color: #AAAAAA; font-style: italic;">Nenhuma avaliação recebida ainda.</p>
+                    <p style="color: #AAAAAA; font-style: italic;">Nenhuma avaliação encontrada para este filtro.</p>
                 </div>`;
         }
     }
