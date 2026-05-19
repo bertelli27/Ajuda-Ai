@@ -486,12 +486,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
 
         listaContainer.innerHTML = meusServicos.map(servico => {
-            const precoFormatado = servico.preco_base ? \`R$ \${parseFloat(servico.preco_base).toFixed(2).replace('.', ',')}\` : 'A combinar';
-            return \`
+            const precoFormatado = servico.preco_base ? `R$ ${parseFloat(servico.preco_base).toFixed(2).replace('.', ',')}` : 'A combinar';
+            return `
             <div class="meu-servico-card">
                 <div class="servico-info">
                     <h4>${servico.titulo}</h4>
-                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria} | Preço Base: <span style="color:#00ADB5;">\${precoFormatado}</span></p>
+                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria} | Preço Base: <span style="color:#00ADB5;">${precoFormatado}</span></p>
                 </div>
                 <div class="botoes-acao" style="margin-top: 0;">
                     ${isOwnProfile 
@@ -500,7 +500,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                         : `<button class="btn-service" onclick="window.location.href='solicitar.html?servicoId=${servico.id}'" style="padding: 8px 15px;">Solicitar</button>`}
                 </div>
             </div>
-            \`;
+            `;
         }).join('');
     }
 
