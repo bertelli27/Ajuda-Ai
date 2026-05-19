@@ -518,13 +518,38 @@ let lightboxCurrentIndex = 0;
 function showLightboxImage(index) {
     if (index < 0 || index >= lightboxGallery.length) return;
     const imgElement = document.getElementById('lightbox-img');
+    const infoPanel = document.getElementById('lightbox-info');
     if (!imgElement) return;
 
     // Adiciona um efeito de fade para a transição da imagem
     imgElement.style.opacity = '0';
+    if (infoPanel) infoPanel.style.opacity = '0';
+    
     setTimeout(() => {
-        imgElement.src = lightboxGallery[index];
+        const imgData = lightboxGallery[index];
+        imgElement.src = typeof imgData === 'string' ? imgData : imgData.src;
+        
+        if (infoPanel && typeof imgData === 'object' && (imgData.verificado || imgData.descricao)) {
+            let html = '';
+            if (imgData.verificado) {
+                html += `<div class="lightbox-badge">✅ Projeto Verificado</div>`;
+                if (imgData.nota) {
+                    const nota = parseInt(imgData.nota, 10);
+                    html += `<div class="lightbox-rating">${'★'.repeat(nota)}${'☆'.repeat(5 - nota)}</div>`;
+                }
+                if (imgData.comentario) html += `<div class="lightbox-comment">"${imgData.comentario}"</div>`;
+            }
+            if (imgData.descricao) {
+                html += `<div class="lightbox-desc">${imgData.descricao}</div>`;
+            }
+            infoPanel.innerHTML = html;
+            infoPanel.style.display = 'block';
+        } else if (infoPanel) {
+            infoPanel.style.display = 'none';
+        }
+
         imgElement.style.opacity = '1';
+        if (infoPanel) infoPanel.style.opacity = '1';
         lightboxCurrentIndex = index;
     }, 150);
 }
@@ -567,11 +592,17 @@ function abrirLightbox(clickedImgElement) {
         img.className = 'lightbox-content';
         img.id = 'lightbox-img';
         img.style.transition = 'opacity 0.2s ease-in-out';
+        
+        const infoPanel = document.createElement('div');
+        infoPanel.id = 'lightbox-info';
+        infoPanel.className = 'lightbox-info-panel';
+        infoPanel.style.transition = 'opacity 0.2s ease-in-out';
 
         overlay.appendChild(closeBtn);
         overlay.appendChild(prevBtn);
         overlay.appendChild(nextBtn);
         overlay.appendChild(img);
+        overlay.appendChild(infoPanel);
         document.body.appendChild(overlay);
         
         const fecharLightbox = () => { overlay.style.display = 'none'; img.src = ''; lightboxGallery = []; };
@@ -590,12 +621,29 @@ function abrirLightbox(clickedImgElement) {
     }
     
     const galleryContainer = clickedImgElement.closest('.portfolio-gallery, #modalListaPortfolio, .chat-messages');
-    lightboxGallery = galleryContainer ? Array.from(galleryContainer.querySelectorAll('img')).map(img => img.src) : [clickedImgElement.src];
+    
+    if (galleryContainer) {
+        lightboxGallery = Array.from(galleryContainer.querySelectorAll('img')).map(img => ({
+            src: img.src,
+            verificado: img.dataset.verificado === "true",
+            nota: img.dataset.nota || "",
+            comentario: img.dataset.comentario || "",
+            descricao: img.dataset.descricao || ""
+        }));
+    } else {
+        lightboxGallery = [{
+            src: clickedImgElement.src,
+            verificado: clickedImgElement.dataset.verificado === "true",
+            nota: clickedImgElement.dataset.nota || "",
+            comentario: clickedImgElement.dataset.comentario || "",
+            descricao: clickedImgElement.dataset.descricao || ""
+        }];
+    }
 
     const navButtons = overlay.querySelectorAll('.lightbox-nav');
     navButtons.forEach(btn => btn.style.display = lightboxGallery.length > 1 ? 'flex' : 'none');
 
-    const startIndex = lightboxGallery.findIndex(src => src === clickedImgElement.src);
+    const startIndex = lightboxGallery.findIndex(imgData => imgData.src === clickedImgElement.src);
     showLightboxImage(startIndex >= 0 ? startIndex : 0);
     overlay.style.display = 'flex';
 }

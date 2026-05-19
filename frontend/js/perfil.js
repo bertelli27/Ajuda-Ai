@@ -770,6 +770,19 @@ document.addEventListener("DOMContentLoaded", async function() {
                 const imgBase64 = typeof imgObj === 'string' ? imgObj : imgObj.imagem_url;
                 const imgId = typeof imgObj === 'string' ? index : imgObj.id; // Fallback se for string (legado)
 
+                let dataAttrs = '';
+                if (typeof imgObj === 'object') {
+                    dataAttrs += ` data-descricao="${imgObj.descricao || ''}"`;
+                    if (imgObj.verificado) {
+                        const aval = avaliacoes.find(a => a.solicitacao_id === imgObj.solicitacao_id);
+                        if (aval) {
+                            dataAttrs += ` data-verificado="true" data-nota="${aval.nota}" data-comentario="${aval.comentario || ''}"`;
+                        } else {
+                            dataAttrs += ` data-verificado="true"`;
+                        }
+                    }
+                }
+
                 const btnExcluirHtml = podeExcluir ? `
                     <button class="delete-portfolio-btn" data-id="${imgId}" data-index="${index}" title="Excluir foto" aria-label="Excluir foto">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>
@@ -781,7 +794,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     html += `
                         <div class="portfolio-item">
                             ${btnExcluirHtml}
-                            <img src="${imgBase64}" alt="Foto do portfólio">
+                            <img src="${imgBase64}" ${dataAttrs} alt="Foto do portfólio">
                             <div class="portfolio-more" id="btn-open-full-portfolio">
                                 +${restantes}
                             </div>
@@ -798,7 +811,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                         <div class="portfolio-item">
                             ${btnExcluirHtml}
                             ${seloVerificado}
-                            <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this)">
+                            <img src="${imgBase64}" ${dataAttrs} alt="Foto do portfólio" onclick="abrirLightbox(this)">
                         </div>
                     `;
                 }
@@ -827,13 +840,26 @@ document.addEventListener("DOMContentLoaded", async function() {
             const imgBase64 = typeof imgObj === 'string' ? imgObj : imgObj.imagem_url;
             const imgId = typeof imgObj === 'string' ? index : imgObj.id;
             
+            let dataAttrs = '';
             let seloVerificado = '';
             if (typeof imgObj === 'object' && imgObj.verificado) {
                 seloVerificado = `<div style="position: absolute; bottom: 8px; left: 8px; background: #5cb85c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">✅ Verificado</div>`;
             }
             
+            if (typeof imgObj === 'object') {
+                dataAttrs += ` data-descricao="${imgObj.descricao || ''}"`;
+                if (imgObj.verificado) {
+                    const aval = avaliacoes.find(a => a.solicitacao_id === imgObj.solicitacao_id);
+                    if (aval) {
+                        dataAttrs += ` data-verificado="true" data-nota="${aval.nota}" data-comentario="${aval.comentario || ''}"`;
+                    } else {
+                        dataAttrs += ` data-verificado="true"`;
+                    }
+                }
+            }
+            
             const btnExcluirHtml = podeExcluir ? `<button class="delete-portfolio-btn" data-id="${imgId}" data-index="${index}" title="Excluir foto" aria-label="Excluir foto"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg></button>` : '';
-            return `<div class="portfolio-item">${btnExcluirHtml}${seloVerificado}<img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this)"></div>`;
+            return `<div class="portfolio-item">${btnExcluirHtml}${seloVerificado}<img src="${imgBase64}" ${dataAttrs} alt="Foto do portfólio" onclick="abrirLightbox(this)"></div>`;
         }).join('');
         
         modal.style.display = 'block';
