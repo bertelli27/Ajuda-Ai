@@ -48,18 +48,10 @@ CREATE TABLE IF NOT EXISTS servicos (
     titulo VARCHAR(150) NOT NULL,
     descricao TEXT NOT NULL,
     preco_base DECIMAL(10,2),
+    status ENUM('ATIVO', 'PAUSADO', 'ARQUIVADO', 'BANNED') DEFAULT 'ATIVO',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prestador_id) REFERENCES prestadores(id) ON DELETE CASCADE,
     FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE RESTRICT
-);
-
--- 5. TABELA DE PORTFÓLIO (Fotos dos trabalhos do prestador)
-CREATE TABLE IF NOT EXISTS portfolio (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    prestador_id INT NOT NULL,
-    imagem_url LONGTEXT NOT NULL,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (prestador_id) REFERENCES prestadores(id) ON DELETE CASCADE
 );
 
 -- 6. TABELA DE SOLICITAÇÕES (O coração do sistema)
@@ -117,14 +109,34 @@ CREATE TABLE IF NOT EXISTS transacoes (
 CREATE TABLE IF NOT EXISTS avaliacoes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     solicitacao_id INT NOT NULL UNIQUE, -- Uma solicitação só pode ter uma avaliação
+    servico_id INT NOT NULL,
     cliente_id INT NOT NULL,
     prestador_id INT NOT NULL,
     nota INT NOT NULL CHECK (nota >= 1 AND nota <= 5),
     comentario TEXT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (solicitacao_id) REFERENCES solicitacoes(id) ON DELETE CASCADE,
+    FOREIGN KEY (servico_id) REFERENCES servicos(id) ON DELETE CASCADE,
     FOREIGN KEY (cliente_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (prestador_id) REFERENCES prestadores(id) ON DELETE CASCADE
+);
+
+-- 9B. TABELA DE PORTFÓLIO (Reestruturada para Portfólio Livre e Verificado)
+CREATE TABLE IF NOT EXISTS portfolio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prestador_id INT NOT NULL,
+    servico_id INT, -- Opcional no portfólio livre, obrigatório no verificado
+    solicitacao_id INT, -- Vínculo com a solicitação para puxar os dados de prova social
+    avaliacao_id INT, -- Vínculo com a avaliação para herdar nota e comentário
+    imagem_url LONGTEXT NOT NULL,
+    descricao TEXT,
+    tipo_portfolio ENUM('livre', 'verificado') DEFAULT 'livre',
+    verificado BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (prestador_id) REFERENCES prestadores(id) ON DELETE CASCADE,
+    FOREIGN KEY (servico_id) REFERENCES servicos(id) ON DELETE CASCADE,
+    FOREIGN KEY (solicitacao_id) REFERENCES solicitacoes(id) ON DELETE SET NULL,
+    FOREIGN KEY (avaliacao_id) REFERENCES avaliacoes(id) ON DELETE SET NULL
 );
 
 -- 10. TABELA DE RECUPERAÇÃO DE SENHA (Controle de tokens e expiração)

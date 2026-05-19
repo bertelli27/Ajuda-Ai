@@ -18,10 +18,15 @@ const criarAvaliacao = async (req, res) => {
         if (prestadorUser.length === 0) return res.status(404).json({ error: 'Prestador não encontrado.' });
         const prestadorId = prestadorUser[0].id;
 
-        // Grava a avaliação no banco de dados
+        // 🚀 HERANÇA DE DADOS: Busca automaticamente o serviço vinculado a esta solicitação
+        const [solicitacao] = await db.execute('SELECT servico_id FROM solicitacoes WHERE id = ?', [id_solicitacao]);
+        if (solicitacao.length === 0) return res.status(404).json({ error: 'Solicitação não encontrada.' });
+        const servicoId = solicitacao[0].servico_id;
+
+        // Grava a avaliação no banco de dados amarrada ao serviço
         await db.execute(
-            'INSERT INTO avaliacoes (solicitacao_id, cliente_id, prestador_id, nota, comentario) VALUES (?, ?, ?, ?, ?)',
-            [id_solicitacao, clienteId, prestadorId, nota, comentario || null]
+            'INSERT INTO avaliacoes (solicitacao_id, servico_id, cliente_id, prestador_id, nota, comentario) VALUES (?, ?, ?, ?, ?, ?)',
+            [id_solicitacao, servicoId, clienteId, prestadorId, nota, comentario || null]
         );
 
         res.status(201).json({ message: 'Avaliação salva com sucesso!' });

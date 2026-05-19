@@ -49,11 +49,14 @@ const listarServicos = async (req, res) => {
                 s.titulo, 
                 c.nome AS categoria,
                 s.descricao, 
+                s.preco_base,
+                s.status,
                 s.criado_em AS dataCriacao
             FROM servicos s
             JOIN categorias c ON s.categoria_id = c.id
             JOIN prestadores p ON s.prestador_id = p.id
             JOIN usuarios u ON p.usuario_id = u.id
+            WHERE s.status = 'ATIVO'
             ORDER BY s.criado_em DESC
         `;
 
@@ -169,14 +172,24 @@ const deletarServico = async (req, res) => {
             return res.status(403).json({ error: 'Você não tem permissão para excluir este serviço.' });
         }
 
-        await db.execute('DELETE FROM servicos WHERE id = ?', [servicoId]);
+        // 🛡️ ARQUIVAMENTO INTELIGENTE (SOFT DELETE)
+        // Verifica se o serviço já possui histórico financeiro/pedidos. Se sim, apenas arquiva.
+        const [historico] = await db.execute('SELECT id FROM solicitacoes WHERE servico_id = ? LIMIT 1', [servicoId]);
         
-        console.log(`[SUCESSO] Serviço ${servicoId} excluído perfeitamente!`);
-        
-        // 🚀 Grava na auditoria que o serviço foi apagado
-        await registrarLog(req.user.id, 'SERVICO_EXCLUIDO', `Removeu o serviço ID #${servicoId} da vitrine.`, req.ip);
-
-        res.status(200).json({ message: 'Serviço excluído com sucesso!' });
+        if (historico.length > 0) {
+            await db.execute('UPDATE servicos SET status = "ARQUIVADO" WHERE id = ?', [servicoId]);
+            console.log(`[SUCESSO] Serviço ${servicoId} ARQUIVADO pois possui histórico!`);
+            
+            await registrarLog(req.user.id, 'SERVICO_ARQUIVADO', `Arquivou o serviço ID #${servicoId} para preservar histórico financeiro e avaliações.`, req.ip);
+            res.status(200).json({ message: 'Serviço arquivado com sucesso (o histórico foi preservado)!' });
+        } else {
+            // Se não tem histórico nenhum, faz o Hard Delete limpo
+            await db.execute('DELETE FROM servicos WHERE id = ?', [servicoId]);
+            console.log(`[SUCESSO] Serviço ${servicoId} excluído perfeitamente (Hard Delete)!`);
+            
+            await registrarLog(req.user.id, 'SERVICO_EXCLUIDO', `Removeu definitivamente o serviço ID #${servicoId} da vitrine.`, req.ip);
+            res.status(200).json({ message: 'Serviço excluído permanentemente!' });
+        }
     } catch (error) {
         console.error('Erro ao excluir serviço:', error);
         res.status(500).json({ error: 'Erro ao excluir serviço.' });
