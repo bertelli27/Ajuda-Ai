@@ -842,42 +842,35 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
     }
 
-    function excluirFotoPortfolio(indexParaExcluir) {
+    function excluirFotoPortfolio(idDaImagem) {
         mostrarConfirmacao("Tem certeza que deseja excluir esta foto do seu portfólio? Esta ação não pode ser desfeita.", async () => {
-            const userIndex = usuarios.findIndex(u => u.email === usuarioAlvo.email);
-            if (userIndex === -1) {
-                mostrarToast("Erro ao encontrar o usuário.", "error");
-                return;
-            }
+            try {
+                // 1. Chama a API dedicada para excluir a imagem do banco de dados
+                await API.excluirPortfolio(idDaImagem);
 
-            const usuario = usuarios[userIndex];
-            const portfolio = usuario.prestador?.portfolio;
+                // 2. Busca os dados mais recentes do usuário para garantir que a tela fique sincronizada
+                const usuariosAtualizados = await API.getUsuarios();
+                const usuarioAtualizado = usuariosAtualizados.find(u => u.email === usuarioAlvo.email);
 
-            if (portfolio && portfolio[indexParaExcluir] !== undefined) {
-                portfolio.splice(indexParaExcluir, 1);
-
-                try {
-                    await API.atualizarPerfilApi(usuario);
-                    
-                    if (typeof API.registrarLogUsuario === 'function') {
-                        await API.registrarLogUsuario({
-                            acao: 'EXCLUSAO_IMAGEM_PORTFOLIO',
-                            detalhes: `Imagem removida no índice ${indexParaExcluir} pelo usuário ${emailLogado}.`,
-                            alvo: usuario.email
-                        });
+                if (usuarioAtualizado) {
+                    // 3. Atualiza o cache local e renderiza o perfil com os dados novos
+                    const userIndex = usuarios.findIndex(u => u.email === usuarioAlvo.email);
+                    if (userIndex !== -1) {
+                        usuarios[userIndex] = usuarioAtualizado;
                     }
-                    
-                    renderizarPortfolio(usuario);
+                    usuarioAlvo = usuarioAtualizado; // Atualiza a variável global
+
+                    renderizarPortfolio(usuarioAlvo);
+
+                    // Se o modal de "ver todas" estiver aberto, atualiza ele também
                     const modal = document.getElementById('portfolioModal');
-                    if (modal && modal.style.display === 'block') abrirModalPortfolio(usuario.prestador.portfolio);
-                    
-                    mostrarToast("Foto excluída com sucesso!", "success");
-                } catch (err) {
-                    mostrarToast("Erro ao excluir a imagem do banco de dados.", "error");
+                    if (modal && modal.style.display === 'block') {
+                        abrirModalPortfolio(usuarioAlvo.prestador.portfolio);
+                    }
                 }
-            } else {
-                mostrarToast("A imagem não existe mais ou já foi removida.", "error");
-                renderizarPortfolio(usuario);
+                mostrarToast("Foto excluída com sucesso!", "success");
+            } catch (err) {
+                mostrarToast(err.message || "Erro ao excluir a imagem do banco de dados.", "error");
             }
         });
     }
@@ -957,8 +950,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         const btn = e.target.closest('.delete-portfolio-btn');
         if (btn) {
             const idImg = parseInt(btn.dataset.id, 10);
-            const index = parseInt(btn.dataset.index, 10);
-            excluirFotoPortfolio(idImg, index);
+            if (!isNaN(idImg)) {
+                excluirFotoPortfolio(idImg);
+            }
         }
     });
     
@@ -968,8 +962,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             const btn = e.target.closest('.delete-portfolio-btn');
             if (btn) {
                 const idImg = parseInt(btn.dataset.id, 10);
-                const index = parseInt(btn.dataset.index, 10);
-                excluirFotoPortfolio(idImg, index);
+                if (!isNaN(idImg)) {
+                    excluirFotoPortfolio(idImg);
+                }
             }
         });
     }
