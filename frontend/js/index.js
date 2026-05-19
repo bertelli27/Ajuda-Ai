@@ -58,12 +58,20 @@ async function carregarUsuario() {
             // 🚀 Ajusta o botão "Quero Trabalhar" para quem JÁ ESTÁ LOGADO
             const btnQueroTrabalhar = document.getElementById("btnQueroTrabalhar");
             if (btnQueroTrabalhar) {
-                if (usuarioAtual.tipo === 'prestador') {
+                if (usuarioAtual.tipo === 'admin') {
+                    btnQueroTrabalhar.style.display = 'none';
+                } else if (usuarioAtual.tipo === 'prestador') {
                     btnQueroTrabalhar.innerText = "Ir para o Dashboard";
                     btnQueroTrabalhar.onclick = () => window.location.href = 'dashboard.html';
                 } else {
                     btnQueroTrabalhar.onclick = () => window.location.href = 'perfil.html?action=become_provider';
                 }
+            }
+
+            // 🚀 Esconde botões comerciais e "Call to Action" da Home para Administradores
+            if (usuarioAtual.tipo === 'admin') {
+                const heroButtons = document.querySelectorAll('.hero-ctas button, .hero-ctas a');
+                heroButtons.forEach(btn => btn.style.display = 'none');
             }
         } else {
             // Caso não encontre o usuário (p.e., localStorage limpo), mostra o menu padrão de não logado
@@ -134,6 +142,10 @@ function carregarServicos() {
     const avaliacoes = await API.getAvaliacoes(); 
     const todosServicos = await API.getServicos(); // 🚀 Busca os serviços para cruzar os dados
 
+    const emailLogado = API.getSessaoAtual();
+    const usuarioLogadoObj = usuarios.find(u => u.email === emailLogado);
+    const isAdmin = usuarioLogadoObj && usuarioLogadoObj.tipo === 'admin';
+
     grid.innerHTML = ''; // Limpa os cards estáticos
 
     if (prestadores.length === 0) {
@@ -149,6 +161,7 @@ function carregarServicos() {
     prestadores.slice(0, 4).forEach(prestador => {
         const card = document.createElement('div');
         card.className = 'service-card';
+        const isSelf = prestador.email === emailLogado;
 
         // Calcula a média de avaliações
         const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
@@ -176,7 +189,9 @@ function carregarServicos() {
             <p>Cidade: ${prestador.endereco.cidade}</p>
             <div class="card-botoes">
                 <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
-                <button class="btn-service" data-email-prestador="${prestador.email}">Solicitar</button>
+                ${isAdmin 
+                    ? `<button class="btn-acao recusar btn-remover-servico" data-servico-id="${servicoPrincipal ? servicoPrincipal.id : ''}" style="padding: 12px 15px;">Remover Serviço</button>` 
+                    : (!isSelf ? `<button class="btn-service" data-servico-id="${servicoPrincipal ? servicoPrincipal.id : ''}">Solicitar</button>` : '')}
             </div>
         `;
         grid.appendChild(card);
@@ -191,6 +206,29 @@ function configurarBotoes() {
     if (!grid) return;
 
     grid.addEventListener("click", function(e) {
+        if (e.target && e.target.classList.contains('btn-remover-servico')) {
+            const servicoId = e.target.getAttribute('data-servico-id');
+            if (!servicoId) {
+                mostrarToast("Este prestador ainda não possui um serviço válido para remover.", "error");
+                return;
+            }
+            if(confirm("👑 MODO ADMIN:\nTem certeza que deseja excluir este serviço permanentemente da plataforma? Esta ação será registrada.")) {
+                const btn = e.target;
+                const originalText = btn.innerText;
+                btn.innerText = "Excluindo...";
+                btn.disabled = true;
+                API.excluirServico(servicoId).then(() => {
+                    mostrarToast("Serviço removido com sucesso.", "success");
+                    carregarServicos();
+                }).catch(err => {
+                    mostrarToast("Erro ao excluir serviço.", "error");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                });
+            }
+            return;
+        }
+
         if (e.target && e.target.classList.contains('btn-service')) {
             const emailLogado = localStorage.getItem("usuarioLogado") || sessionStorage.getItem("usuarioLogado");
 
@@ -200,8 +238,12 @@ function configurarBotoes() {
                     window.location.href = "login.html";
                 }, 1500);
             } else {
-                const prestadorEmail = e.target.getAttribute('data-email-prestador');
-                window.location.href = `solicitar.html?prestador=${encodeURIComponent(prestadorEmail)}`; 
+                const servicoId = e.target.getAttribute('data-servico-id');
+                if (servicoId) {
+                    window.location.href = `solicitar.html?servicoId=${servicoId}`;
+                } else {
+                    mostrarToast("Este prestador ainda não cadastrou um serviço.", "error");
+                }
             }
         }
 

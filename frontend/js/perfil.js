@@ -150,7 +150,13 @@ document.addEventListener("DOMContentLoaded", async function() {
             if (isAdmin) {
                 btnContratar.style.display = 'none';
             } else {
-                btnContratar.onclick = () => window.location.href = `solicitar.html?prestador=${encodeURIComponent(usuario.email)}`;
+                btnContratar.onclick = () => {
+                    const servicesSection = document.getElementById("secao-prestador");
+                    if (servicesSection) {
+                        servicesSection.scrollIntoView({ behavior: 'smooth' });
+                        mostrarToast("Escolha um dos serviços abaixo para solicitar.", "success");
+                    }
+                };
             }
         }
         
@@ -248,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             
             renderizarPortfolio(usuario);
             carregarAvaliacoes(usuario); // Carrega as avaliações para o prestador
-        } else if (isOwnProfile) {
+        } else if (isOwnProfile && usuario.tipo === 'cliente') {
             // Se o usuário é um cliente vendo o próprio perfil, mostra o botão para virar prestador
             let areaTornarPrestador = document.getElementById("areaTornarPrestador");
             if (areaTornarPrestador) {

@@ -117,10 +117,17 @@ const login = async (req, res) => {
 const atualizarPerfil = async (req, res) => {
     let connection;
     try {
-        const usuarioId = req.user.id;
+        const isSelf = (!req.body.id || Number(req.body.id) === Number(req.user.id));
+        const isAdmin = req.user.tipo === 'admin';
+        
+        if (!isSelf && !isAdmin) {
+            return res.status(403).json({ error: 'Acesso negado. Você não pode modificar outro usuário.' });
+        }
+
+        const targetUsuarioId = isSelf ? req.user.id : Number(req.body.id);
         const { nome, telefone, fotoPerfil, endereco, tipo, prestador } = req.body;
         
-        if (tipo && tipo !== 'cliente' && tipo !== 'prestador') {
+        if (tipo && tipo !== 'cliente' && tipo !== 'prestador' && tipo !== 'admin') {
             return res.status(400).json({ error: 'Tipo de usuário inválido.' });
         }
 
@@ -128,31 +135,41 @@ const atualizarPerfil = async (req, res) => {
         await connection.beginTransaction();
 
         // 📸 FOTOGRAFIA DO "ANTES" (Para gerar o log inteligente de auditoria)
-        const [oldUserRows] = await connection.execute('SELECT nome, telefone, foto_perfil, cep, tipo FROM usuarios WHERE id = ?', [usuarioId]);
+        const [oldUserRows] = await connection.execute('SELECT nome, telefone, foto_perfil, cep, tipo FROM usuarios WHERE id = ?', [targetUsuarioId]);
         const oldUser = oldUserRows[0];
+
+        // 🛡️ BLINDAGEM ABSOLUTA DE CARGO (GARANTIA DE SEGURANÇA)
+        // 1. O Admin JAMAIS perderá seu cargo, mesmo que o front-end envie um tipo diferente por engano.
+        // 2. Clientes e Prestadores NUNCA poderão se promover a Admin (Fecha a nossa brecha anterior).
+        let tipoFinal = oldUser.tipo;
+        if (oldUser.tipo === 'admin') {
+            tipoFinal = 'admin'; // Fica blindado como admin
+        } else if (tipo === 'cliente' || tipo === 'prestador') {
+            tipoFinal = tipo; // Permite alternar apenas entre cliente e prestador
+        }
 
         let mudancas = [];
         if (oldUser.nome !== nome) mudancas.push("Alterou o nome");
         if ((oldUser.telefone || '') !== (telefone || '')) mudancas.push("Alterou o telefone");
         if ((oldUser.cep || '') !== (endereco?.cep || '')) mudancas.push("Atualizou o endereço");
         if ((oldUser.foto_perfil || '') !== (fotoPerfil || '')) mudancas.push("Atualizou a foto de perfil");
-        if (oldUser.tipo !== tipo) mudancas.push(`Mudou a finalidade da conta para ${tipo}`);
+        if (oldUser.tipo !== tipoFinal) mudancas.push(`Mudou a finalidade da conta para ${tipoFinal}`);
         
         let detalhesLog = mudancas.length > 0 ? `Atualizações feitas: ${mudancas.join(', ')}.` : `Perfil salvo sem alterações nos dados principais.`;
 
         // 1. Atualiza dados na tabela usuarios
         await connection.execute(
             'UPDATE usuarios SET nome = ?, telefone = ?, foto_perfil = ?, cep = ?, rua = ?, numero = ?, complemento = ?, bairro = ?, cidade = ?, estado = ?, tipo = ? WHERE id = ?',
-            [nome, telefone || null, fotoPerfil || null, endereco?.cep || null, endereco?.rua || null, endereco?.numero || null, endereco?.complemento || null, endereco?.bairro || null, endereco?.cidade || null, endereco?.estado || null, tipo, usuarioId]
+            [nome, telefone || null, fotoPerfil || null, endereco?.cep || null, endereco?.rua || null, endereco?.numero || null, endereco?.complemento || null, endereco?.bairro || null, endereco?.cidade || null, endereco?.estado || null, tipoFinal, targetUsuarioId]
         );
 
         // 2. Se for prestador, atualiza tabela prestadores e portfólio
-        if (tipo === 'prestador') {
-            const [prestRows] = await connection.execute('SELECT id FROM prestadores WHERE usuario_id = ?', [usuarioId]);
+        if (tipoFinal === 'prestador') {
+            const [prestRows] = await connection.execute('SELECT id FROM prestadores WHERE usuario_id = ?', [targetUsuarioId]);
             let prestadorId;
             
             if (prestRows.length === 0) {
-                const [insertPrest] = await connection.execute('INSERT INTO prestadores (usuario_id, descricao_perfil) VALUES (?, ?)', [usuarioId, prestador?.descricao || null]);
+                const [insertPrest] = await connection.execute('INSERT INTO prestadores (usuario_id, descricao_perfil) VALUES (?, ?)', [targetUsuarioId, prestador?.descricao || null]);
                 prestadorId = insertPrest.insertId;
             } else {
                 prestadorId = prestRows[0].id;
@@ -169,14 +186,17 @@ const atualizarPerfil = async (req, res) => {
         await connection.commit();
         
         // 🚀 GERA UM NOVO TOKEN: Atualiza as permissões caso o cliente tenha virado prestador
-        const novoToken = jwt.sign(
-            { id: usuarioId, email: req.user.email, tipo: tipo },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        let novoToken;
+        if (isSelf) {
+            novoToken = jwt.sign(
+                { id: targetUsuarioId, email: req.user.email, tipo: tipoFinal },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+        }
 
         // 🚀 Registra a atualização no banco
-        await registrarLog(usuarioId, 'ATUALIZAR_PERFIL', detalhesLog, req.ip);
+        await registrarLog(req.user.id, isSelf ? 'ATUALIZAR_PERFIL' : 'MODERACAO_ADMIN', isSelf ? detalhesLog : `Moderação no perfil #${targetUsuarioId}: ${detalhesLog}`, req.ip);
 
         res.status(200).json({ message: 'Perfil atualizado com sucesso!', token: novoToken });
     } catch (error) {
