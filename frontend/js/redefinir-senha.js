@@ -14,13 +14,29 @@ document.addEventListener("DOMContentLoaded", function() {
     const novaSenhaInput = document.getElementById("novaSenha");
     const confirmarSenhaInput = document.getElementById("confirmarSenha");
 
-    const passwordStrengthContainer = document.getElementById("passwordStrengthContainer");
-    const strengthBar = document.getElementById("strengthBar");
-    const strengthText = document.getElementById("strengthText");
+    // Oculta a barra de força antiga se ela ainda existir no HTML
+    const oldContainer = document.getElementById("passwordStrengthContainer");
+    if (oldContainer) oldContainer.style.display = 'none';
+
+    // Injeta o novo Checklist dinamicamente se não existir
+    if (!document.getElementById("passwordChecklist")) {
+        const checklistHTML = `
+            <div class="password-checklist" id="passwordChecklist" style="display: none; margin-bottom: 16px;">
+                <div class="checklist-item" id="rule-length">❌ Mínimo de 8 caracteres</div>
+                <div class="checklist-item" id="rule-upper">❌ Pelo menos uma letra maiúscula</div>
+                <div class="checklist-item" id="rule-number">❌ Pelo menos um número</div>
+                <div class="checklist-item" id="rule-special">❌ Pelo menos um caractere especial</div>
+            </div>
+        `;
+        novaSenhaInput.closest('.form-group').insertAdjacentHTML('afterend', checklistHTML);
+    }
+
+    const passwordChecklist = document.getElementById("passwordChecklist");
 
     const validateNovaSenha = () => {
-        if (novaSenhaInput.value.trim().length < 6) {
-            setInputError(novaSenhaInput, "A senha deve ter no mínimo 6 caracteres.");
+        const numInvalidos = document.querySelectorAll('.checklist-item:not(.valid)').length;
+        if (numInvalidos > 0 || novaSenhaInput.value.trim() === '') {
+            setInputError(novaSenhaInput, "A senha não cumpre todos os requisitos.");
             return false;
         }
         clearInputError(novaSenhaInput);
@@ -41,40 +57,38 @@ document.addEventListener("DOMContentLoaded", function() {
         return true;
     };
 
-    const checkPasswordStrength = () => {
-        const pwd = novaSenhaInput.value;
-        if (pwd.length === 0) {
-            if(passwordStrengthContainer) passwordStrengthContainer.style.display = 'none';
-            return;
-        }
-        if(passwordStrengthContainer) passwordStrengthContainer.style.display = 'flex';
-
-        let strength = 0;
-        if (pwd.length >= 6) strength += 1;
-        if (pwd.length >= 8) strength += 1;
-        if (/[A-Z]/.test(pwd)) strength += 1;
-        if (/[a-z]/.test(pwd)) strength += 1;
-        if (/[0-9]/.test(pwd)) strength += 1;
-        if (/[^A-Za-z0-9]/.test(pwd)) strength += 1;
-
-        if (strength <= 2) {
-            if(strengthBar) { strengthBar.style.width = '33%'; strengthBar.style.backgroundColor = '#d9534f'; }
-            if(strengthText) { strengthText.style.color = '#d9534f'; strengthText.innerText = 'Força: Fraca'; }
-        } else if (strength >= 3 && strength <= 4) {
-            if(strengthBar) { strengthBar.style.width = '66%'; strengthBar.style.backgroundColor = '#f0ad4e'; }
-            if(strengthText) { strengthText.style.color = '#f0ad4e'; strengthText.innerText = 'Força: Média'; }
-        } else {
-            if(strengthBar) { strengthBar.style.width = '100%'; strengthBar.style.backgroundColor = '#5cb85c'; }
-            if(strengthText) { strengthText.style.color = '#5cb85c'; strengthText.innerText = 'Força: Forte'; }
-        }
-    };
-
     novaSenhaInput.addEventListener('blur', validateNovaSenha);
     confirmarSenhaInput.addEventListener('blur', validateConfirmarNovaSenha);
     confirmarSenhaInput.addEventListener('input', validateConfirmarNovaSenha);
-    novaSenhaInput.addEventListener('input', () => {
+    
+    novaSenhaInput.addEventListener('input', (e) => {
+        const pwd = e.target.value;
+        
+        if (pwd.length > 0) {
+            passwordChecklist.style.display = 'flex';
+        } else {
+            passwordChecklist.style.display = 'none';
+        }
+
+        const rules = [
+            { id: 'rule-length', regex: /.{8,}/ },
+            { id: 'rule-upper', regex: /[A-Z]/ },
+            { id: 'rule-number', regex: /[0-9]/ },
+            { id: 'rule-special', regex: /[^A-Za-z0-9]/ }
+        ];
+
+        rules.forEach(rule => {
+            const el = document.getElementById(rule.id);
+            if (rule.regex.test(pwd)) {
+                el.classList.add('valid');
+                el.innerHTML = el.innerHTML.replace('❌', '✅');
+            } else {
+                el.classList.remove('valid');
+                el.innerHTML = el.innerHTML.replace('✅', '❌');
+            }
+        });
+
         if (confirmarSenhaInput.value) validateConfirmarNovaSenha();
-        checkPasswordStrength();
     });
 
     form.addEventListener("submit", async function(e) {
@@ -84,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const isConfirmarSenhaValid = validateConfirmarNovaSenha();
 
         if (!isNovaSenhaValid || !isConfirmarSenhaValid) {
-            mostrarToast("Por favor, corrija os campos em vermelho.", "error");
+            mostrarToast("Por favor, garanta que a senha seja forte e as senhas coincidam.", "error");
             return;
         }
         
