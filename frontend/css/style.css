@@ -947,6 +947,41 @@ body {
 }
 .portfolio-more:hover { background: rgba(34, 42, 49, 0.9); }
 
+/* ===========================
+   BOTÃO EXCLUIR PORTFÓLIO
+=========================== */
+.delete-portfolio-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(217, 83, 79, 0.85); /* Vermelho translúcido */
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.delete-portfolio-btn:hover {
+    background: #d9534f;
+    transform: scale(1.15);
+    box-shadow: 0 4px 10px rgba(217, 83, 79, 0.4);
+}
+.delete-portfolio-btn svg {
+    transition: transform 0.3s ease;
+}
+.delete-portfolio-btn:hover svg {
+    transform: rotate(5deg);
+}
+
 /* Grid para o Modal de Portfólio Completo */
 #modalListaPortfolio {
     overflow-y: auto;

@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <p><strong>Prestador:</strong> ${prestador.nome}</p>
                 <p><strong>Avaliação:</strong> <span class="rating-display">${mediaEstrelas}</span> (${avaliacoesDoPrestador.length})</p>
                 <p><strong>Descrição:</strong> ${servico.descricao || 'Sem descrição.'}</p>
-                <p><strong>Local:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
+                <p><strong>Cidade:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
                 <div class="card-botoes">
                     <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
                     ${!isSelf ? `<button class="btn-service" data-servico-id="${servico.id}">Solicitar</button>` : ''}

@@ -591,14 +591,23 @@ document.addEventListener("DOMContentLoaded", async function() {
         } else {
             const MAX_VISIVEIS = 6;
             let html = '';
+            
+            const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+            const isAdmin = usuarioLogado && usuarioLogado.tipo === 'admin';
+            const podeExcluir = isOwnProfile || isAdmin;
 
             portfolio.slice(0, MAX_VISIVEIS).forEach((imgBase64, index) => {
+                const btnExcluirHtml = podeExcluir ? `
+                    <button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto" aria-label="Excluir foto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>
+                    </button>` : '';
+
                 // Se for a última imagem permitida na grade E existirem mais imagens no array
                 if (index === MAX_VISIVEIS - 1 && portfolio.length > MAX_VISIVEIS) {
                     const restantes = portfolio.length - MAX_VISIVEIS + 1;
                     html += `
                         <div class="portfolio-item">
-                            <button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto">&times;</button>
+                            ${btnExcluirHtml}
                             <img src="${imgBase64}" alt="Foto do portfólio">
                             <div class="portfolio-more" id="btn-open-full-portfolio">
                                 +${restantes}
@@ -609,7 +618,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     // Imagem normal
                     html += `
                         <div class="portfolio-item">
-                            <button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto">&times;</button>
+                            ${btnExcluirHtml}
                             <img src="${imgBase64}" alt="Foto do portfólio" onclick="abrirLightbox(this)">
                         </div>
                     `;
@@ -631,7 +640,15 @@ document.addEventListener("DOMContentLoaded", async function() {
         const listaModal = document.getElementById('modalListaPortfolio');
         if(!modal || !listaModal) return;
         
-        listaModal.innerHTML = portfolioArray.map(img => `<div class="portfolio-item"><img src="${img}" alt="Foto do portfólio" onclick="abrirLightbox(this)"></div>`).join('');
+        const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+        const isAdmin = usuarioLogado && usuarioLogado.tipo === 'admin';
+        const podeExcluir = isOwnProfile || isAdmin;
+        
+        listaModal.innerHTML = portfolioArray.map((img, index) => {
+            const btnExcluirHtml = podeExcluir ? `<button class="delete-portfolio-btn" data-index="${index}" title="Excluir foto" aria-label="Excluir foto"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg></button>` : '';
+            return `<div class="portfolio-item">${btnExcluirHtml}<img src="${img}" alt="Foto do portfólio" onclick="abrirLightbox(this)"></div>`;
+        }).join('');
+        
         modal.style.display = 'block';
         
         const closeBtn = document.getElementById('closePortfolioModal');
@@ -640,9 +657,9 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     function excluirFotoPortfolio(indexParaExcluir) {
         mostrarConfirmacao("Tem certeza que deseja excluir esta foto do seu portfólio? Esta ação não pode ser desfeita.", async () => {
-            const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+            const userIndex = usuarios.findIndex(u => u.email === usuarioAlvo.email);
             if (userIndex === -1) {
-                mostrarToast("Erro ao encontrar seu usuário.", "error");
+                mostrarToast("Erro ao encontrar o usuário.", "error");
                 return;
             }
 
@@ -650,16 +667,30 @@ document.addEventListener("DOMContentLoaded", async function() {
             const portfolio = usuario.prestador?.portfolio;
 
             if (portfolio && portfolio[indexParaExcluir] !== undefined) {
-                // Remove a imagem do array pelo índice
                 portfolio.splice(indexParaExcluir, 1);
 
                 try {
                     await API.atualizarPerfilApi(usuario);
+                    
+                    if (typeof API.registrarLogUsuario === 'function') {
+                        await API.registrarLogUsuario({
+                            acao: 'EXCLUSAO_IMAGEM_PORTFOLIO',
+                            detalhes: `Imagem removida no índice ${indexParaExcluir} pelo usuário ${emailLogado}.`,
+                            alvo: usuario.email
+                        });
+                    }
+                    
                     renderizarPortfolio(usuario);
+                    const modal = document.getElementById('portfolioModal');
+                    if (modal && modal.style.display === 'block') abrirModalPortfolio(usuario.prestador.portfolio);
+                    
                     mostrarToast("Foto excluída com sucesso!", "success");
                 } catch (err) {
-                    mostrarToast("Erro ao excluir do banco.", "error");
+                    mostrarToast("Erro ao excluir a imagem do banco de dados.", "error");
                 }
+            } else {
+                mostrarToast("A imagem não existe mais ou já foi removida.", "error");
+                renderizarPortfolio(usuario);
             }
         });
     }
@@ -735,11 +766,23 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     // Event Delegation para o botão de excluir foto
     portfolioContainer?.addEventListener('click', function(e) {
-        if (e.target.classList.contains('delete-portfolio-btn')) {
-            const index = parseInt(e.target.dataset.index, 10);
+        const btn = e.target.closest('.delete-portfolio-btn');
+        if (btn) {
+            const index = parseInt(btn.dataset.index, 10);
             excluirFotoPortfolio(index);
         }
     });
+    
+    const modalListaPortfolio = document.getElementById('modalListaPortfolio');
+    if (modalListaPortfolio) {
+        modalListaPortfolio.addEventListener('click', function(e) {
+            const btn = e.target.closest('.delete-portfolio-btn');
+            if (btn) {
+                const index = parseInt(btn.dataset.index, 10);
+                excluirFotoPortfolio(index);
+            }
+        });
+    }
 
     // Fecha o modal de portfólio se clicar fora dele
     window.addEventListener('click', e => { 
