@@ -209,7 +209,9 @@ const atualizarPerfil = async (req, res) => {
 const listarUsuarios = async (req, res) => {
     try {
         const [usuarios] = await db.execute(`
-            SELECT u.*, p.id AS prestador_id, p.descricao_perfil 
+            SELECT u.*, p.id AS prestador_id, p.descricao_perfil,
+            (SELECT COALESCE(AVG(nota), 0) FROM avaliacoes WHERE prestador_id = p.id) AS media_global,
+            (SELECT COUNT(id) FROM avaliacoes WHERE prestador_id = p.id) AS total_avaliacoes
             FROM usuarios u 
             LEFT JOIN prestadores p ON u.id = p.usuario_id
             WHERE u.ativo = TRUE
@@ -222,7 +224,12 @@ const listarUsuarios = async (req, res) => {
             return {
                 id: u.id, nome: u.nome, cpf: u.cpf, email: u.email, telefone: u.telefone, fotoPerfil: u.foto_perfil, tipo: u.tipo,
                 endereco: { cep: u.cep, rua: u.rua, numero: u.numero, complemento: u.complemento, bairro: u.bairro, cidade: u.cidade, estado: u.estado },
-                prestador: u.tipo === 'prestador' ? { descricao: u.descricao_perfil, portfolio: imgs } : null
+                prestador: u.tipo === 'prestador' ? { 
+                    descricao: u.descricao_perfil, 
+                    portfolio: imgs,
+                    mediaGlobal: parseFloat(u.media_global || 0),
+                    totalAvaliacoes: parseInt(u.total_avaliacoes || 0)
+                } : null
             };
         });
         res.status(200).json(formatados);

@@ -51,12 +51,16 @@ const listarServicos = async (req, res) => {
                 s.descricao, 
                 s.preco_base,
                 s.status,
-                s.criado_em AS dataCriacao
+                s.criado_em AS dataCriacao,
+                COALESCE(AVG(a.nota), 0) AS mediaAvaliacao,
+                COUNT(a.id) AS totalAvaliacoes
             FROM servicos s
             JOIN categorias c ON s.categoria_id = c.id
             JOIN prestadores p ON s.prestador_id = p.id
             JOIN usuarios u ON p.usuario_id = u.id
+            LEFT JOIN avaliacoes a ON a.servico_id = s.id
             WHERE s.status = 'ATIVO'
+            GROUP BY s.id
             ORDER BY s.criado_em DESC
         `;
 
@@ -80,15 +84,21 @@ const getServicoById = async (req, res) => {
                 s.id, 
                 s.titulo, 
                 s.descricao,
+                s.preco_base,
+                s.status,
                 c.nome AS categoria,
                 p.usuario_id,
                 u.nome AS prestador_nome,
-                u.email AS prestador_email
+                u.email AS prestador_email,
+                COALESCE(AVG(a.nota), 0) AS mediaAvaliacao,
+                COUNT(a.id) AS totalAvaliacoes
             FROM servicos s
             JOIN categorias c ON s.categoria_id = c.id
             JOIN prestadores p ON s.prestador_id = p.id
             JOIN usuarios u ON p.usuario_id = u.id
+            LEFT JOIN avaliacoes a ON a.servico_id = s.id
             WHERE s.id = ?
+            GROUP BY s.id
         `;
 
         const [servicos] = await db.execute(query, [servicoId]);
