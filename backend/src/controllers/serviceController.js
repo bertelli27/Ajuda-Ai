@@ -152,17 +152,20 @@ const atualizarServico = async (req, res) => {
 
 const deletarServico = async (req, res) => {
     try {
-        if (req.user.tipo !== 'prestador') return res.status(403).json({ error: 'Acesso negado.' });
+        if (req.user.tipo !== 'prestador' && req.user.tipo !== 'admin') return res.status(403).json({ error: 'Acesso negado.' });
         const servicoId = parseInt(req.params.id, 10);
 
-        const [prestadores] = await db.execute('SELECT id FROM prestadores WHERE usuario_id = ?', [req.user.id]);
-        if (prestadores.length === 0) return res.status(404).json({ error: 'Prestador não encontrado.' });
-        const prestadorId = prestadores[0].id;
+        let prestadorId = null;
+        if (req.user.tipo === 'prestador') {
+            const [prestadores] = await db.execute('SELECT id FROM prestadores WHERE usuario_id = ?', [req.user.id]);
+            if (prestadores.length === 0) return res.status(404).json({ error: 'Prestador não encontrado.' });
+            prestadorId = prestadores[0].id;
+        }
 
         const [servico] = await db.execute('SELECT * FROM servicos WHERE id = ?', [servicoId]);
         if (servico.length === 0) return res.status(404).json({ error: 'Serviço não encontrado.' });
 
-        if (Number(servico[0].prestador_id) !== Number(prestadorId)) {
+        if (req.user.tipo !== 'admin' && Number(servico[0].prestador_id) !== Number(prestadorId)) {
             return res.status(403).json({ error: 'Você não tem permissão para excluir este serviço.' });
         }
 

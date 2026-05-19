@@ -982,6 +982,24 @@ body {
     transform: rotate(5deg);
 }
 
+/* ===========================
+   MODO ADMINISTRADOR (GLOBAL)
+=========================== */
+.admin-global-banner {
+    background-color: #d9534f;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
 /* Grid para o Modal de Portfólio Completo */
 #modalListaPortfolio {
     overflow-y: auto;

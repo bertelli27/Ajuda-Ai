@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function() {
             menu.innerHTML = `
                 <a href="index.html">Início</a>
                 <a href="servicos.html" class="active-nav">Serviços</a>
-                <a href="pedidos.html">${textoPedidos}</a>
+                ${usuarioLogado.tipo !== 'admin' ? `<a href="pedidos.html">${textoPedidos}</a>` : ''}
                 <div class="profile-menu-container">
                     <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                         <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         ${usuarioLogado.tipo === 'admin' ? '<a href="admin.html" style="color: #d9534f; font-weight: bold;">👑 Painel Admin</a>' : ''}
-                        <a href="dashboard.html">Dashboard</a>
+                        ${usuarioLogado.tipo !== 'admin' ? `<a href="dashboard.html">Dashboard</a>` : ''}
                         <a href="perfil.html">Meu Perfil</a>
                         <a href="configuracoes.html">Configurações</a>
                         <a href="#" id="btnLogout">Sair</a>
@@ -94,6 +94,10 @@ document.addEventListener("DOMContentLoaded", function() {
             const todosServicos = await API.getServicos();
             const usuarios = await API.getUsuarios();
             const avaliacoes = await API.getAvaliacoes();
+
+            const usuarioLogadoObj = usuarios.find(u => u.email === emailLogado);
+            const isAdmin = usuarioLogadoObj && usuarioLogadoObj.tipo === 'admin';
+
             let servicosFiltrados = todosServicos.filter(s => {
                 const prestador = usuarios.find(u => u.email === s.prestadorEmail);
                 return prestador && prestador.tipo === 'prestador';
@@ -130,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 paginatedServicos.forEach(servico => {
                     const prestador = usuarios.find(u => u.email === servico.prestadorEmail);
                     const isSelf = prestador?.email === emailLogado;
-                    if (prestador) renderizarCard(servico, prestador, avaliacoes, grid, isSelf);
+                    if (prestador) renderizarCard(servico, prestador, avaliacoes, grid, isSelf, isAdmin);
                 });
             }
 
@@ -142,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1500);
     }
 
-    function renderizarCard(servico, prestador, avaliacoes, grid, isSelf) {
+    function renderizarCard(servico, prestador, avaliacoes, grid, isSelf, isAdmin) {
             const card = document.createElement('div');
             card.className = 'service-card';
 
@@ -164,7 +168,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 <p><strong>Cidade:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
                 <div class="card-botoes">
                     <button class="btn-ver-perfil" data-email-prestador="${prestador.email}">Ver Perfil</button>
-                    ${!isSelf ? `<button class="btn-service" data-servico-id="${servico.id}">Solicitar</button>` : ''}
+                    ${isAdmin 
+                        ? `<button class="btn-acao recusar btn-remover-servico" data-servico-id="${servico.id}" style="padding: 12px 15px;">Remover Serviço</button>` 
+                        : (!isSelf ? `<button class="btn-service" data-servico-id="${servico.id}">Solicitar</button>` : '')}
                 </div>
             `;
         grid.appendChild(card);
@@ -194,6 +200,26 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!grid) return;
 
         grid.addEventListener("click", function(e) {
+            if (e.target && e.target.classList.contains('btn-remover-servico')) {
+                const servicoId = e.target.getAttribute('data-servico-id');
+                if(confirm("👑 MODO ADMIN:\nTem certeza que deseja excluir este serviço permanentemente da plataforma? Esta ação será registrada.")) {
+                    const btn = e.target;
+                    const originalText = btn.innerText;
+                    btn.innerText = "Excluindo...";
+                    btn.disabled = true;
+                    API.excluirServico(servicoId).then(() => {
+                        mostrarToast("Serviço removido com sucesso.", "success");
+                        const searchTerm = document.getElementById("searchInput")?.value || "";
+                        const category = document.querySelector('.btn-categoria.active')?.getAttribute('data-cat') || 'Todos';
+                        carregarServicos(category, searchTerm);
+                    }).catch(err => {
+                        mostrarToast("Erro ao excluir serviço.", "error");
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    });
+                }
+                return;
+            }
             if (e.target && e.target.classList.contains('btn-service')) {
                 const emailLogado = API.getSessaoAtual();
 

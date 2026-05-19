@@ -21,7 +21,7 @@ async function carregarUsuario() {
             menu.innerHTML = `
                 <a href="index.html" class="active-nav">Início</a>
                 <a href="servicos.html">Serviços</a>
-                <a href="pedidos.html">${textoPedidos}</a>
+                ${usuarioAtual.tipo !== 'admin' ? `<a href="pedidos.html">${textoPedidos}</a>` : ''}
                 <div class="profile-menu-container">
                     <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                         <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
@@ -29,7 +29,7 @@ async function carregarUsuario() {
                     </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         ${usuarioAtual.tipo === 'admin' ? '<a href="admin.html" style="color: #d9534f; font-weight: bold;">👑 Painel Admin</a>' : ''}
-                        <a href="dashboard.html">Dashboard</a>
+                        ${usuarioAtual.tipo !== 'admin' ? `<a href="dashboard.html">Dashboard</a>` : ''}
                         <a href="perfil.html">Meu Perfil</a>
                         <a href="configuracoes.html">Configurações</a>
                         <a href="#" id="btnLogout">Sair</a>

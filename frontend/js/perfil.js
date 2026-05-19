@@ -127,6 +127,9 @@ document.addEventListener("DOMContentLoaded", async function() {
     // ================= FUNÇÕES PRINCIPAIS =================
 
     function preencherDados(usuario) {
+        const usuarioLogadoObj = usuarios.find(u => u.email === emailLogado);
+        const isAdmin = usuarioLogadoObj && usuarioLogadoObj.tipo === 'admin';
+
         // Preenche a foto de perfil
         const profilePic = document.getElementById("profilePicPreview");
         profilePic.src = usuario.fotoPerfil || "../img/avatar_padrao.png";
@@ -143,7 +146,34 @@ document.addEventListener("DOMContentLoaded", async function() {
         document.getElementById("public-sidebar-user-name").innerText = usuario.nome;
         document.getElementById("public-sidebar-user-email").style.display = 'none'; // Oculta o email na visão pública
         const btnContratar = document.getElementById("public-btnContratar");
-        if(btnContratar) btnContratar.onclick = () => window.location.href = `solicitar.html?prestador=${encodeURIComponent(usuario.email)}`;
+        if(btnContratar) {
+            if (isAdmin) {
+                btnContratar.style.display = 'none';
+            } else {
+                btnContratar.onclick = () => window.location.href = `solicitar.html?prestador=${encodeURIComponent(usuario.email)}`;
+            }
+        }
+        
+        // ================= PERFIL TRANSPARENTE (MODO ADMIN) =================
+        if (isAdmin && !isOwnProfile) {
+            const emailPub = document.getElementById("public-sidebar-user-email");
+            if (emailPub) {
+                emailPub.style.display = 'block';
+                emailPub.style.color = '#d9534f';
+                emailPub.style.fontWeight = 'bold';
+                emailPub.innerText = `📧 ${usuario.email} | CPF: ${usuario.cpf || 'N/A'}`;
+            }
+            const containerAvaliacao = document.getElementById("public-sidebar-rating-container");
+            if (containerAvaliacao && !document.getElementById("adminActionsContainer")) {
+                let infoAdmin = document.createElement("div");
+                infoAdmin.id = "adminActionsContainer";
+                infoAdmin.style.marginTop = "15px";
+                infoAdmin.style.paddingTop = "15px";
+                infoAdmin.style.borderTop = "1px dashed #d9534f";
+                infoAdmin.innerHTML = `<button class="btn-acao recusar" style="width: 100%; font-size: 13px;" onclick="window.banirEsteUsuario('${usuario.id}', '${usuario.nome}')">🚫 Banir Conta</button>`;
+                containerAvaliacao.parentNode.insertBefore(infoAdmin, containerAvaliacao.nextSibling);
+            }
+        }
 
         // Preenche os campos de visualização
         document.getElementById("view-nome").innerText = usuario.nome;
@@ -966,7 +996,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             menu.innerHTML = `
                 <a href="index.html">Início</a>
                 <a href="servicos.html">Serviços</a>
-                <a href="pedidos.html">${textoPedidos}</a>
+                ${usuarioLogado.tipo !== 'admin' ? `<a href="pedidos.html">${textoPedidos}</a>` : ''}
                 <div class="profile-menu-container">
                     <a href="#" id="avatarMenuBtn" class="menu-avatar-link" data-tooltip="Opções da Conta" data-tooltip-dir="down">
                         <img src="${fotoPerfil}" alt="Avatar" class="menu-avatar">
@@ -974,7 +1004,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     </a>
                     <div class="profile-dropdown" id="profileDropdown">
                         ${usuarioLogado.tipo === 'admin' ? '<a href="admin.html" style="color: #d9534f; font-weight: bold;">👑 Painel Admin</a>' : ''}
-                        <a href="dashboard.html">Dashboard</a>
+                        ${usuarioLogado.tipo !== 'admin' ? `<a href="dashboard.html">Dashboard</a>` : ''}
                         <a href="perfil.html" class="active-nav">Meu Perfil</a>
                         <a href="configuracoes.html">Configurações</a>
                         <a href="#" id="btnLogout">Sair</a>
@@ -1009,4 +1039,15 @@ document.addEventListener("DOMContentLoaded", async function() {
         API.fazerLogout();
         window.location.href = "login.html";
     }
+
+    // ================= FUNÇÃO ADMINISTRATIVA =================
+    window.banirEsteUsuario = function(id, nome) {
+        const motivo = prompt(`👑 MODO ADMIN:\nInforme o motivo para banir ${nome} (Ficará registrado na auditoria):`);
+        if (motivo) {
+            API.banirUsuarioAdmin(id, motivo).then(() => {
+                mostrarToast("Usuário banido com sucesso e registrado no log.", "success");
+                setTimeout(() => window.location.href = "servicos.html", 1500);
+            }).catch(e => mostrarToast(e.message, "error"));
+        }
+    };
 });

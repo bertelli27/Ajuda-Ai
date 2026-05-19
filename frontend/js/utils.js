@@ -137,6 +137,30 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // Delay seguro para garantir que os menus carregaram
 
 // =======================================================
+// MODO DEUS (ADMIN GLOBAL BANNER)
+// =======================================================
+async function inicializarModoDeus() {
+    if (typeof API === 'undefined') return;
+    const emailLogado = API.getSessaoAtual();
+    if (!emailLogado) return;
+    
+    try {
+        const usuarios = await API.getUsuarios();
+        const user = usuarios.find(u => u.email === emailLogado);
+        if (user && user.tipo === 'admin') {
+            if (!document.getElementById("adminGlobalBanner")) {
+                const banner = document.createElement('div');
+                banner.id = "adminGlobalBanner";
+                banner.className = "admin-global-banner fade-up-animation";
+                banner.innerHTML = "👑 Modo Administrador Ativo - Suas ações são definitivas e auditadas";
+                document.body.appendChild(banner);
+                document.body.style.paddingTop = "35px"; // Abre espaço para a barra
+            }
+        }
+    } catch (e) {}
+}
+
+// =======================================================
 // MODO CLARO / ESCURO (THEME TOGGLE FLOATING)
 // =======================================================
 function inicializarThemeToggle() {
@@ -584,4 +608,5 @@ document.addEventListener("DOMContentLoaded", () => {
     inicializarAnimacoesFade(); // Chama as animações fluídas
     inicializarAccordion(); // Inicia o FAQ Expansível
     inicializarAllPasswordToggles(); // Inicia o botão de mostrar/ocultar senha
+    inicializarModoDeus(); // Inicia o banner global do Admin
 });
