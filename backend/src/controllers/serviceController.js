@@ -90,6 +90,7 @@ const getServicoById = async (req, res) => {
                 p.usuario_id,
                 u.nome AS prestador_nome,
                 u.email AS prestador_email,
+                u.foto_perfil AS prestador_foto,
                 COALESCE(AVG(a.nota), 0) AS mediaAvaliacao,
                 COUNT(a.id) AS totalAvaliacoes
             FROM servicos s
@@ -98,7 +99,7 @@ const getServicoById = async (req, res) => {
             JOIN usuarios u ON p.usuario_id = u.id
             LEFT JOIN avaliacoes a ON a.servico_id = s.id
             WHERE s.id = ?
-            GROUP BY s.id, s.titulo, s.descricao, s.preco_base, s.status, c.nome, p.usuario_id, u.nome, u.email
+            GROUP BY s.id, s.titulo, s.descricao, s.preco_base, s.status, c.nome, p.usuario_id, u.nome, u.email, u.foto_perfil
         `;
 
         const [servicos] = await db.execute(query, [servicoId]);
@@ -107,7 +108,28 @@ const getServicoById = async (req, res) => {
             return res.status(404).json({ error: 'Serviço não encontrado.' });
         }
 
-        res.status(200).json(servicos[0]);
+        // 🚀 O PACOTE COMPLETO DO MICRO PERFIL: Busca o portfólio e avaliações deste serviço
+        const [portfolio] = await db.execute(`
+            SELECT p.*, a.nota, a.comentario 
+            FROM portfolio p 
+            LEFT JOIN avaliacoes a ON p.solicitacao_id = a.solicitacao_id
+            WHERE p.servico_id = ? 
+            ORDER BY p.criado_em DESC
+        `, [servicoId]);
+        
+        const [avaliacoes] = await db.execute(`
+            SELECT a.id, a.nota, a.comentario, a.criado_em, u.nome AS cliente_nome, u.foto_perfil AS cliente_foto
+            FROM avaliacoes a
+            JOIN usuarios u ON a.cliente_id = u.id
+            WHERE a.servico_id = ?
+            ORDER BY a.criado_em DESC
+        `, [servicoId]);
+
+        const servicoCompleto = servicos[0];
+        servicoCompleto.portfolio = portfolio;
+        servicoCompleto.avaliacoes = avaliacoes;
+
+        res.status(200).json(servicoCompleto);
     } catch (error) {
         console.error('Erro ao buscar serviço por ID:', error);
         res.status(500).json({ error: 'Erro interno ao buscar serviço.' });

@@ -43,10 +43,105 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // ================= FUNÇÕES DE UI E LÓGICA =================
+    
+    window.mudarAbaServico = function(abaId, btnElement) {
+        document.querySelectorAll('.aba-conteudo').forEach(aba => aba.style.display = 'none');
+        document.getElementById('aba-' + abaId).style.display = 'block';
+        
+        document.querySelectorAll('.micro-perfil-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+    };
+
+    function gerarPortfolioHTML(portfolio) {
+        if (!portfolio || portfolio.length === 0) {
+            return `<p style="color: #AAAAAA; font-style: italic; text-align: center; padding: 20px;">Este serviço ainda não possui fotos no portfólio.</p>`;
+        }
+        let html = '<div class="portfolio-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">';
+        portfolio.forEach(img => {
+            let selo = img.verificado ? `<div style="position: absolute; bottom: 8px; left: 8px; background: #5cb85c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">✅ Verificado</div>` : '';
+            let dataAttrs = `data-descricao="${img.descricao || ''}"`;
+            if (img.verificado) {
+                dataAttrs += ` data-verificado="true" data-nota="${img.nota || ''}" data-comentario="${img.comentario || ''}"`;
+            }
+            html += `
+                <div class="portfolio-item" style="position: relative; border-radius: 8px; overflow: hidden; padding-top: 100%;">
+                    ${selo}
+                    <img src="${img.imagem_url}" ${dataAttrs} alt="Trabalho" onclick="abrirLightbox(this)" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function gerarAvaliacoesHTML(avaliacoes) {
+        if (!avaliacoes || avaliacoes.length === 0) {
+            return `<p style="color: #AAAAAA; font-style: italic; text-align: center; padding: 20px;">Este serviço ainda não possui avaliações.</p>`;
+        }
+        let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+        avaliacoes.forEach(a => {
+            const estrelas = '★'.repeat(a.nota) + '☆'.repeat(5 - a.nota);
+            const data = new Date(a.criado_em).toLocaleDateString('pt-BR');
+            const foto = a.cliente_foto || '../img/avatar_padrao.png';
+            html += `
+                <div class="avaliacao-card fade-up-animation" style="background: #2A343D; padding: 15px; border-radius: 12px; border: 1px solid #4F5B66;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${foto}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                            <strong style="color: #EEEEEE;">${a.cliente_nome.split(' ')[0]}</strong>
+                        </div>
+                        <span style="font-size: 12px; color: #AAAAAA;">${data}</span>
+                    </div>
+                    <div style="color: #ffc107; font-size: 16px; margin-bottom: 8px;">${estrelas}</div>
+                    ${a.comentario ? `<p style="color: #CCCCCC; font-size: 14px; font-style: italic; line-height: 1.5;">"${a.comentario}"</p>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+
     function preencherDadosTela(servico, cliente) {
+        const numProjetosVerificados = servico.portfolio ? servico.portfolio.filter(p => p.verificado).length : 0;
+
         document.getElementById("infoPrestador").innerHTML = `
-            <h3 style="color: #00ADB5; margin-bottom: 5px;">${servico.titulo}</h3>
-            <p style="margin-bottom: 5px;"><strong>Profissional:</strong> ${servico.prestador_nome}</p>
+            <div class="micro-perfil-header" style="display: flex; gap: 20px; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #4F5B66; padding-bottom: 20px; flex-wrap: wrap;">
+                <img src="${servico.prestador_foto || '../img/avatar_padrao.png'}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #00ADB5;">
+                <div style="flex-grow: 1;">
+                    <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold;">${servico.categoria}</span>
+                    <h2 style="color: #EEEEEE; margin: 5px 0; font-size: 22px;">${servico.titulo}</h2>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 5px;">Oferecido por: <strong>${servico.prestador_nome}</strong></p>
+                    <div style="display: flex; gap: 15px; margin-top: 8px; flex-wrap: wrap;">
+                        <span style="color: #ffc107; font-size: 14px; font-weight: bold;">★ ${parseFloat(servico.mediaAvaliacao).toFixed(1)} (${servico.totalAvaliacoes})</span>
+                        ${numProjetosVerificados > 0 ? `<span style="color: #5cb85c; font-size: 14px; font-weight: bold;">✅ ${numProjetosVerificados} verificados</span>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="micro-perfil-tabs" style="margin-bottom: 20px;">
+                <div class="tabs-container" style="border-bottom: 1px solid #4F5B66; padding-bottom: 0; margin-bottom: 0;">
+                    <button type="button" class="tab-btn active" onclick="window.mudarAbaServico('detalhes', this)">Detalhes</button>
+                    <button type="button" class="tab-btn" onclick="window.mudarAbaServico('portfolio', this)">Portfólio (${servico.portfolio ? servico.portfolio.length : 0})</button>
+                    <button type="button" class="tab-btn" onclick="window.mudarAbaServico('avaliacoes', this)">Avaliações (${servico.totalAvaliacoes})</button>
+                </div>
+            </div>
+
+            <div id="aba-detalhes" class="aba-conteudo fade-up-animation" style="display: block; padding-top: 20px;">
+                <h4 style="color: #00ADB5; margin-bottom: 10px; font-size: 18px;">Sobre o Serviço</h4>
+                <p style="color: #CCCCCC; line-height: 1.6; white-space: pre-wrap; font-size: 15px;">${servico.descricao || 'O prestador ainda não adicionou uma descrição detalhada para este serviço.'}</p>
+                <div style="margin-top: 20px; padding: 15px; background: #2A343D; border-radius: 8px; border: 1px solid #4F5B66; display: inline-block;">
+                    <span style="color: #AAAAAA; font-size: 13px; display: block;">Preço Base Sugerido</span>
+                    <strong style="color: #00ADB5; font-size: 24px;">${servico.preco_base ? 'R$ ' + parseFloat(servico.preco_base).toFixed(2).replace('.', ',') : 'A combinar'}</strong>
+                </div>
+            </div>
+
+            <div id="aba-portfolio" class="aba-conteudo fade-up-animation" style="display: none; padding-top: 20px;">
+                ${gerarPortfolioHTML(servico.portfolio)}
+            </div>
+
+            <div id="aba-avaliacoes" class="aba-conteudo fade-up-animation" style="display: none; padding-top: 20px;">
+                ${gerarAvaliacoesHTML(servico.avaliacoes)}
+            </div>
         `;
 
         if (cliente && cliente.endereco) {
