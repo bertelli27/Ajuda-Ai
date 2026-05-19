@@ -175,12 +175,10 @@ const atualizarPerfil = async (req, res) => {
                 prestadorId = prestRows[0].id;
             }
 
-            if (prestador && prestador.portfolio) {
-                await connection.execute('DELETE FROM portfolio WHERE prestador_id = ?', [prestadorId]);
-                for (const img of prestador.portfolio) {
-                    await connection.execute('INSERT INTO portfolio (prestador_id, imagem_url) VALUES (?, ?)', [prestadorId, img]);
-                }
+            if (prestador && prestador.descricao !== undefined) {
+                await connection.execute('UPDATE prestadores SET descricao_perfil = ? WHERE id = ?', [prestador.descricao, prestadorId]);
             }
+            // 🚀 NOTA: O portfólio não é mais destruído e recriado junto com a foto de perfil. Ele agora é independente!
         }
 
         await connection.commit();
@@ -216,11 +214,11 @@ const listarUsuarios = async (req, res) => {
             LEFT JOIN prestadores p ON u.id = p.usuario_id
             WHERE u.ativo = TRUE
         `);
-        const [portfolio] = await db.execute('SELECT prestador_id, imagem_url FROM portfolio');
+        const [portfolio] = await db.execute('SELECT id, prestador_id, servico_id, solicitacao_id, avaliacao_id, imagem_url, descricao, tipo_portfolio, verificado, criado_em FROM portfolio');
         
         // Tradutor: Transforma o MySQL em um objeto que o Front-end entende sem quebrar a tela
         const formatados = usuarios.map(u => {
-            const imgs = portfolio.filter(img => img.prestador_id === u.prestador_id).map(img => img.imagem_url);
+            const imgs = portfolio.filter(img => img.prestador_id === u.prestador_id); // Devolve o objeto inteiro e não só a string
             return {
                 id: u.id, nome: u.nome, cpf: u.cpf, email: u.email, telefone: u.telefone, fotoPerfil: u.foto_perfil, tipo: u.tipo,
                 endereco: { cep: u.cep, rua: u.rua, numero: u.numero, complemento: u.complemento, bairro: u.bairro, cidade: u.cidade, estado: u.estado },

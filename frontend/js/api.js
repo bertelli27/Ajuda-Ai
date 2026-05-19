@@ -207,6 +207,32 @@ const API = {
         if (!response.ok) throw new Error(data.error || 'Erro ao excluir serviço');
         return data;
     },
+    
+    // ================= PORTFÓLIO =================
+    async adicionarPortfolio(dadosPortfolio) {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const response = await fetch(`${BASE_URL}/portfolio`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(dadosPortfolio)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao adicionar ao portfólio');
+        return data;
+    },
+    async excluirPortfolio(id) {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const response = await fetch(`${BASE_URL}/portfolio/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao excluir do portfólio');
+        return data;
+    },
 
     // ================= RELATÓRIOS (BI) =================
     async getRelatoriosPrestador(periodo = 'todos') {
