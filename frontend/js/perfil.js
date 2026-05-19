@@ -875,30 +875,182 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
     }
 
-    document.getElementById('portfolio-upload')?.addEventListener('change', async function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+    // ================= MODAL INTELIGENTE DE PORTFÓLIO (LIVRE X VERIFICADO) =================
+    let arquivoPortfolioTemp = null;
 
-        try {
-            mostrarToast("Processando imagem, aguarde...", "success");
-            const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
+    function abrirModalAddPortfolio(arquivoInicial = null) {
+        let modal = document.getElementById("modalAddPortfolio");
+        if (!modal) {
+            const html = `
+                <div id="modalAddPortfolio" class="modal" style="display: flex; align-items: center; justify-content: center; z-index: 10000; background-color: rgba(0,0,0,0.7);">
+                    <div class="modal-content fade-up-animation" style="max-width: 500px; height: auto; text-align: left; padding: 30px; margin: 0; position: relative;">
+                        <span class="close-button" id="closeModalAddPortfolio" style="position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer;">&times;</span>
+                        <h3 style="color: #00ADB5; margin-bottom: 20px; font-size: 22px;">Adicionar ao Portfólio</h3>
+
+                        <div class="form-group">
+                            <label style="color:#AAAAAA; font-size:13px;">Selecione a Imagem</label>
+                            <input type="file" id="novaFotoPortfolio" accept="image/*" style="background: #2A343D; color: #EEE; padding: 10px; border: 1px dashed #4F5B66; border-radius: 8px; width: 100%; cursor: pointer;">
+                            <img id="previewNovaFoto" style="width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; display: none; border-radius: 8px; border: 1px solid #4F5B66; background: #222A31;">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label style="color:#AAAAAA; font-size:13px;">Tipo de Projeto</label>
+                            <div style="display: flex; gap: 15px; margin-top: 5px; background: #2A343D; padding: 15px; border-radius: 8px; border: 1px solid #4F5B66;">
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #EEE; font-size: 14px;">
+                                    <input type="radio" name="tipoPortfolio" value="livre" checked style="width: 18px; height: 18px; cursor: pointer;"> 
+                                    Trabalho Livre
+                                </label>
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #EEE; font-size: 14px;" id="labelVerificado">
+                                    <input type="radio" name="tipoPortfolio" value="verificado" style="width: 18px; height: 18px; cursor: pointer;"> 
+                                    Projeto Verificado ✅
+                                </label>
+                            </div>
+                            <small id="avisoSemConcluidos" style="color: #d9534f; display: none; margin-top: 5px;">Você precisa de pelo menos 1 serviço concluído no AjudaAí para verificar um projeto.</small>
+                        </div>
+
+                        <div class="form-group" id="containerSolicitacaoVerificada" style="display: none; margin-top: 15px;">
+                            <label style="color:#AAAAAA; font-size:13px;">Vincular ao Serviço Concluído</label>
+                            <select id="solicitacaoVinculada" style="background: #222A31; border: 1px solid #4F5B66; color: #EEE; width: 100%; padding: 12px; border-radius: 8px; outline: none; cursor: pointer;">
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label style="color:#AAAAAA; font-size:13px;">Descrição (Opcional)</label>
+                            <textarea id="descricaoPortfolio" rows="2" placeholder="Descreva os detalhes..." style="background: #222A31; border: 1px solid #4F5B66; color: #EEE; width: 100%; padding: 12px; border-radius: 8px; resize: vertical;"></textarea>
+                        </div>
+
+                        <button id="btnSalvarPortfolio" class="btn-login" style="margin-top: 25px;">Salvar no Portfólio</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', html);
+            modal = document.getElementById("modalAddPortfolio");
+
+            // Eventos do novo Modal
+            document.getElementById("closeModalAddPortfolio").onclick = () => modal.style.display = "none";
             
-            if (typeof API.adicionarPortfolio === 'function') {
-                await API.adicionarPortfolio({ imagemBase64: base64Comprimido, tipo_portfolio: 'livre' });
-                
-                const novosUsuarios = await API.getUsuarios();
-                const userAtualizado = novosUsuarios.find(u => u.email === emailLogado);
-                
-                const userIndex = usuarios.findIndex(u => u.email === emailLogado);
-                if (userIndex !== -1 && userAtualizado) usuarios[userIndex] = userAtualizado;
-                
-                renderizarPortfolio(userAtualizado);
-                mostrarToast("Imagem salva com sucesso!", "success");
-            }
-        } catch (error) {
-            mostrarToast("Erro ao processar a imagem.", "error");
+            document.querySelectorAll('input[name="tipoPortfolio"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    document.getElementById("containerSolicitacaoVerificada").style.display = e.target.value === 'verificado' ? 'block' : 'none';
+                });
+            });
+
+            document.getElementById("novaFotoPortfolio").addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    arquivoPortfolioTemp = file;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = document.getElementById("previewNovaFoto");
+                        img.src = ev.target.result;
+                        img.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById("btnSalvarPortfolio").addEventListener('click', async function() {
+                if (!arquivoPortfolioTemp) {
+                    mostrarToast("Por favor, selecione uma imagem.", "error");
+                    return;
+                }
+
+                const tipo = document.querySelector('input[name="tipoPortfolio"]:checked').value;
+                const solicitacaoId = document.getElementById("solicitacaoVinculada").value;
+                const descricao = document.getElementById("descricaoPortfolio").value.trim();
+
+                if (tipo === 'verificado' && !solicitacaoId) {
+                    mostrarToast("Selecione o serviço concluído para verificar o projeto.", "error");
+                    return;
+                }
+
+                setButtonLoading(this);
+                try {
+                    mostrarToast("Processando imagem, aguarde...", "success");
+                    const base64Comprimido = await comprimirImagem(arquivoPortfolioTemp, 800, 800, 0.7);
+                    
+                    const payload = {
+                        imagemBase64: base64Comprimido,
+                        tipo_portfolio: tipo,
+                        solicitacao_id: tipo === 'verificado' ? parseInt(solicitacaoId) : null,
+                        descricao: descricao
+                    };
+
+                    await API.adicionarPortfolio(payload);
+                    
+                    const novosUsuarios = await API.getUsuarios();
+                    const userAtualizado = novosUsuarios.find(u => u.email === emailLogado);
+                    
+                    const userIndex = usuarios.findIndex(u => u.email === emailLogado);
+                    if (userIndex !== -1 && userAtualizado) {
+                        usuarios[userIndex] = userAtualizado;
+                        if (isOwnProfile) usuarioAlvo = userAtualizado;
+                    }
+                    
+                    renderizarPortfolio(userAtualizado);
+                    mostrarToast("Projeto adicionado ao portfólio!", "success");
+                    modal.style.display = "none";
+                } catch (error) {
+                    console.error("Erro no upload:", error);
+                    mostrarToast(error.message || "Erro ao salvar imagem.", "error");
+                } finally {
+                    removeButtonLoading(this);
+                }
+            });
         }
-    });
+
+        // Reseta o modal ao abrir
+        arquivoPortfolioTemp = arquivoInicial;
+        document.getElementById("novaFotoPortfolio").value = "";
+        document.getElementById("descricaoPortfolio").value = "";
+        document.querySelector('input[name="tipoPortfolio"][value="livre"]').checked = true;
+        document.getElementById("containerSolicitacaoVerificada").style.display = "none";
+        
+        const preview = document.getElementById("previewNovaFoto");
+        if (arquivoInicial) {
+            const reader = new FileReader();
+            reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(arquivoInicial);
+        } else {
+            preview.src = "";
+            preview.style.display = "none";
+        }
+
+        // Busca e Popula as solicitações concluídas mais recentes na API
+        API.getSolicitacoes().then(sols => {
+            const concluidas = sols.filter(s => 
+                (s.prestadorEmail === emailLogado || s.prestador_email === emailLogado) && s.status === 'CONCLUIDO'
+            );
+
+            const select = document.getElementById("solicitacaoVinculada");
+            if (concluidas.length === 0) {
+                document.getElementById("labelVerificado").style.opacity = '0.5';
+                document.querySelector('input[name="tipoPortfolio"][value="verificado"]').disabled = true;
+                document.getElementById("avisoSemConcluidos").style.display = 'block';
+                select.innerHTML = '<option value="">Nenhum serviço concluído ainda</option>';
+            } else {
+                document.getElementById("labelVerificado").style.opacity = '1';
+                document.querySelector('input[name="tipoPortfolio"][value="verificado"]').disabled = false;
+                document.getElementById("avisoSemConcluidos").style.display = 'none';
+                select.innerHTML = concluidas.map(s => {
+                    const data = new Date(s.dataSolicitacao || s.criado_em).toLocaleDateString('pt-BR');
+                    const clienteNome = s.cliente_nome || 'Cliente';
+                    return `<option value="${s.id}">${s.servico} (para ${clienteNome} - ${data})</option>`;
+                }).join('');
+            }
+        });
+
+        modal.style.display = "flex";
+    }
+
+    // 🚀 Intercepta o clique no botão antigo para abrir o modal
+    const btnAddPortfolioOriginal = document.getElementById('btn-add-portfolio');
+    if (btnAddPortfolioOriginal) {
+        btnAddPortfolioOriginal.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            abrirModalAddPortfolio();
+        });
+    }
 
     // --- NOVO: Drag & Drop para Portfólio ---
     const portfolioContainer = document.getElementById("portfolio-gallery");
@@ -925,20 +1077,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
-                try {
-                    mostrarToast("Processando imagem, aguarde...", "success");
-                    const base64Comprimido = await comprimirImagem(file, 800, 800, 0.7);
-                    
-                    if (typeof API.adicionarPortfolio === 'function') {
-                        await API.adicionarPortfolio({ imagemBase64: base64Comprimido, tipo_portfolio: 'livre' });
-                        const novosUsuarios = await API.getUsuarios();
-                        const userAtualizado = novosUsuarios.find(u => u.email === emailLogado);
-                        renderizarPortfolio(userAtualizado);
-                        mostrarToast("Imagem salva com sucesso!", "success");
-                    }
-                } catch (error) {
-                    mostrarToast("Erro ao processar a imagem.", "error");
-                }
+                abrirModalAddPortfolio(file);
             } else if (file) {
                 mostrarToast("Por favor, solte apenas arquivos de imagem.", "error");
             }
@@ -974,6 +1113,10 @@ document.addEventListener("DOMContentLoaded", async function() {
         const pModal = document.getElementById('portfolioModal');
         if(pModal && e.target === pModal) {
             pModal.style.display = 'none'; 
+        }
+        const pAddModal = document.getElementById('modalAddPortfolio');
+        if(pAddModal && e.target === pAddModal) {
+            pAddModal.style.display = 'none'; 
         }
     });
 
