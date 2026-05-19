@@ -94,7 +94,10 @@ document.addEventListener("DOMContentLoaded", function() {
             const todosServicos = await API.getServicos();
             const usuarios = await API.getUsuarios();
             const avaliacoes = await API.getAvaliacoes();
-            let servicosFiltrados = [...todosServicos];
+            let servicosFiltrados = todosServicos.filter(s => {
+                const prestador = usuarios.find(u => u.email === s.prestadorEmail);
+                return prestador && prestador.tipo === 'prestador';
+            });
 
             // 1. Filtro de categoria
             if (categoriaFiltro !== "Todos") {

@@ -120,6 +120,10 @@ const atualizarPerfil = async (req, res) => {
         const usuarioId = req.user.id;
         const { nome, telefone, fotoPerfil, endereco, tipo, prestador } = req.body;
         
+        if (tipo && tipo !== 'cliente' && tipo !== 'prestador') {
+            return res.status(400).json({ error: 'Tipo de usuário inválido.' });
+        }
+
         connection = await db.getConnection();
         await connection.beginTransaction();
 

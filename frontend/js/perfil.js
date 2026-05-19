@@ -241,6 +241,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         } else if (btnCopiarLink) {
             btnCopiarLink.style.display = "none";
         }
+        verificarModoCliente();
     }
 
     function alternarModoEdicao(editar) {
@@ -277,32 +278,104 @@ document.addEventListener("DOMContentLoaded", async function() {
         if (isOwnProfile) document.getElementById("btn-add-portfolio").style.display = editar ? "inline-flex" : "none";
     }
 
-    async function tornarPrestador() {
-        document.getElementById("areaTornarPrestador").style.display = "none";
-        document.getElementById("secao-prestador").style.display = "block";
-        usuarioAlvo.tipo = "prestador"; // Marca a mudança
+    function verificarModoCliente() {
+        if (!isOwnProfile) return;
+        const areaPrestador = document.getElementById("secao-prestador");
+        let btnVoltarCliente = document.getElementById('btnVoltarCliente');
         
-        if (!usuarioAlvo.prestador) {
-            usuarioAlvo.prestador = {}; // Inicializa o objeto de metadados
+        if (usuarioAlvo.tipo === 'prestador') {
+            if (!btnVoltarCliente && areaPrestador) {
+                areaPrestador.insertAdjacentHTML('beforeend', `
+                    <div id="containerVoltarCliente" style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #4F5B66;">
+                        <button id="btnVoltarCliente" class="btn-forgot" style="width: auto; padding: 10px 20px; color: #AAAAAA; border-color: #4F5B66;">
+                            Voltar para conta de cliente
+                        </button>
+                    </div>
+                `);
+                document.getElementById('btnVoltarCliente').addEventListener('click', reverterParaCliente);
+            }
+        } else {
+            const container = document.getElementById('containerVoltarCliente');
+            if (container) container.remove();
         }
+    }
 
-        // UX: Mostra que está processando a mudança para evitar impaciência
-        const btnTornar = document.getElementById("btnTornarPrestador");
-        if (btnTornar) {
-            btnTornar.innerText = "Configurando seu perfil profissional...";
-            btnTornar.disabled = true;
-        }
+    function reverterParaCliente() {
+        mostrarConfirmacao("Tem certeza que deseja voltar a ser cliente? Seus serviços ficarão inativos e não aparecerão nas buscas.", async () => {
+            try {
+                usuarioAlvo.tipo = "cliente";
+                await API.atualizarPerfilApi(usuarioAlvo);
+                document.getElementById("secao-prestador").style.display = "none";
+                document.getElementById("areaTornarPrestador").style.display = "block";
+                
+                verificarModoCliente();
+                mostrarToast("Conta revertida para cliente.", "success");
+                
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                mostrarToast("Erro ao reverter conta.", "error");
+            }
+        });
+    }
 
-        try {
-            // 🚀 AUTO-SALVA NO BANCO: Transforma o cliente em prestador imediatamente nos bastidores!
-            await API.atualizarPerfilApi(usuarioAlvo);
-            mostrarToast("Parabéns! Você agora é um profissional. Já pode adicionar seus serviços abaixo.", "success");
-        } catch (error) {
-            console.error("Erro ao converter para prestador:", error);
-            mostrarToast("Erro ao ativar modo prestador. Tente salvar manualmente no fim da página.", "error");
-        }
+    async function tornarPrestador() {
+        const modalHtml = `
+            <div id="modalTornarPrestador" class="modal" style="display: flex; align-items: center; justify-content: center; z-index: 10000; background-color: rgba(0,0,0,0.7);">
+                <div class="modal-content fade-up-animation" style="max-width: 500px; height: auto; text-align: center; padding: 40px 30px; margin: 0;">
+                    <div style="font-size: 50px; margin-bottom: 15px;">💼</div>
+                    <h3 style="color: #00ADB5; margin-bottom: 15px; font-size: 24px;">Pronto para ganhar dinheiro no AjudaAí?</h3>
+                    <p style="color: #CCCCCC; margin-bottom: 15px; font-size: 15px; line-height: 1.6;">
+                        Ao se tornar um prestador, você terá uma vitrine para oferecer seus serviços para milhares de clientes.
+                    </p>
+                    <div style="text-align: left; background: #2A343D; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #4F5B66;">
+                        <ul style="color: #AAAAAA; font-size: 14px; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px;">
+                            <li>✅ <strong>Visibilidade:</strong> Seu perfil aparecerá nas buscas.</li>
+                            <li>✅ <strong>Flexibilidade:</strong> Negocie orçamentos diretamente no chat.</li>
+                            <li>✅ <strong>Segurança:</strong> Pagamento garantido e retido pela plataforma.</li>
+                            <li>⚠️ <strong>Taxa da Plataforma:</strong> Será descontada uma pequena taxa sobre os serviços concluídos.</li>
+                        </ul>
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button id="btnCancelPrestador" class="btn-forgot" style="margin: 0; flex: 1;">Cancelar</button>
+                        <button id="btnConfirmPrestador" class="btn-login" style="margin: 0; flex: 1.5; font-size: 14px;">Aceitar e Criar Meu Primeiro Serviço</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        document.getElementById('btnCancelPrestador').onclick = () => document.getElementById('modalTornarPrestador').remove();
+        
+        document.getElementById('btnConfirmPrestador').onclick = async () => {
+            const btnTornar = document.getElementById("btnConfirmPrestador");
+            setButtonLoading(btnTornar);
 
-        alternarModoEdicao(true);
+            usuarioAlvo.tipo = "prestador";
+            if (!usuarioAlvo.prestador) {
+                usuarioAlvo.prestador = {}; 
+            }
+
+            try {
+                await API.atualizarPerfilApi(usuarioAlvo);
+                document.getElementById('modalTornarPrestador').remove();
+                document.getElementById("areaTornarPrestador").style.display = "none";
+                document.getElementById("secao-prestador").style.display = "block";
+                
+                mostrarToast("Parabéns! Você agora é um profissional.", "success");
+                alternarModoEdicao(true);
+                verificarModoCliente();
+                
+                // Abre o modal de serviço obrigatoriamente
+                setTimeout(() => {
+                    abrirModalServico();
+                }, 500);
+                
+            } catch (error) {
+                console.error("Erro ao converter para prestador:", error);
+                mostrarToast("Erro ao ativar modo prestador.", "error");
+                removeButtonLoading(btnTornar);
+            }
+        };
     }
 
     async function préVisualizarFoto(event) {
@@ -378,16 +451,29 @@ document.addEventListener("DOMContentLoaded", async function() {
         const todosServicos = await API.getServicos();
         const meusServicos = todosServicos.filter(s => s.prestadorEmail === emailDoPrestador);
 
+        if (meusServicos.length === 0 && isOwnProfile && usuarioAlvo.tipo === 'prestador') {
+            listaContainer.innerHTML = `
+                <div class="empty-state fade-up-animation" style="background: rgba(217, 83, 79, 0.05); border: 1px dashed #d9534f; padding: 25px; border-radius: 12px;">
+                    <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+                    <p style="color: #d9534f; font-weight: bold; margin-bottom: 5px;">Atenção: Perfil Incompleto</p>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 20px;">Cadastre seu primeiro serviço para começar a receber clientes e aparecer nas buscas.</p>
+                    <button class="btn-service" onclick="abrirModalServico()" style="width: auto; padding: 12px 25px;">Cadastrar Primeiro Serviço</button>
+                </div>`;
+            return;
+        }
+
         if (meusServicos.length === 0) {
             listaContainer.innerHTML = `<p style="color: #AAAAAA; font-style: italic; text-align: center;">Você ainda não cadastrou nenhum serviço.</p>`;
             return;
         }
 
-        listaContainer.innerHTML = meusServicos.map(servico => `
+        listaContainer.innerHTML = meusServicos.map(servico => {
+            const precoFormatado = servico.preco_base ? \`R$ \${parseFloat(servico.preco_base).toFixed(2).replace('.', ',')}\` : 'A combinar';
+            return \`
             <div class="meu-servico-card">
                 <div class="servico-info">
                     <h4>${servico.titulo}</h4>
-                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria}</p>
+                    <p style="font-size: 13px; color: #AAAAAA;">Categoria: ${servico.categoria} | Preço Base: <span style="color:#00ADB5;">\${precoFormatado}</span></p>
                 </div>
                 <div class="botoes-acao" style="margin-top: 0;">
                     ${isOwnProfile 
@@ -396,7 +482,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                         : `<button class="btn-service" onclick="window.location.href='solicitar.html?servicoId=${servico.id}'" style="padding: 8px 15px;">Solicitar</button>`}
                 </div>
             </div>
-        `).join('');
+            \`;
+        }).join('');
     }
 
     async function abrirModalServico(servicoId = null) {
@@ -411,16 +498,41 @@ document.addEventListener("DOMContentLoaded", async function() {
         formServico.reset();
         document.getElementById("servicoId").value = "";
 
+        let precoInput = document.getElementById("servicoPreco");
+        if (!precoInput) {
+            const descGroup = document.getElementById("servicoDescricao").closest('.form-group');
+            descGroup.insertAdjacentHTML('afterend', `
+                <div class="form-group">
+                    <label for="servicoPreco" style="color:#AAAAAA; font-size:13px;">Preço Base (R$)</label>
+                    <input type="text" id="servicoPreco" placeholder="R$ 0,00" required style="background:#2A343D; border:1px solid #4F5B66; color:#EEE;">
+                </div>
+            `);
+            if (typeof aplicarMascaraDinheiro === 'function') {
+                aplicarMascaraDinheiro(document.getElementById("servicoPreco"));
+            }
+        }
+
+        const todosServicos = await API.getServicos();
+        const meusServicos = todosServicos.filter(s => s.prestadorEmail === emailLogado);
+        
+        if (meusServicos.length === 0) {
+            closeServicoModal.style.display = 'none'; // Bloqueia saída
+        } else {
+            closeServicoModal.style.display = 'block';
+        }
+
         if (servicoId) {
             // Modo Edição
             servicoModalTitle.innerText = "Editar Serviço";
-            const todosServicos = await API.getServicos();
             const servico = todosServicos.find(s => String(s.id) === String(servicoId));
             if (servico) {
                 document.getElementById("servicoId").value = servico.id;
                 document.getElementById("servicoTitulo").value = servico.titulo;
                 document.getElementById("servicoCategoria").value = servico.categoria;
                 document.getElementById("servicoDescricao").value = servico.descricao;
+                if (document.getElementById("servicoPreco") && typeof formatarMoedaParaMascara === 'function') {
+                    document.getElementById("servicoPreco").value = servico.preco_base ? formatarMoedaParaMascara(servico.preco_base) : '';
+                }
             }
         } else {
             // Modo Adição
@@ -440,24 +552,28 @@ document.addEventListener("DOMContentLoaded", async function() {
         const titulo = document.getElementById("servicoTitulo").value.trim();
         const categoria = document.getElementById("servicoCategoria").value;
         const descricao = document.getElementById("servicoDescricao").value.trim();
+        
+        const precoInput = document.getElementById("servicoPreco");
+        const preco_base = precoInput ? limparMascaraDinheiro(precoInput.value) : null;
 
-        if (!titulo || !categoria) {
+        if (!titulo || !categoria || !descricao || !preco_base || parseFloat(preco_base) <= 0) {
             removeButtonLoading(submitButton);
-            mostrarToast("Título e Categoria são obrigatórios.", "error");
+            mostrarToast("Todos os campos, incluindo o Preço Base, são obrigatórios.", "error");
             return;
         }
 
         try {
             if (id) { // Editando
                 // 🚀 Edita direto no Banco de Dados MySQL
-                await API.editarServico(id, { titulo, categoria, descricao });
+                await API.editarServico(id, { titulo, categoria, descricao, preco_base });
             } else { // Criando
                 // 🚀 Envia direto para o Banco de Dados MySQL via Node.js
-                await API.criarServico({ titulo, categoria, descricao });
+                await API.criarServico({ titulo, categoria, descricao, preco_base });
             }
     
             mostrarToast("Serviço salvo no Banco de Dados com sucesso!", "success");
             servicoModal.style.display = "none";
+            if (closeServicoModal) closeServicoModal.style.display = 'block';
             renderizarMeusServicos(emailLogado);
             removeButtonLoading(submitButton);
         } catch (error) {

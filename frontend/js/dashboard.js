@@ -80,6 +80,23 @@ function carregarDashboard(usuarioAtual, solicitacoes, avaliacoes, usuarios, ser
     if (isPrestador) {
         document.getElementById("dashboard-prestador-area").style.display = "block";
         document.getElementById("financeiro-section").style.display = "block";
+
+        const meusServicos = servicos.filter(s => s.prestadorEmail === emailLogado);
+        if (meusServicos.length === 0) {
+            const areaPrestador = document.getElementById("dashboard-prestador-area");
+            areaPrestador.insertAdjacentHTML('afterbegin', `
+                <div class="empty-state fade-up-animation" style="background: rgba(217, 83, 79, 0.05); border: 1px dashed #d9534f; padding: 25px; border-radius: 12px; margin-bottom: 30px;">
+                    <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+                    <p style="color: #d9534f; font-weight: bold; margin-bottom: 5px;">Atenção: Perfil Incompleto</p>
+                    <p style="color: #AAAAAA; font-size: 14px; margin-bottom: 20px;">Você precisa cadastrar seu primeiro serviço para ativar seu Dashboard corretamente.</p>
+                    <button class="btn-service" onclick="window.location.href='perfil.html'" style="width: auto; padding: 12px 25px;">Ir para Perfil e Cadastrar</button>
+                </div>
+            `);
+            
+            const cardsGrid = areaPrestador.querySelector('.dashboard-container');
+            if (cardsGrid) cardsGrid.style.opacity = '0.3';
+            if (cardsGrid) cardsGrid.style.pointerEvents = 'none';
+        }
     }
 
     // Fallbacks para garantir que lê do BD (snake_case) ou do Cache
