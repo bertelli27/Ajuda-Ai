@@ -60,7 +60,7 @@ const listarServicos = async (req, res) => {
             JOIN usuarios u ON p.usuario_id = u.id
             LEFT JOIN avaliacoes a ON a.servico_id = s.id
             WHERE s.status = 'ATIVO'
-            GROUP BY s.id
+            GROUP BY s.id, u.email, s.titulo, c.nome, s.descricao, s.preco_base, s.status, s.criado_em
             ORDER BY s.criado_em DESC
         `;
 
@@ -98,7 +98,7 @@ const getServicoById = async (req, res) => {
             JOIN usuarios u ON p.usuario_id = u.id
             LEFT JOIN avaliacoes a ON a.servico_id = s.id
             WHERE s.id = ?
-            GROUP BY s.id
+            GROUP BY s.id, s.titulo, s.descricao, s.preco_base, s.status, c.nome, p.usuario_id, u.nome, u.email
         `;
 
         const [servicos] = await db.execute(query, [servicoId]);

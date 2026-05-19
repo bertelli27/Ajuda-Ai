@@ -163,13 +163,10 @@ function carregarServicos() {
         card.className = 'service-card';
         const isSelf = prestador.email === emailLogado;
 
-        // Calcula a média de avaliações
-        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
-        let mediaEstrelas = 'N/A';
-        if (avaliacoesDoPrestador.length > 0) {
-            const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
-            const notaMedia = somaNotas / avaliacoesDoPrestador.length;
-            mediaEstrelas = '★'.repeat(Math.round(notaMedia)) + '☆'.repeat(5 - Math.round(notaMedia));
+        // 🚀 USA A MÉDIA GLOBAL DO PRESTADOR VINDA DIRETO DA API
+        let mediaEstrelas = 'Novo';
+        if (prestador.prestador && prestador.prestador.totalAvaliacoes > 0) {
+            mediaEstrelas = `★ ${parseFloat(prestador.prestador.mediaGlobal).toFixed(1)}`;
         }
         
         // Encontra o serviço principal do prestador para exibir no card

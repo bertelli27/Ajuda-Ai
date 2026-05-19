@@ -150,12 +150,10 @@ document.addEventListener("DOMContentLoaded", function() {
             const card = document.createElement('div');
             card.className = 'service-card';
 
-        const avaliacoesDoPrestador = avaliacoes.filter(a => a.prestadorEmail === prestador.email);
-        let mediaEstrelas = 'N/A';
-        if (avaliacoesDoPrestador.length > 0) {
-            const somaNotas = avaliacoesDoPrestador.reduce((acc, a) => acc + a.nota, 0);
-            const notaMedia = somaNotas / avaliacoesDoPrestador.length;
-            mediaEstrelas = `★ ${notaMedia.toFixed(1)}`;
+        // 🚀 USA A MÉDIA PONDERADA REAL VINDA DIRETO DO BANCO DE DADOS!
+        let mediaEstrelas = 'Novo';
+        if (servico.totalAvaliacoes > 0) {
+            mediaEstrelas = `★ ${parseFloat(servico.mediaAvaliacao).toFixed(1)}`;
         }
 
         card.innerHTML = `
@@ -163,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <span style="font-size: 12px; background: #00ADB5; color: #222A31; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px;">${servico.categoria}</span>
                 <h3>${servico.titulo}</h3>
                 <p><strong>Prestador:</strong> ${prestador.nome}</p>
-                <p><strong>Avaliação:</strong> <span class="rating-display">${mediaEstrelas}</span> (${avaliacoesDoPrestador.length})</p>
+                <p><strong>Avaliação do Serviço:</strong> <span class="rating-display">${mediaEstrelas}</span> (${servico.totalAvaliacoes})</p>
                 <p><strong>Descrição:</strong> ${servico.descricao || 'Sem descrição.'}</p>
                 <p><strong>Cidade:</strong> ${prestador.endereco.cidade} - ${prestador.endereco.estado}</p>
                 <div class="card-botoes">
