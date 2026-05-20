@@ -1206,22 +1206,24 @@ document.addEventListener("DOMContentLoaded", async function() {
         if (!btn) return;
 
         const avaliacaoId = btn.dataset.id;
-        const motivo = prompt("👑 MODO ADMIN:\nInforme o motivo para excluir esta avaliação (Ficará registrado na auditoria):");
 
-        if (motivo && motivo.trim() !== "") {
-            API.excluirAvaliacaoAdmin(avaliacaoId, motivo.trim())
-                .then(async () => {
-                    mostrarToast("Avaliação removida com sucesso.", "success");
-                    // Refresca os dados e re-renderiza a seção
-                    avaliacoes = await API.getAvaliacoes();
-                    carregarAvaliacoes(usuarioAlvo);
-                })
-                .catch(err => {
-                    mostrarToast(err.message, "error");
-                });
-        } else if (motivo !== null) {
-            mostrarToast("A justificativa é obrigatória.", "error");
-        }
+        mostrarPromptAdmin(
+            "Moderação de Avaliação",
+            "Informe o motivo para excluir esta avaliação (Ficará registrado na auditoria):",
+            "Motivo da exclusão...",
+            (motivo) => {
+                API.excluirAvaliacaoAdmin(avaliacaoId, motivo)
+                    .then(async () => {
+                        mostrarToast("Avaliação removida com sucesso.", "success");
+                        // Refresca os dados e re-renderiza a seção
+                        avaliacoes = await API.getAvaliacoes();
+                        carregarAvaliacoes(usuarioAlvo);
+                    })
+                    .catch(err => {
+                        mostrarToast(err.message, "error");
+                    });
+            }
+        );
     }
 
     document.getElementById("avaliacoesRecebidas")?.addEventListener('click', handleDeleteReview);
@@ -1251,6 +1253,45 @@ document.addEventListener("DOMContentLoaded", async function() {
         const modal = document.getElementById('customConfirmModal');
         document.getElementById('btnConfirmCancel').onclick = () => modal.remove();
         document.getElementById('btnConfirmOk').onclick = () => { modal.remove(); callbackConfirmar(); };
+    }
+
+    function mostrarPromptAdmin(titulo, mensagem, placeholder, callbackConfirmar) {
+        const existingModal = document.getElementById('customPromptModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHtml = `
+            <div id="customPromptModal" class="modal" style="display: flex; align-items: center; justify-content: center; z-index: 10000; background-color: rgba(0,0,0,0.7);">
+                <div class="modal-content fade-up-animation" style="max-width: 450px; height: auto; text-align: center; padding: 30px; margin: 0;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">👑</div>
+                    <h3 style="color: #d9534f; margin-bottom: 15px; font-size: 20px;">${titulo}</h3>
+                    <p style="color: #AAAAAA; margin-bottom: 15px; font-size: 14px;">${mensagem}</p>
+                    <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                        <textarea id="promptInput" rows="3" placeholder="${placeholder}" style="background: #222A31; border: 1px solid #4F5B66; color: #EEE; width: 100%; padding: 12px; border-radius: 8px; resize: vertical; outline: none;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button id="btnPromptCancel" class="btn-forgot" style="margin: 0; flex: 1;">Cancelar</button>
+                        <button id="btnPromptOk" class="btn-login" style="background-color: #d9534f; color: white; margin: 0; flex: 1; box-shadow: none;">Confirmar Ação</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = document.getElementById('customPromptModal');
+        const input = document.getElementById('promptInput');
+        input.focus();
+
+        document.getElementById('btnPromptCancel').onclick = () => modal.remove();
+        document.getElementById('btnPromptOk').onclick = () => { 
+            const valor = input.value.trim();
+            if(valor) {
+                modal.remove(); 
+                callbackConfirmar(valor); 
+            } else {
+                mostrarToast("A justificativa é obrigatória.", "error");
+                input.style.borderColor = "#d9534f";
+            }
+        };
     }
 
     function setupHeader() {
@@ -1313,12 +1354,16 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     // ================= FUNÇÃO ADMINISTRATIVA =================
     window.banirEsteUsuario = function(id, nome) {
-        const motivo = prompt(`👑 MODO ADMIN:\nInforme o motivo para banir ${nome} (Ficará registrado na auditoria):`);
-        if (motivo) {
-            API.banirUsuarioAdmin(id, motivo).then(() => {
-                mostrarToast("Usuário banido com sucesso e registrado no log.", "success");
-                setTimeout(() => window.location.href = "servicos.html", 1500);
-            }).catch(e => mostrarToast(e.message, "error"));
-        }
+        mostrarPromptAdmin(
+            "Banir Usuário",
+            `Informe o motivo para banir ${nome} (Ficará registrado na auditoria):`,
+            "Motivo do banimento...",
+            (motivo) => {
+                API.banirUsuarioAdmin(id, motivo).then(() => {
+                    mostrarToast("Usuário banido com sucesso e registrado no log.", "success");
+                    setTimeout(() => window.location.href = "servicos.html", 1500);
+                }).catch(e => mostrarToast(e.message, "error"));
+            }
+        );
     };
 });
