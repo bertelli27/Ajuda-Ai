@@ -5,6 +5,14 @@ document.addEventListener("DOMContentLoaded", async function() {
         return;
     }
 
+    const usuarios = await API.getUsuarios();
+    const usuarioAtual = usuarios.find(u => u.email === emailLogado);
+    
+    if (usuarioAtual && usuarioAtual.tipo === 'admin') {
+        window.location.href = "index.html";
+        return;
+    }
+
     async function renderizarCarteira() {
         const list = document.getElementById("transactionList");
         const walletBalance = document.getElementById("walletBalance");
@@ -88,13 +96,11 @@ document.addEventListener("DOMContentLoaded", async function() {
     async function setupHeader() {
         const menu = document.getElementById("menu");
         if (!menu) return;
-        const usuarios = await API.getUsuarios(); // Mantendo mock por enquanto
-        const usuarioLogado = usuarios.find(u => u.email === emailLogado);
-        if(!usuarioLogado) return;
+        if(!usuarioAtual) return;
         
-        const fotoPerfil = usuarioLogado?.fotoPerfil || '../img/avatar_padrao.png';
-        const primeiroNome = usuarioLogado.nome.split(' ')[0];
-        const textoPedidos = usuarioLogado.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
+        const fotoPerfil = usuarioAtual?.fotoPerfil || '../img/avatar_padrao.png';
+        const primeiroNome = usuarioAtual.nome.split(' ')[0];
+        const textoPedidos = usuarioAtual.tipo === 'prestador' ? 'Meus Serviços' : 'Meus Pedidos';
         
         menu.innerHTML = `
             <a href="index.html">Início</a>

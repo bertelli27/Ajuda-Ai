@@ -22,6 +22,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         return;
     }
 
+    // Trava de segurança para Administradores
+    if (usuarioAtual.tipo === 'admin') {
+        window.location.href = "index.html";
+        return;
+    }
+
     setupHeader(usuarioAtual, usuarios);
     carregarDashboard(usuarioAtual, solicitacoes, avaliacoes, usuarios, servicos, transacoes);
     await renderizarHistoricoFinanceiro(emailLogado);

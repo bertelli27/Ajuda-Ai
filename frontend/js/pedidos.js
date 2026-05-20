@@ -28,6 +28,12 @@ document.addEventListener("DOMContentLoaded", async function() {
         return;
     }
 
+    // Trava de segurança para Administradores
+    if (usuarioAtual.tipo === 'admin') {
+        window.location.href = "index.html";
+        return;
+    }
+
     // Containers para pedidos enviados e recebidos
     const recebidosSection = document.getElementById("recebidos-section");
     const recebidosContainer = document.getElementById("pedidos-recebidos-container");

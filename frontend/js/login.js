@@ -62,7 +62,11 @@ loginForm.addEventListener("submit", async function(e){
 
         mostrarToast("Login bem-sucedido! Redirecionando...", "success");
         setTimeout(() => {
-            window.location.href = "dashboard.html";
+            if (resposta.usuario.tipo === 'admin') {
+                window.location.href = "index.html";
+            } else {
+                window.location.href = "dashboard.html";
+            }
         }, 1000);
         
     } catch (error) {
