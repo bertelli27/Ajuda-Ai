@@ -1861,6 +1861,33 @@ textarea#chat-input {
     font-style: italic;
 }
 
+.btn-excluir-avaliacao {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(217, 83, 79, 0.1);
+    color: #d9534f;
+    border: 1px solid rgba(217, 83, 79, 0.3);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+}
+.btn-excluir-avaliacao:hover {
+    background: #d9534f;
+    color: #FFFFFF;
+    transform: scale(1.1);
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(217, 83, 79, 0.4);
+}
+.btn-excluir-avaliacao svg { width: 14px; height: 14px; }
+
 /* ===========================
    TOAST NOTIFICATIONS
 =========================== */

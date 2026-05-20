@@ -4,11 +4,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     const params = new URLSearchParams(window.location.search);
     const action = params.get("action");
     const perfilEmail = params.get("usuario");
-    
+
     // 🚀 Busca dados REAIS da API!
-    const usuarios = await API.getUsuarios();
-    const solicitacoes = await API.getSolicitacoes();
-    const avaliacoes = await API.getAvaliacoes();
+    let usuarios, solicitacoes, avaliacoes;
+    [usuarios, solicitacoes, avaliacoes] = await Promise.all([
+        API.getUsuarios(), API.getSolicitacoes(), API.getAvaliacoes()
+    ]);
 
     let usuarioAlvo; // O usuário cujo perfil está sendo exibido
     let isOwnProfile = false; // Flag para verificar se o usuário está vendo seu próprio perfil
@@ -652,6 +653,9 @@ document.addEventListener("DOMContentLoaded", async function() {
     window.excluirServico = excluirServico; // Expondo para o onclick
 
     async function carregarAvaliacoes(usuario, servicoIdFiltro = 'todos') {
+        const usuarioLogado = usuarios.find(u => u.email === emailLogado);
+        const isAdmin = usuarioLogado && usuarioLogado.tipo === 'admin';
+
         const containerAvaliacoes = document.getElementById("avaliacoesRecebidas");
         const dashboard = document.getElementById("avaliacoesDashboard");
         const listaAvaliacoes = document.getElementById("listaAvaliacoes");
@@ -732,19 +736,23 @@ document.addEventListener("DOMContentLoaded", async function() {
             
             // 3. Renderização de Cards Reutilizável
             const renderReview = (avaliacao) => {
-                 const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
-                 const fotoCliente = cliente?.fotoPerfil || '../img/avatar_padrao.png';
-                 const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
-                 const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
-                 // 🚀 Pega a data de criação do Banco de Dados (criado_em)
-                 const dataAvaliacao = new Date(avaliacao.criado_em || avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
-                 
-                 // 🚀 Busca o nome do serviço para a TAG
-                 const servicoAvaliado = servicosDoPrestador.find(s => String(s.id) === String(avaliacao.servico_id));
-                 const nomeServicoTag = servicoAvaliado ? servicoAvaliado.titulo : 'Serviço Excluído';
+                const cliente = usuarios.find(u => u.email === avaliacao.clienteEmail);
+                const fotoCliente = cliente?.fotoPerfil || '../img/avatar_padrao.png';
+                const nomeCliente = cliente ? cliente.nome.split(' ')[0] : 'Anônimo';
+                const estrelas = '★'.repeat(avaliacao.nota) + '☆'.repeat(5 - avaliacao.nota);
+                const dataAvaliacao = new Date(avaliacao.criado_em || avaliacao.data_avaliacao || new Date()).toLocaleDateString('pt-BR');
+                const servicoAvaliado = servicosDoPrestador.find(s => String(s.id) === String(avaliacao.servico_id));
+                const nomeServicoTag = servicoAvaliado ? servicoAvaliado.titulo : 'Serviço Excluído';
+
+                const btnExcluirAdmin = isAdmin && !isOwnProfile ? `
+                    <button class="btn-excluir-avaliacao" data-id="${avaliacao.id}" data-tooltip="Moderar Avaliação" data-tooltip-dir="left">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>
+                    </button>
+                ` : '';
 
                  return `
-                     <div class="avaliacao-card fade-up-animation">
+                     <div class="avaliacao-card fade-up-animation" style="position: relative;">
+                         ${btnExcluirAdmin}
                          <div class="avaliacao-header" style="justify-content: space-between;">
                              <div style="display: flex; align-items: center; gap: 10px;">
                                  <img src="${fotoCliente}" alt="Avatar" class="menu-avatar">
@@ -1192,6 +1200,32 @@ document.addEventListener("DOMContentLoaded", async function() {
             pAddModal.style.display = 'none'; 
         }
     });
+
+    function handleDeleteReview(e) {
+        const btn = e.target.closest('.btn-excluir-avaliacao');
+        if (!btn) return;
+
+        const avaliacaoId = btn.dataset.id;
+        const motivo = prompt("👑 MODO ADMIN:\nInforme o motivo para excluir esta avaliação (Ficará registrado na auditoria):");
+
+        if (motivo && motivo.trim() !== "") {
+            API.excluirAvaliacaoAdmin(avaliacaoId, motivo.trim())
+                .then(async () => {
+                    mostrarToast("Avaliação removida com sucesso.", "success");
+                    // Refresca os dados e re-renderiza a seção
+                    avaliacoes = await API.getAvaliacoes();
+                    carregarAvaliacoes(usuarioAlvo);
+                })
+                .catch(err => {
+                    mostrarToast(err.message, "error");
+                });
+        } else if (motivo !== null) {
+            mostrarToast("A justificativa é obrigatória.", "error");
+        }
+    }
+
+    document.getElementById("avaliacoesRecebidas")?.addEventListener('click', handleDeleteReview);
+    document.getElementById("modalListaAvaliacoes")?.addEventListener('click', handleDeleteReview);
 
     // ================= FUNÇÕES AUXILIARES =================
 

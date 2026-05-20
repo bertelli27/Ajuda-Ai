@@ -436,6 +436,22 @@ const API = {
         return data;
     },
 
+    async excluirAvaliacaoAdmin(id, motivo) {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/admin/avaliacoes/${id}`, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ motivo })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao excluir avaliação');
+        return data;
+    },
+
     // ================= SESSÃO E AUTENTICAÇÃO =================
     getSessaoAtual() {
         // Síncrono, pois apenas verifica o token/email salvo localmente

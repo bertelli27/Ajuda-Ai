@@ -60,6 +60,35 @@ const adminController = {
         }
     },
 
+    // 4. Excluir uma avaliação (Moderação de Conteúdo)
+    excluirAvaliacao: async (req, res) => {
+        const { id } = req.params;
+        const { motivo } = req.body;
+        const adminId = req.user.id;
+
+        if (!motivo) {
+            return res.status(400).json({ error: 'A justificativa é obrigatória para a exclusão.' });
+        }
+
+        try {
+            const [review] = await db.execute('SELECT id FROM avaliacoes WHERE id = ?', [id]);
+            if (review.length === 0) {
+                return res.status(404).json({ error: 'Avaliação não encontrada.' });
+            }
+
+            await db.execute('DELETE FROM avaliacoes WHERE id = ?', [id]);
+
+            await db.execute(
+                `INSERT INTO logs_administrador (admin_id, acao, alvo_tipo, alvo_id, justificativa) VALUES (?, ?, ?, ?, ?)`,
+                [adminId, 'EXCLUSAO_AVALIACAO', 'avaliacao', id, motivo]
+            );
+
+            res.json({ message: "Avaliação excluída com sucesso e ação registrada no log." });
+        } catch (error) {
+            res.status(500).json({ error: "Erro ao tentar excluir a avaliação." });
+        }
+    },
+
     // 3. Extrair as Trilhas de Auditoria (Logs) para mostrar na tela
     listarLogs: async (req, res) => {
         try {

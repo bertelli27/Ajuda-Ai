@@ -14,5 +14,6 @@ router.use(verificarToken, verificarAdmin);
 router.get('/usuarios', adminController.listarUsuarios);
 router.put('/usuarios/:id/banir', adminController.banirUsuario);
 router.get('/logs', adminController.listarLogs);
+router.delete('/avaliacoes/:id', adminController.excluirAvaliacao);
 
 module.exports = router;
