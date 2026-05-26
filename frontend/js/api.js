@@ -147,6 +147,18 @@ const API = {
         return data;
     },
 
+    // ================= ASSISTENTE INTELIGENTE =================
+    async analisarProblema(descricao) {
+        const response = await fetch(`${BASE_URL}/assistente/analisar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ descricao })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao analisar o problema');
+        return data;
+    },
+
     // ================= SERVIÇOS =================
     async getServicos() {
         try {

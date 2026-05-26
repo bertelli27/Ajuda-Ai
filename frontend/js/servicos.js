@@ -279,38 +279,35 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // ================= INTELIGÊNCIA ARTIFICIAL (CLASSIFICADOR) =================
-    async function sugerirServicoIA(descricao) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const desc = descricao.toLowerCase();
-                // Palavras mapeadas diretamente para as Categorias Reais do sistema
-                const regras = {
-                    "Limpeza": ["limpeza", "limpar", "faxina", "suja", "sujo", "poeira", "diarista", "lavar"],
-                    "Manutenção": ["água", "agua", "cano", "vazamento", "vazando", "pia", "torneira", "ralo", "encanamento", "luz", "energia", "tomada", "fio", "curto", "disjuntor", "chuveiro", "eletricista", "encanador", "ar condicionado"],
-                    "Reformas": ["pintura", "tinta", "parede", "pintar", "reforma", "pedreiro", "construir", "montar", "móveis", "moveis", "guarda-roupa", "mesa", "cadeira", "armário", "armario"],
-                    "Tecnologia": ["computador", "pc", "notebook", "formatar", "vírus", "internet", "wifi", "rede", "celular", "tela"],
-                    "Saúde e Beleza": ["cabelo", "corte", "unha", "manicure", "maquiagem", "massagem"],
-                };
+    // ================= ASSISTENTE INTELIGENTE =================
+    let ultimaAnaliseIA = null;
 
-                let categoriaSugerida = "Outros"; // Fallback
+    function renderizarResultadoIA(analise) {
+        const iaResultado = document.getElementById("ia-resultado");
+        const iaCategoriaTexto = document.getElementById("ia-categoria-texto");
+        const iaExplicacao = document.getElementById("ia-explicacao");
+        const iaLista = document.getElementById("ia-profissionais-lista");
 
-                for (const [categoria, palavras] of Object.entries(regras)) {
-                    if (palavras.some(palavra => desc.includes(palavra))) {
-                        categoriaSugerida = categoria;
-                        break;
-                    }
-                }
-                resolve(categoriaSugerida);
-            }, 800); // 800ms delay para parecer real
-        });
+        if (!iaResultado || !iaCategoriaTexto || !iaLista) return;
+
+        iaCategoriaTexto.innerText = analise.categoriaPrincipal;
+        if (iaExplicacao) iaExplicacao.innerText = analise.explicacao;
+
+        iaLista.innerHTML = analise.profissionais.map((prof) => `
+            <li style="background: rgba(34, 42, 49, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
+                <strong style="color: #EEEEEE;">${prof.nome}</strong>
+                <span style="color: #00ADB5; font-size: 12px; margin-left: 8px;">${prof.confianca}% de compatibilidade</span>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.8;">${prof.descricao}</p>
+            </li>
+        `).join('');
+
+        iaResultado.style.display = "block";
     }
 
     function configurarIA() {
         const btnSugerir = document.getElementById("btnSugerirServico");
         const inputDescricao = document.getElementById("ia-descricao-problema");
         const iaResultado = document.getElementById("ia-resultado");
-        const iaSugestaoTexto = document.getElementById("ia-sugestao-texto");
         const btnUsarSugestao = document.getElementById("btnUsarSugestao");
 
         if (!btnSugerir || !inputDescricao) return;
@@ -318,7 +315,7 @@ document.addEventListener("DOMContentLoaded", function() {
         btnSugerir.addEventListener("click", async () => {
             const texto = inputDescricao.value.trim();
             if (!texto) {
-                mostrarToast("Descreva seu problema na caixa da IA primeiro.", "error");
+                mostrarToast("Descreva seu problema no assistente primeiro.", "error");
                 return;
             }
 
@@ -326,38 +323,50 @@ document.addEventListener("DOMContentLoaded", function() {
             btnSugerir.disabled = true;
 
             try {
-                const categoria = await sugerirServicoIA(texto);
-                iaSugestaoTexto.innerText = categoria;
-                iaResultado.style.display = "block";
+                const analise = await API.analisarProblema(texto);
+                ultimaAnaliseIA = analise;
+                renderizarResultadoIA(analise);
             } catch (e) {
-                mostrarToast("Erro na IA.", "error");
+                mostrarToast(e.message || "Erro ao analisar o problema.", "error");
             } finally {
                 btnSugerir.innerHTML = "Analisar Problema";
                 btnSugerir.disabled = false;
             }
         });
 
-        btnUsarSugestao.addEventListener("click", () => {
-            const categoriaSugerida = iaSugestaoTexto.innerText;
-            
-            // 1. Atualiza visualmente os botões redondos de categoria (Deixa a sugerida "active")
-            const botoesCategoria = document.querySelectorAll('.btn-categoria');
-            botoesCategoria.forEach(b => {
+        inputDescricao.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                btnSugerir.click();
+            }
+        });
+
+        btnUsarSugestao?.addEventListener("click", () => {
+            if (!ultimaAnaliseIA) return;
+
+            const categoriaSugerida = ultimaAnaliseIA.categoriaPrincipal;
+            const termosBusca = ultimaAnaliseIA.profissionais
+                .map((p) => p.nome.split(' ')[0].toLowerCase())
+                .join(' ');
+            const nomesProfissionais = ultimaAnaliseIA.profissionais.map(p => p.nome).join(', ');
+
+            document.querySelectorAll('.btn-categoria').forEach(b => {
                 b.classList.remove('active');
                 if (b.getAttribute('data-cat') === categoriaSugerida) {
                     b.classList.add('active');
                 }
             });
 
-            // 2. Executa a busca e limpa o texto da barra de pesquisa comum
             currentPage = 1;
-            document.getElementById("searchInput").value = ""; 
-            carregarServicos(categoriaSugerida, "");
-            
-            // 3. Esconde a caixa e dá feedback
+            const searchInput = document.getElementById("searchInput");
+            if (searchInput) searchInput.value = termosBusca;
+            carregarServicos(categoriaSugerida, termosBusca);
+
             iaResultado.style.display = "none";
             inputDescricao.value = "";
-            mostrarToast(`Exibindo profissionais da categoria: ${categoriaSugerida}`, "success");
+            ultimaAnaliseIA = null;
+
+            mostrarToast(`Exibindo: ${nomesProfissionais} (${categoriaSugerida})`, "success");
         });
     }
 
