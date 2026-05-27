@@ -528,6 +528,83 @@ body {
     box-shadow: 0 6px 20px rgba(0, 173, 181, 0.3);
 }
 
+/* Assistente Inteligente - campo de pesquisa igual ao principal */
+.assistant-search-section {
+    display: flex;
+    justify-content: center;
+    margin: -20px auto 40px auto;
+    padding: 0 15px;
+}
+
+.assistant-search-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 800px;
+    padding: 28px;
+    background: #393E46;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 173, 181, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 173, 181, 0.25);
+    margin: 0 auto;
+}
+
+.assistant-search-card h4 {
+    color: #00ADB5;
+    margin: 0;
+    font-size: 18px;
+}
+
+.assistant-search-card p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.assistant-search-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.assistant-search-input {
+    flex: 1;
+    min-width: 280px;
+    min-height: 58px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    background: #2A343D;
+    color: #EEEEEE;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    resize: none;
+}
+
+.assistant-search-input:focus {
+    border-color: #00ADB5;
+    background: #222A31;
+    box-shadow: 0 0 0 4px rgba(0, 173, 181, 0.1);
+}
+
+.assistant-search-btn {
+    width: auto;
+    padding: 14px 28px;
+}
+
+.assistant-result-box {
+    background: rgba(0, 173, 181, 0.1);
+    border-left: 4px solid #00ADB5;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 8px;
+}
+
 /* CATEGORIAS DE SERVIÇOS */
 .categorias-container {
     display: flex;
