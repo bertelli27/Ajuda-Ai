@@ -18,10 +18,22 @@ function calcularPontuacao(textoNormalizado, palavrasChave) {
     let pontuacao = 0;
     const termosEncontrados = [];
 
+    // Quebra o texto em palavras para busca por palavra inteira, não substring
+    const palavrasTexto = textoNormalizado.split(/\s+/).filter(Boolean);
+
     for (const chave of chaves) {
-        if (textoNormalizado.includes(chave)) {
-            pontuacao += chave.includes(' ') ? 3 : 1;
-            termosEncontrados.push(chave);
+        // Se a chave tem múltiplas palavras (ex: "dog walker"), busca como frase
+        if (chave.includes(' ')) {
+            if (textoNormalizado.includes(chave)) {
+                pontuacao += 3;
+                termosEncontrados.push(chave);
+            }
+        } else {
+            // Se é uma palavra única, busca por palavra inteira, não substring
+            if (palavrasTexto.includes(chave)) {
+                pontuacao += 1;
+                termosEncontrados.push(chave);
+            }
         }
     }
 
