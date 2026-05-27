@@ -18,6 +18,7 @@ const PROFISSIONAIS_POR_CATEGORIA = [
     { categoria: 'Limpeza', nome: 'Limpeza Pós-Obra', descricao: 'Remoção de entulho e limpeza após reformas', palavras_chave: 'pós-obra,pos obra,entulho,reforma,construção,construcao,obras,resíduos,residuos' },
     { categoria: 'Limpeza', nome: 'Limpeza de Estofados', descricao: 'Higienização de sofás, colchões e carpetes', palavras_chave: 'estofado,sofá,sofa,colchão,colchao,carpete,tapete,higienização,higienizacao,mancha,ácaros,acaros' },
     { categoria: 'Limpeza', nome: 'Limpeza de Vidros', descricao: 'Limpeza de janelas, vitrines e fachadas', palavras_chave: 'vidro,janela,vitrine,fachada,cristal,espelho' },
+    { categoria: 'Manutenção', nome: 'Piscineiro', descricao: 'Limpeza, tratamento e manutenção de piscinas', palavras_chave: 'piscina,piscineiro,água verde,tratamento água,cloro,filtro,algas,ph,limpar piscina' },
 
     { categoria: 'Manutenção', nome: 'Encanador', descricao: 'Reparos hidráulicos, vazamentos e encanamentos', palavras_chave: 'encanador,encanamento,água,agua,cano,vazamento,vazando,pia,torneira,ralo,vaso,sanitário,sanitario,entupido,entupimento,hidráulica,hidraulica,pingando,gotejando' },
     { categoria: 'Manutenção', nome: 'Eletricista', descricao: 'Instalações e reparos elétricos', palavras_chave: 'eletricista,eletricidade,luz,energia,tomada,fio,curto,disjuntor,chuveiro,lâmpada,lampada,interruptor,sem luz,apagou' },

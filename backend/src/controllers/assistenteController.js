@@ -1,9 +1,9 @@
 const assistenteService = require('../services/assistenteService');
 
-const analisarProblema = (req, res) => {
+const analisarProblema = async (req, res) => {
     try {
         const { descricao } = req.body;
-        const resultado = assistenteService.analisarProblema(descricao);
+        const resultado = await assistenteService.analisarProblema(descricao);
         res.status(200).json(resultado);
     } catch (error) {
         const status = error.statusCode || 500;
