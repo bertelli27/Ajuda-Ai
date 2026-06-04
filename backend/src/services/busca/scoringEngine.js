@@ -3,9 +3,10 @@
  * Calcula relevância de serviços contra solicitação do usuário
  */
 
-const semanticAnalyzer = require('./semanticAnalyzer');
-const tokenizer = require('./tokenizer');
-const sinonimos = require('./sinonimosDB');
+const semanticAnalyzer = require('../nlp/semanticAnalyzer');
+const tokenizer = require('../nlp/tokenizer');
+const sinonimos = require('../nlp/sinonimosDB');
+const { DOMINIOS_ESPECIALIZADOS } = require('../../data/dominiosEspecializados');
 
 // Configuração de pesos para cada campo
 const PESOS_CAMPOS = {
@@ -25,8 +26,60 @@ const MULTIPLICADORES = {
     matchParcial: 0.2,         // Match parcial baixo para evitar que "carro" bata com "carroceria" sem querer
     contextoProblem: 1.3,      // Boost se há contexto de problema
     contextoUrgencia: 1.1,     // Boost se há urgência
-    penalidadeGenerica: 0.5    // Penaliza se o match for APENAS palavras genéricas
+    penalidadeGenerica: 0.5,   // Penaliza se o match for APENAS palavras genéricas
+    boostDominioEspecializado: 1.4,
+    penalidadeForaDominio: 0.3
 };
+
+/**
+ * Detecta domínios especializados presentes na solicitação (ex.: piscina, faxina residencial)
+ */
+function detectarDominiosAtivos(analiseSemantica) {
+    const { normalizado, tokens, bigramas } = analiseSemantica;
+    const tokensSet = new Set(tokens);
+    const bigramasSet = new Set(bigramas);
+    const ativos = [];
+
+    for (const dominio of DOMINIOS_ESPECIALIZADOS) {
+        const temToken = dominio.termosDetectores.some(t => tokensSet.has(t));
+        const temFrase = dominio.frasesDetectoras.some(
+            f => normalizado.includes(f) || bigramasSet.has(f)
+        );
+
+        if (temToken || temFrase) {
+            ativos.push(dominio);
+        }
+    }
+
+    // Domínios mais específicos têm prioridade (ex.: piscina sobre limpeza genérica)
+    const idsAtivos = new Set(ativos.map(d => d.id));
+    return ativos.filter(d => !d.cedePara?.some(id => idsAtivos.has(id)));
+}
+
+function servicoPertenceAoDominio(servico, dominio) {
+    const textoServico = tokenizer.normalizarTexto(
+        `${servico.titulo} ${servico.descricao} ${servico.palavras_chave}`
+    );
+
+    return dominio.termosServico.some(t => textoServico.includes(t)) ||
+        dominio.profissoesRelacionadas.some(p => textoServico.includes(p.toLowerCase()));
+}
+
+function ajustarScorePorDominio(score, servico, dominiosAtivos) {
+    if (!dominiosAtivos.length) return score;
+
+    let scoreAjustado = score;
+
+    for (const dominio of dominiosAtivos) {
+        if (servicoPertenceAoDominio(servico, dominio)) {
+            scoreAjustado = Math.min(scoreAjustado * MULTIPLICADORES.boostDominioEspecializado, 1);
+        } else {
+            scoreAjustado *= MULTIPLICADORES.penalidadeForaDominio;
+        }
+    }
+
+    return scoreAjustado;
+}
 
 /**
  * Calcula score para um campo específico
@@ -44,6 +97,7 @@ function calcularScoreCampo(campo, tokens, bigramas, trigramas) {
     const tokensCampo = tokenizer.tokenizar(campoNormalizado);
     const bigramasCampo = tokenizer.criarNGramas(tokensCampo, 2);
     const trigramasCampo = tokenizer.criarNGramas(tokensCampo, 3);
+    const tokensCampoSet = new Set(tokensCampo);
 
     let scoreTotal = 0;
     let matchesAncora = 0;
@@ -140,19 +194,23 @@ function calcularCompatibilidade(analiseSemantica, servico) {
 
     scoreComContexto = Math.min(scoreBase * multiplicadorContexto, 1);
 
+    const dominiosAtivos = detectarDominiosAtivos(analiseSemantica);
+    const scoreFinal = ajustarScorePorDominio(scoreComContexto, servico, dominiosAtivos);
+
     return {
         servico: servico.titulo,
         descricao: servico.descricao,
         categoria: servico.categoria,
-        scoreTotal: scoreComContexto,
+        scoreTotal: scoreFinal,
         scoreBase,
+        dominiosAtivos: dominiosAtivos.map(d => d.id),
         scoresPorCampo: {
             titulo: scoresTitulo,
             descricao: scoresDescricao,
             categoria: scoresCategoria,
             palavrasChave: scoresPalavrasChave
         },
-        compatibilidade: Math.round(scoreComContexto * 100),
+        compatibilidade: Math.round(scoreFinal * 100),
         contextoAplicado: {
             problema: contexto.problema,
             urgencia: contexto.urgencia,
@@ -183,5 +241,7 @@ module.exports = {
     MULTIPLICADORES,
     calcularScoreCampo,
     calcularCompatibilidade,
-    calcularCompatibilidadeMultipla
+    calcularCompatibilidadeMultipla,
+    detectarDominiosAtivos,
+    ajustarScorePorDominio
 };

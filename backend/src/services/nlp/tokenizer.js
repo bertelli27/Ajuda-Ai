@@ -74,9 +74,10 @@ function extrairPalavrasChave(texto) {
  */
 function analisarTexto(texto) {
     const tokens = tokenizar(texto);
-    const bigramas = criarNGramas(tokens, 2);
-    const trigramas = criarNGramas(tokens, 3);
     const palavrasChave = extrairPalavrasChave(texto);
+    // N-gramas sem stopwords: "limpeza de piscina" → bigrama "limpeza piscina"
+    const bigramas = criarNGramas(palavrasChave, 2);
+    const trigramas = criarNGramas(palavrasChave, 3);
 
     return {
         original: texto,

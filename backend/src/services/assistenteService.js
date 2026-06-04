@@ -8,6 +8,12 @@ const scoringEngine = require('./busca/scoringEngine');
 const semanticAnalyzer = require('./nlp/semanticAnalyzer');
 const tokenizer = require('./nlp/tokenizer');
 const mapping = require('../data/profissionaisMapeamento');
+const catalogoProfissao = require('./catalogoProfissaoService');
+
+/** Compatibilidade mínima (%) para considerar match com prestador do banco */
+const LIMIAR_BOA_CORRESPONDENCIA = 35;
+/** Score bruto mínimo (0–1) para confiar no melhor prestador */
+const LIMIAR_SCORE_PRESTADOR = 0.1;
 
 /**
  * Busca serviços ativos no banco de dados
@@ -40,23 +46,36 @@ async function buscarServicosAtivos() {
             
             let tagsMapeadas = '';
             let descricaoAuxiliar = '';
+            let melhorProfissao = null;
+            let melhorPontuacao = 0;
 
-            // 🚀 ENRIQUECIMENTO CIRÚRGICO: Apenas se encontrar âncoras técnicas
+            // Enriquecimento: escolhe a profissão mais específica (evita misturar diarista + piscineiro)
             for (const p of mapping.PROFISSIONAIS_POR_CATEGORIA) {
                 const nomeProfissao = p.nome.toLowerCase();
-                
-                // Filtra apenas as palavras-chave que NÃO são genéricas para usar como gatilho
+
                 const keywordsGatilho = p.palavras_chave.split(',')
-                    .map(k => k.trim())
+                    .map(k => k.trim().toLowerCase())
+                    .filter(k => k.length > 0)
                     .filter(k => !semanticAnalyzer.buscarTermosRelacionados('genericas').includes(k));
 
-                const matchAncora = tituloLower.includes(nomeProfissao) || 
-                                   keywordsGatilho.some(k => tituloLower.includes(k));
+                const gatilhosNoTitulo = keywordsGatilho.filter(k => tituloLower.includes(k));
+                const matchNome = tituloLower.includes(nomeProfissao);
+                const matchAncora = matchNome || gatilhosNoTitulo.length > 0;
 
-                if (matchAncora) {
-                    tagsMapeadas += ` ${p.palavras_chave.replace(/limpeza|manutenção|conserto/gi, '')}`; // Evita duplicar genéricos
-                    descricaoAuxiliar = p.descricao;
+                if (!matchAncora) continue;
+
+                const pontuacao = (matchNome ? 100 : 0) +
+                    gatilhosNoTitulo.reduce((acc, k) => acc + k.length, 0);
+
+                if (pontuacao > melhorPontuacao) {
+                    melhorPontuacao = pontuacao;
+                    melhorProfissao = p;
                 }
+            }
+
+            if (melhorProfissao) {
+                tagsMapeadas = melhorProfissao.palavras_chave.replace(/limpeza|manutenção|conserto/gi, '');
+                descricaoAuxiliar = melhorProfissao.descricao;
             }
 
             return {
@@ -124,47 +143,105 @@ async function analisarProblema(descricaoProblema, detalhado = false) {
     // Busca serviços
     const servicos = await buscarServicosAtivos();
 
+    const sugestoesCatalogo = catalogoProfissao.sugerirProfissoesPorTexto(descricao);
+
     if (servicos.length === 0) {
-        return {
-            descricaoAnalisada: descricao,
-            profissionais: [],
-            explicacao: 'Desculpe, nenhum serviço disponível no momento.',
-            analise: detalhado ? analisarSolicitacaoDetalhado(descricao) : undefined
-        };
+        const respostaSemPrestadores = montarResposta({
+            descricao,
+            analiseSemantica,
+            servicos,
+            profissionaisDb: [],
+            sugestoesCatalogo,
+            detalhado
+        });
+        return respostaSemPrestadores;
     }
 
-    // Calcula compatibilidade para todos os serviços
     const compatibilidades = scoringEngine.calcularCompatibilidadeMultipla(descricao, servicos);
-
-    // Filtra top 3 com score > 0
-    const top3 = compatibilidades
-        .filter(c => c.scoreTotal > 0)
-        .slice(0, 3);
-
-    // Se nenhum com score positivo, retorna top 1 mesmo assim
+    const top3 = compatibilidades.filter((c) => c.scoreTotal > 0).slice(0, 3);
     const profissionaisSugeridos = top3.length > 0 ? top3 : compatibilidades.slice(0, 1);
 
-    // Pega a categoria do melhor resultado real do banco
-    const categoriaSugerida = profissionaisSugeridos.length > 0 ? profissionaisSugeridos[0].categoria : 'Outros';
+    const melhorPrestador = profissionaisSugeridos[0];
+    const temBoaCorrespondenciaPrestador = melhorPrestador &&
+        melhorPrestador.compatibilidade >= LIMIAR_BOA_CORRESPONDENCIA &&
+        melhorPrestador.scoreTotal >= LIMIAR_SCORE_PRESTADOR;
 
-    // Formata resposta
+    const resposta = montarResposta({
+        descricao,
+        analiseSemantica,
+        servicos,
+        profissionaisDb: profissionaisSugeridos,
+        sugestoesCatalogo,
+        temBoaCorrespondenciaPrestador,
+        detalhado
+    });
+
+    if (detalhado && compatibilidades) {
+        resposta.analiseCompleta.scoresDetalhados = compatibilidades.slice(0, 5);
+        resposta.analiseCompleta.sugestoesCatalogoDetalhadas = sugestoesCatalogo;
+    }
+
+    return resposta;
+}
+
+function montarResposta({
+    descricao,
+    analiseSemantica,
+    servicos,
+    profissionaisDb,
+    sugestoesCatalogo,
+    temBoaCorrespondenciaPrestador = false,
+    detalhado = false
+}) {
+    const melhorCatalogo = sugestoesCatalogo[0] || null;
+    const semPrestadores = servicos.length === 0;
+    const catalogoRelevante = melhorCatalogo && melhorCatalogo.confianca > 0;
+
+    let tipoCorrespondencia = 'prestador';
+    if (semPrestadores && catalogoRelevante) {
+        tipoCorrespondencia = 'catalogo';
+    } else if (!semPrestadores && !temBoaCorrespondenciaPrestador && catalogoRelevante) {
+        tipoCorrespondencia = 'misto';
+    } else if (!semPrestadores && profissionaisDb.length === 0 && catalogoRelevante) {
+        tipoCorrespondencia = 'catalogo';
+    }
+
+    const categoriaSugerida = temBoaCorrespondenciaPrestador && profissionaisDb[0]
+        ? profissionaisDb[0].categoria
+        : (melhorCatalogo?.categoria || 'Outros');
+
+    const profissionais = profissionaisDb.map((p) => ({
+        nome: p.servico,
+        descricao: p.descricao,
+        categoria: p.categoria,
+        confianca: p.compatibilidade,
+        score: Math.round(p.scoreTotal * 100) / 100,
+        tipo: 'prestador',
+        baixaCorrespondencia: !temBoaCorrespondenciaPrestador,
+        detalhesScore: p.scoresPorCampo
+    }));
+
     const resposta = {
         descricaoAnalisada: descricao,
         contexto: analiseSemantica.contexto,
-        categoriaPrincipal: categoriaSugerida, // Vincula a categoria ao prestador real encontrado
-        profissionais: profissionaisSugeridos.map(p => ({
-            nome: p.servico,
-            descricao: p.descricao,
-            categoria: p.categoria,
-            confianca: p.compatibilidade, // Alinha com o campo esperado pelo front-end
-            score: Math.round(p.scoreTotal * 100) / 100,
-            detalhesScore: p.scoresPorCampo
-        })),
-        explicacao: gerarExplicacao(profissionaisSugeridos, descricao),
-        totalServiçosAvaliados: servicos.length
+        categoriaPrincipal: categoriaSugerida,
+        tipoCorrespondencia,
+        semPrestadoresDisponiveis: semPrestadores,
+        profissionais,
+        sugestoesCatalogo,
+        explicacao: gerarMensagemCompleta({
+            tipoCorrespondencia,
+            profissionaisDb,
+            sugestoesCatalogo,
+            temBoaCorrespondenciaPrestador,
+            semPrestadores,
+            descricao
+        }),
+        mensagemOrientacao: gerarMensagemOrientacao(tipoCorrespondencia, melhorCatalogo, semPrestadores),
+        totalServiçosAvaliados: servicos.length,
+        totalProfissoesCatalogo: mapping.PROFISSIONAIS_POR_CATEGORIA.length
     };
 
-    // Adiciona análise detalhada se solicitado
     if (detalhado) {
         resposta.analiseCompleta = {
             entrada: descricao,
@@ -173,7 +250,8 @@ async function analisarProblema(descricaoProblema, detalhado = false) {
             trigramas: analiseSemantica.trigramas,
             palavrasChave: analiseSemantica.palavrasChave,
             contextoDetectado: analiseSemantica.contexto,
-            scoresDetalhados: compatibilidades.slice(0, 5)
+            temBoaCorrespondenciaPrestador,
+            tipoCorrespondencia
         };
     }
 
@@ -181,28 +259,72 @@ async function analisarProblema(descricaoProblema, detalhado = false) {
 }
 
 /**
- * Gera explicação humanizada da recomendação
- * @param {array} sugeridos - Array de profissionais sugeridos
- * @param {string} descricao - Descrição original
- * @returns {string} - Explicação formatada
+ * Mensagem principal exibida no assistente
  */
-function gerarExplicacao(sugeridos, descricao) {
+function gerarMensagemCompleta({
+    tipoCorrespondencia,
+    profissionaisDb,
+    sugestoesCatalogo,
+    temBoaCorrespondenciaPrestador,
+    semPrestadores,
+    descricao
+}) {
+    const catalogo = sugestoesCatalogo[0];
+
+    if (semPrestadores && catalogo) {
+        return `Ainda não há prestadores cadastrados para atender "${resumirDescricao(descricao)}". Pela sua descrição, o profissional mais indicado seria um ${catalogo.nome} (${catalogo.categoria}). Confira a sugestão abaixo e use o filtro para buscar quando houver cadastros.`;
+    }
+
+    if (tipoCorrespondencia === 'misto' && catalogo) {
+        const prestador = profissionaisDb[0];
+        const nomePrestador = prestador?.servico || 'os prestadores listados';
+        const pct = prestador?.compatibilidade ?? 0;
+        return `Os prestadores disponíveis têm compatibilidade baixa com seu pedido (melhor match: ${nomePrestador}, ${pct}%). Com base no que você escreveu, o perfil mais adequado seria ${catalogo.nome}. Veja a sugestão por profissão e os prestadores mais próximos abaixo.`;
+    }
+
+    if (tipoCorrespondencia === 'catalogo' && catalogo) {
+        return `Não encontramos prestadores com boa correspondência, mas identificamos que você precisa de um ${catalogo.nome} (${catalogo.categoria}).`;
+    }
+
+    return gerarExplicacaoPrestadores(profissionaisDb, temBoaCorrespondenciaPrestador);
+}
+
+function gerarMensagemOrientacao(tipoCorrespondencia, melhorCatalogo, semPrestadores) {
+    if (semPrestadores) {
+        return 'Quer oferecer esse serviço? Cadastre-se em "Trabalhe Conosco". Clientes: volte em breve ou refine a busca manualmente.';
+    }
+    if (tipoCorrespondencia === 'misto' || tipoCorrespondencia === 'catalogo') {
+        return `Dica: filtre pela categoria "${melhorCatalogo?.categoria || 'sugerida'}" ou busque por "${melhorCatalogo?.nome || 'profissional'}" na barra de pesquisa.`;
+    }
+    return null;
+}
+
+function resumirDescricao(descricao, max = 60) {
+    const t = descricao.trim();
+    return t.length <= max ? t : `${t.slice(0, max)}...`;
+}
+
+function gerarExplicacaoPrestadores(sugeridos, temBoaCorrespondencia) {
     if (sugeridos.length === 0) {
-        return 'Desculpe, não conseguimos identificar um serviço adequado. Tente descrever com mais detalhes.';
+        return 'Não identificamos prestadores compatíveis. Veja as sugestões de profissão abaixo ou descreva com mais detalhes (local, urgência, o que está acontecendo).';
     }
 
     const principal = sugeridos[0];
-    const compatibilidadePercent = principal.compatibilidade;
-    
-    if (compatibilidadePercent >= 80) {
-        return `Encontramos uma correspondência excelente! Recomendamos ${principal.servico} (${compatibilidadePercent}% de compatibilidade).`;
-    } else if (compatibilidadePercent >= 60) {
-        return `Recomendamos ${principal.servico} (${compatibilidadePercent}% de compatibilidade) para sua solicitação.`;
-    } else if (compatibilidadePercent >= 40) {
-        return `Sugerimos ${principal.servico}, porém a compatibilidade é moderada (${compatibilidadePercent}%). Se não for exatamente o que procura, veja outras opções.`;
-    } else {
-        return `Embora ${principal.servico} seja nossa melhor sugestão (${compatibilidadePercent}%), a compatibilidade é baixa. Descreva melhor o que precisa.`;
+    const pct = principal.compatibilidade;
+
+    if (!temBoaCorrespondencia) {
+        return `Encontramos prestadores parciais (melhor: ${principal.servico}, ${pct}% de compatibilidade). Recomendamos também verificar a sugestão de profissão abaixo.`;
     }
+    if (pct >= 80) {
+        return `Excelente correspondência! Recomendamos ${principal.servico} (${pct}% de compatibilidade).`;
+    }
+    if (pct >= 60) {
+        return `Recomendamos ${principal.servico} (${pct}% de compatibilidade) para sua solicitação.`;
+    }
+    if (pct >= 40) {
+        return `Sugerimos ${principal.servico} com compatibilidade moderada (${pct}%). Veja outras opções se necessário.`;
+    }
+    return `Melhor opção entre os cadastrados: ${principal.servico} (${pct}%). Veja também a sugestão de profissão.`;
 }
 
 /**
@@ -211,19 +333,21 @@ function gerarExplicacao(sugeridos, descricao) {
  */
 async function listarProfissionaisMapeados() {
     const servicos = await buscarServicosAtivos();
-    
-    const categorias = [...new Set(servicos.map(s => s.categoria))];
+    const categoriasDb = [...new Set(servicos.map((s) => s.categoria))];
 
     return {
-        fonte: 'banco de dados (servicos ativos)',
-        categorias,
-        total: servicos.length,
-        profissionais: servicos.map(s => ({
+        fonte: 'banco de dados (servicos ativos) + catalogo de referencia',
+        categorias: mapping.CATEGORIAS_SCHEMA,
+        categoriasComPrestadores: categoriasDb,
+        totalPrestadoresAtivos: servicos.length,
+        totalCatalogoReferencia: mapping.PROFISSIONAIS_POR_CATEGORIA.length,
+        prestadoresAtivos: servicos.map((s) => ({
             nome: s.titulo,
             categoria: s.categoria,
             descricao: s.descricao,
             prestador: s.prestador
-        }))
+        })),
+        catalogoReferencia: catalogoProfissao.listarCatalogoCompleto()
     };
 }
 

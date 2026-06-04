@@ -4,12 +4,12 @@
  */
 
 const SINONIMOS = {
-    // ===== ÁGUA E PISCINA =====
-    agua: ['agua', 'h2o', 'liquido', 'cano', 'encanamento', 'vazamento'],
-    piscina: ['piscina', 'piscineiro', 'tratamento piscina', 'cloro', 'filtro', 'limpeza piscina', 'agua verde', 'algas', 'ph', 'limpeza de piscina', 'manutenção de piscina'],
-    
-    // ===== LIMPEZA =====
-    limpeza: ['limpeza', 'limpar', 'limpo', 'sujo', 'sujeira', 'poeira', 'faxina', 'faxineira', 'higiene', 'higienizar', 'lavar', 'passar'],
+    // ===== PISCINA (antes de termos genéricos de limpeza/água) =====
+    piscina: ['piscina', 'piscineiro', 'tratamento piscina', 'cloro', 'filtro', 'limpeza piscina', 'agua verde', 'algas', 'ph', 'limpeza de piscina', 'manutencao de piscina', 'limpar piscina'],
+
+    // ===== LIMPEZA RESIDENCIAL (sem termos de piscina) =====
+    limpeza_residencial: ['faxina', 'faxineira', 'diarista', 'limpeza residencial', 'limpeza domestica', 'arrumacao', 'organizacao'],
+    limpeza: ['limpeza', 'limpar', 'limpo', 'sujo', 'sujeira', 'poeira', 'higiene', 'higienizar', 'lavar', 'passar'],
     casa: ['casa', 'residencia', 'lar', 'apartamento', 'imovel', 'domestica', 'domicilio'],
     diarista: ['diarista', 'faxineira', 'limpeza residencial', 'arrumação', 'arrumacao', 'organização', 'organizacao'],
     
@@ -18,8 +18,8 @@ const SINONIMOS = {
     chuveiro: ['chuveiro', 'queimado', 'queimada', 'nao funciona', 'defeito', 'quebrado', 'chuveiro eletrico', 'resistencia'],
     luz: ['luz', 'iluminacao', 'lampada', 'apagou', 'sem luz', 'escuro', 'tomada', 'interruptor'],
     
-    // ===== ENCANAMENTO =====
-    agua_servico: ['agua', 'cano', 'encanamento', 'tubulacao', 'vazamento', 'vazando', 'entupido', 'entupimento', 'pingando'],
+    // ===== ENCANAMENTO (água de rede/canos — não confundir com piscina) =====
+    agua_servico: ['agua', 'cano', 'encanamento', 'tubulacao', 'vazamento', 'vazando', 'entupido', 'entupimento', 'pingando', 'torneira', 'ralo'],
     encanador: ['encanador', 'vazamento', 'cano entupido', 'pia entupida', 'ralo entupido', 'vaso entupido', 'hidraulica', 'torneira'],
     
     // ===== TRANSPORTE =====
@@ -36,6 +36,14 @@ const SINONIMOS = {
     // ===== LIMPEZA ESPECIALIZADA =====
     estofado: ['estofado', 'sofá', 'sofa', 'colchão', 'colchao', 'carpete', 'tapete', 'mancha', 'higienização'],
     vidro: ['vidro', 'janela', 'vitrine', 'fachada', 'espelho', 'cristal', 'vidraçaria'],
+
+    gas: ['gas', 'gás', 'botijao', 'botijão', 'fogao a gas', 'fogão a gás', 'vazamento de gas'],
+    dedetizacao: ['dedetizacao', 'dedetização', 'dedetizar', 'dedetizador', 'pragas', 'barata', 'cupim', 'rato', 'desinsetizacao', 'desinsetização', 'inseto'],
+    mudanca: ['mudanca', 'mudança', 'frete', 'carreto', 'transporte de moveis', 'caminhao'],
+    pet: ['pet', 'cachorro', 'cao', 'gato', 'adestramento', 'veterinario', 'veterinário', 'passeio'],
+    eventos: ['festa', 'casamento', 'evento', 'formatura', 'buffet', 'churrasco', 'dj', 'fotografo', 'fotógrafo'],
+    beleza: ['esteticista', 'depilacao', 'depilação', 'podologo', 'podólogo', 'manicure', 'maquiagem'],
+    reforma_infiltracao: ['infiltracao', 'infiltração', 'goteira', 'impermeabilizacao', 'impermeabilização', 'mofo'],
 };
 
 const CONTEXTOS_PALAVRAS = {

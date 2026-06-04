@@ -1,0 +1,79 @@
+{
+  "gerado_em": "2026-05-28T00:45:54.271Z",
+  "arquivos": {
+    "prestadores_ficticios": 1000,
+    "avaliacoes_ficticias": 1000
+  },
+  "faixas_ids_ficticios": {
+    "prestadores": {
+      "min": 200001,
+      "max": 201000,
+      "usuario_id_min": 500001,
+      "usuario_id_max": 501000
+    },
+    "avaliacoes": {
+      "min": 200001,
+      "max": 201000
+    },
+    "solicitacoes": {
+      "min": 400001,
+      "max": 401000
+    },
+    "clientes": {
+      "min": 600001,
+      "max": 601500
+    }
+  },
+  "integridade": {
+    "prestadores_sem_avaliacao": 383,
+    "avaliacoes_com_prestador_invalido": 0,
+    "solicitacoes_unicas": 1000,
+    "clientes_unicos": 713
+  },
+  "distribuicao_prestadores_por_categoria": {
+    "Manutenção": 389,
+    "Saúde e Beleza": 135,
+    "Reformas": 35,
+    "Outros": 266,
+    "Tecnologia": 67,
+    "Limpeza": 108
+  },
+  "distribuicao_prestadores_por_profissao": {
+    "Técnico em Antenas e TV": 347,
+    "Cuidador de Idosos": 126,
+    "Pintor": 20,
+    "Frete e Mudanças": 156,
+    "Técnico de Celular": 47,
+    "Limpeza de Estofados": 45,
+    "Técnico de Informática": 20,
+    "Dog Walker": 16,
+    "Motorista Particular": 28,
+    "Diarista": 28,
+    "Personal Trainer": 9,
+    "Jardineiro": 16,
+    "Veterinário": 17,
+    "Instalador de Piso Laminado": 15,
+    "Limpeza de Vidros": 19,
+    "Instalador de Gás": 5,
+    "Técnico de Ar Condicionado": 13,
+    "Paisagista": 8,
+    "Eletricista": 8,
+    "Limpeza Pós-Obra": 16,
+    "Professor Particular": 25,
+    "Dedetizador": 16
+  },
+  "distribuicao_notas": {
+    "1": 72,
+    "2": 64,
+    "3": 98,
+    "4": 181,
+    "5": 585
+  },
+  "schema_relacionamentos": [
+    "usuarios (500001-501000) -> prestadores (200001-201000)",
+    "usuarios (600001-601500) -> solicitacoes.cliente_id",
+    "servicos.prestador_id -> prestadores.id",
+    "solicitacoes.servico_id -> servicos.id",
+    "avaliacoes -> solicitacao_id, servico_id, cliente_id, prestador_id"
+  ]
+}

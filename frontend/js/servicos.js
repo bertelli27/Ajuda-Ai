@@ -287,20 +287,61 @@ document.addEventListener("DOMContentLoaded", function() {
         const iaCategoriaTexto = document.getElementById("ia-categoria-texto");
         const iaExplicacao = document.getElementById("ia-explicacao");
         const iaLista = document.getElementById("ia-profissionais-lista");
+        const iaOrientacao = document.getElementById("ia-orientacao");
 
         if (!iaResultado || !iaCategoriaTexto || !iaLista) return;
 
         iaCategoriaTexto.innerText = analise.categoriaPrincipal;
         if (iaExplicacao) iaExplicacao.innerText = analise.explicacao;
 
-        iaLista.innerHTML = analise.profissionais.map((prof) => `
-            <li style="background: rgba(34, 42, 49, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
-                <strong style="color: #EEEEEE;">${prof.nome}</strong>
-                <span style="color: #00ADB5; font-size: 12px; margin-left: 8px;">${prof.confianca}% de compatibilidade</span>
-                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.8;">${prof.descricao}</p>
-            </li>
-        `).join('');
+        if (iaOrientacao) {
+            if (analise.mensagemOrientacao) {
+                iaOrientacao.innerText = analise.mensagemOrientacao;
+                iaOrientacao.style.display = "block";
+            } else {
+                iaOrientacao.style.display = "none";
+                iaOrientacao.innerText = "";
+            }
+        }
 
+        let html = "";
+
+        const catalogo = analise.sugestoesCatalogo || [];
+        const mostrarCatalogo = catalogo.length > 0 &&
+            (analise.tipoCorrespondencia === "catalogo" || analise.tipoCorrespondencia === "misto" || analise.semPrestadoresDisponiveis);
+
+        if (mostrarCatalogo) {
+            html += `<li style="list-style: none; margin-bottom: 10px; font-size: 13px; color: #00ADB5; font-weight: 600;">Profissão sugerida (com base no que você escreveu)</li>`;
+            html += catalogo.map((prof) => `
+                <li style="background: rgba(0, 173, 181, 0.12); border: 1px solid rgba(0, 173, 181, 0.35); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <strong style="color: #EEEEEE;">${prof.nome}</strong>
+                    <span style="color: #ffc107; font-size: 12px; margin-left: 8px;">Perfil indicado · ${prof.confianca}%</span>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.85;">${prof.descricao}</p>
+                    ${prof.termosRelevantes?.length ? `<p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.65;">Termos: ${prof.termosRelevantes.join(", ")}</p>` : ""}
+                </li>
+            `).join("");
+        }
+
+        const prestadores = analise.profissionais || [];
+        if (prestadores.length > 0) {
+            if (mostrarCatalogo) {
+                html += `<li style="list-style: none; margin: 14px 0 10px; font-size: 13px; color: #AAAAAA; font-weight: 600;">Prestadores cadastrados na plataforma</li>`;
+            }
+            html += prestadores.map((prof) => `
+                <li style="background: rgba(34, 42, 49, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <strong style="color: #EEEEEE;">${prof.nome}</strong>
+                    <span style="color: #00ADB5; font-size: 12px; margin-left: 8px;">${prof.confianca}% de compatibilidade</span>
+                    ${prof.baixaCorrespondencia ? `<span style="color: #ffc107; font-size: 11px; margin-left: 6px;">(correspondência parcial)</span>` : ""}
+                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.8;">${prof.descricao}</p>
+                </li>
+            `).join("");
+        }
+
+        if (!html) {
+            html = `<li style="color: #AAAAAA; font-size: 14px;">Não foi possível identificar uma profissão. Descreva o problema com mais detalhes (o que aconteceu, onde, urgência).</li>`;
+        }
+
+        iaLista.innerHTML = html;
         iaResultado.style.display = "block";
     }
 
@@ -345,10 +386,13 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!ultimaAnaliseIA) return;
 
             const categoriaSugerida = ultimaAnaliseIA.categoriaPrincipal;
-            const termosBusca = ultimaAnaliseIA.profissionais
-                .map((p) => p.nome.split(' ')[0].toLowerCase())
-                .join(' ');
-            const nomesProfissionais = ultimaAnaliseIA.profissionais.map(p => p.nome).join(', ');
+            const fonteBusca = (ultimaAnaliseIA.tipoCorrespondencia === "catalogo" || !ultimaAnaliseIA.profissionais?.length)
+                ? (ultimaAnaliseIA.sugestoesCatalogo || [])
+                : ultimaAnaliseIA.profissionais;
+            const termosBusca = fonteBusca
+                .map((p) => p.nome.split(" ")[0].toLowerCase())
+                .join(" ");
+            const nomesProfissionais = fonteBusca.map((p) => p.nome).join(", ");
 
             document.querySelectorAll('.btn-categoria').forEach(b => {
                 b.classList.remove('active');
