@@ -5,7 +5,7 @@
  * e atua como uma camada DTO (Data Transfer Object), normalizando os dados do banco de dados para a tela.
  */
 
-// const BASE_URL = 'http://localhost:3000/api'; // Ambiente Local
+//const BASE_URL = 'http://localhost:3000/api'; // Ambiente Local
 const BASE_URL = 'https://ajuda-ai-gz4a.onrender.com/api'; // Ambiente de Produção
 
 const API = {
@@ -461,6 +461,17 @@ const API = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Erro ao excluir avaliação');
+        return data;
+    },
+
+    async getDashboardStatsAdmin() {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) throw new Error("Não autorizado");
+        const response = await fetch(`${BASE_URL}/admin/dashboard-stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao buscar estatísticas');
         return data;
     },
 

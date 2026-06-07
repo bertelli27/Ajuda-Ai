@@ -38,7 +38,16 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     // Adiciona o evento de clique para o novo botão de exportar
-    document.getElementById("btnExportarPDF").addEventListener("click", exportarParaPDF);
+    const btnPdf = document.getElementById("btnExportarPDF");
+    if (btnPdf) {
+        btnPdf.addEventListener("click", exportarParaPDF);
+        
+        // Injeta o botão de CSV ao lado do PDF se ele ainda não existir
+        if (!document.getElementById("btnExportarCSV")) {
+            btnPdf.insertAdjacentHTML('afterend', `<button id="btnExportarCSV" class="btn-service" style="background: #5cb85c; margin-left: 10px; width: auto; padding: 10px 20px;">📥 Exportar CSV (Excel)</button>`);
+            document.getElementById("btnExportarCSV").addEventListener("click", exportarTransacoesCSV);
+        }
+    }
     
     // Adiciona o evento de filtro de período para o histórico financeiro
     document.getElementById("filtroPeriodoTransacoes").addEventListener("change", () => {
@@ -316,9 +325,140 @@ async function renderizarHistoricoFinanceiro(emailLogado) {
 }
 
 async function exportarParaPDF() {
+    try {
+        const emailLogado = API.getSessaoAtual();
+        const [usuarios, solicitacoes] = await Promise.all([
+            API.getUsuarios(),
+            API.getSolicitacoes()
+        ]);
+        
+        const minhasTransacoes = await getTransacoesFiltradas(emailLogado);
+        const usuarioAtual = usuarios.find(u => u.email === emailLogado);
+
+        if (minhasTransacoes.length === 0) {
+            mostrarToast("Não há transações para exportar.", "error");
+            return;
+        }
+
+        // 🚀 INJEÇÃO DINÂMICA: Carrega as bibliotecas de PDF automaticamente se faltarem no HTML
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            mostrarToast("Preparando o motor de PDF pela primeira vez. Aguarde...", "success");
+            await new Promise((resolve, reject) => {
+                const scriptPdf = document.createElement('script');
+                scriptPdf.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+                scriptPdf.onload = () => {
+                    const scriptTable = document.createElement('script');
+                    scriptTable.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js";
+                    scriptTable.onload = resolve;
+                    scriptTable.onerror = reject;
+                    document.head.appendChild(scriptTable);
+                };
+                scriptPdf.onerror = reject;
+                document.head.appendChild(scriptPdf);
+            });
+        }
+
+        // Garante compatibilidade de inicialização da biblioteca jsPDF
+        const jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+        if (!jsPDF) {
+            mostrarToast("A biblioteca PDF não foi carregada corretamente.", "error");
+            return;
+        }
+
+        const doc = new jsPDF({ orientation: 'landscape' }); 
+
+        // Adiciona o cabeçalho do documento (Usando RGB em vez de Hex para evitar bugs de versão)
+        doc.setFontSize(18);
+        doc.setTextColor(0, 173, 181); 
+        doc.text("Extrato Financeiro Completo - AjudaAí", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Profissional: ${usuarioAtual?.nome || 'Prestador'}`, 14, 30);
+        doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, 36);
+
+        let totalBruto = 0;
+        let totalTaxa = 0;
+        let totalLiquido = 0;
+
+        // Prepara os dados para a tabela
+        const head = [['Data/Hora', 'ID', 'Cliente', 'Serviço', 'Status', 'Valor Bruto', 'Taxa Plataforma', 'Líquido']];
+        const body = minhasTransacoes.map(t => {
+            const isCliente = t.clienteEmail === emailLogado;
+            const isEntrada = !isCliente;
+            const sinal = isEntrada ? '+' : '-';
+            const fator = isEntrada ? 1 : -1;
+            
+            // Cruzamento de dados (Join Front-end)
+            const pedido = solicitacoes.find(s => String(s.id) === String(t.servicoId));
+            const clienteObj = usuarios.find(u => u.email === t.clienteEmail);
+
+            const dataFormatada = new Date(t.data).toLocaleString('pt-BR', { timeZone: 'UTC' });
+            const pedidoId = t.servicoId ? `#${t.servicoId}` : '-';
+            const nomeCliente = clienteObj ? clienteObj.nome : 'Desconhecido';
+            const nomeServico = pedido ? pedido.servico : 'Não identificado';
+            const statusTx = t.status || '-';
+            
+            const vBruto = parseFloat(t.valorServico || 0);
+            const vTaxa = isEntrada && t.status !== 'CANCELADO' ? parseFloat(t.taxaPlataforma || 0) : 0;
+            const vLiquido = parseFloat(t.valorPrestador || 0);
+
+            if (t.status !== 'CANCELADO') {
+                totalBruto += (vBruto * fator);
+                totalTaxa += vTaxa;
+                totalLiquido += (vLiquido * fator);
+            }
+
+            return [
+                dataFormatada,
+                pedidoId,
+                nomeCliente,
+                nomeServico,
+                statusTx,
+                `R$ ${vBruto.toFixed(2).replace('.', ',')}`,
+                isEntrada && t.status !== 'CANCELADO' ? `R$ ${vTaxa.toFixed(2).replace('.', ',')}` : '-',
+                `${sinal} R$ ${vLiquido.toFixed(2).replace('.', ',')}`
+            ];
+        });
+
+        if (typeof doc.autoTable !== 'function') {
+            mostrarToast("Plugin de Tabela PDF não carregado.", "error");
+            return;
+        }
+
+        const foot = [[
+            { content: 'TOTAIS DO PERÍODO', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [45, 55, 72] } },
+            { content: `R$ ${totalBruto.toFixed(2).replace('.', ',')}`, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [45, 55, 72] } },
+            { content: `R$ ${totalTaxa.toFixed(2).replace('.', ',')}`, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [45, 55, 72] } },
+            { content: `R$ ${totalLiquido.toFixed(2).replace('.', ',')}`, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [45, 55, 72] } }
+        ]];
+
+        // Gera a tabela usando o plugin autoTable
+        doc.autoTable({
+            head: head,
+            body: body,
+            foot: foot,
+            startY: 45,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 173, 181] }, // Cor #00ADB5 em RGB
+            styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
+            columnStyles: { 5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' } } // Alinha valores
+        });
+
+        // Salva o arquivo PDF
+        doc.save(`extrato-completo-ajudaai-${new Date().toISOString().slice(0,10)}.pdf`);
+        mostrarToast("PDF gerado com sucesso!", "success");
+    } catch (error) {
+        console.error("Erro na geração do PDF: ", error);
+        mostrarToast("Ocorreu um erro ao processar o PDF.", "error");
+    }
+}
+
+async function exportarTransacoesCSV() {
     const emailLogado = API.getSessaoAtual();
-    const usuarios = await API.getUsuarios();
-    const usuarioAtual = usuarios.find(u => u.email === emailLogado);
+    const [usuarios, solicitacoes] = await Promise.all([
+        API.getUsuarios(),
+        API.getSolicitacoes()
+    ]);
     const minhasTransacoes = await getTransacoesFiltradas(emailLogado);
 
     if (minhasTransacoes.length === 0) {
@@ -326,47 +466,62 @@ async function exportarParaPDF() {
         return;
     }
 
-    // Desestrutura o jsPDF do objeto window, onde ele é carregado pelo CDN
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    let totalBruto = 0;
+    let totalTaxa = 0;
+    let totalLiquido = 0;
 
-    // Adiciona o cabeçalho do documento
-    doc.setFontSize(18);
-    doc.setTextColor('#00ADB5');
-    doc.text("Extrato Financeiro - AjudaAí", 14, 22);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Usuário: ${usuarioAtual.nome}`, 14, 30);
-    doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, 36);
-
-    // Prepara os dados para a tabela
-    const head = [['Data', 'Descrição', 'Tipo', 'Valor (R$)']];
-    const body = minhasTransacoes.map(t => {
+    const dadosLimpos = minhasTransacoes.map(t => {
         const isCliente = t.clienteEmail === emailLogado;
         const isEntrada = !isCliente;
         const sinal = isEntrada ? '+' : '-';
-        const valorExibicao = isCliente ? t.valorServico : t.valorPrestador;
-        const valorFormatado = `${sinal} ${parseFloat(valorExibicao || 0).toFixed(2).replace('.', ',')}`;
-        const dataFormatada = new Date(t.data).toLocaleString('pt-BR', { timeZone: 'UTC' });
-        const descricao = isCliente ? `Pagamento de Serviço` : `Recebimento de Serviço`;
-        const tipo = isEntrada ? 'Entrada' : 'Saída';
+        const fator = isEntrada ? 1 : -1;
+        
+        // Cruzamento de dados
+        const pedido = solicitacoes.find(s => String(s.id) === String(t.servicoId));
+        const clienteObj = usuarios.find(u => u.email === t.clienteEmail);
 
-        return [dataFormatada, descricao, tipo, valorFormatado];
+        const vBruto = parseFloat(t.valorServico || 0);
+        const vTaxa = isEntrada && t.status !== 'CANCELADO' ? parseFloat(t.taxaPlataforma || 0) : 0;
+        const vLiquido = parseFloat(t.valorPrestador || 0);
+
+        if (t.status !== 'CANCELADO') {
+            totalBruto += (vBruto * fator);
+            totalTaxa += vTaxa;
+            totalLiquido += (vLiquido * fator);
+        }
+        
+        return {
+            'Data e Hora': new Date(t.data).toLocaleString('pt-BR', { timeZone: 'UTC' }),
+            'ID Pedido': t.servicoId ? `#${t.servicoId}` : '-',
+            'Cliente': clienteObj ? clienteObj.nome : 'Desconhecido',
+            'Serviço Prestado': pedido ? pedido.servico : 'Não identificado',
+            'Status': t.status,
+            'Valor Bruto (R$)': vBruto.toFixed(2).replace('.', ','),
+            'Taxa Plataforma (R$)': isEntrada && t.status !== 'CANCELADO' ? vTaxa.toFixed(2).replace('.', ',') : '0,00',
+            'Valor Líquido (R$)': `${sinal}${vLiquido.toFixed(2).replace('.', ',')}`
+        };
     });
 
-    // Gera a tabela usando o plugin autoTable
-    doc.autoTable({
-        head: head,
-        body: body,
-        startY: 45,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 173, 181] }, // Cor #00ADB5 em RGB
-        styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
-        columnStyles: { 3: { halign: 'right' } } // Alinha a coluna de valor à direita
+    // Adiciona uma linha em branco para espaçamento visual no Excel
+    dadosLimpos.push({
+        'Data e Hora': '', 'ID Pedido': '', 'Cliente': '', 'Serviço Prestado': '', 'Status': '', 'Valor Bruto (R$)': '', 'Taxa Plataforma (R$)': '', 'Valor Líquido (R$)': ''
     });
 
-    // Salva o arquivo PDF
-    doc.save(`extrato-ajudaai-${new Date().toISOString().slice(0,10)}.pdf`);
+    // Adiciona a linha de TOTAIS
+    dadosLimpos.push({
+        'Data e Hora': 'TOTAIS DO PERÍODO',
+        'ID Pedido': '',
+        'Cliente': '',
+        'Serviço Prestado': '',
+        'Status': '',
+        'Valor Bruto (R$)': totalBruto.toFixed(2).replace('.', ','),
+        'Taxa Plataforma (R$)': totalTaxa.toFixed(2).replace('.', ','),
+        'Valor Líquido (R$)': totalLiquido.toFixed(2).replace('.', ',')
+    });
+
+    if (typeof window.exportarDadosParaCSV === 'function') {
+        window.exportarDadosParaCSV(dadosLimpos, `extrato_completo_${new Date().toISOString().slice(0,10)}.csv`);
+    }
 }
 
 async function renderEvolucaoFinanceiraChart(emailLogado) {

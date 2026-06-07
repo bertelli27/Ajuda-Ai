@@ -658,3 +658,46 @@ document.addEventListener("DOMContentLoaded", () => {
     inicializarAllPasswordToggles(); // Inicia o botão de mostrar/ocultar senha
     inicializarModoDeus(); // Inicia o banner global do Admin
 });
+
+// =======================================================
+// MOTOR DE EXPORTAÇÃO CSV GLOBAL (RELATÓRIOS E AUDITORIA)
+// =======================================================
+window.exportarDadosParaCSV = function(dados, nomeDoArquivo) {
+    if (!dados || dados.length === 0) {
+        mostrarToast("Não há dados para exportar.", "error");
+        return;
+    }
+
+    // 1. Extrair os Cabeçalhos (Headers) da primeira linha
+    const colunas = Object.keys(dados[0]);
+    const cabecalho = colunas.map(col => `"${col.toUpperCase()}"`).join(';');
+
+    // 2. Extrair e Formatar as Linhas de Dados
+    const linhas = dados.map(registro => {
+        return colunas.map(coluna => {
+            let valor = registro[coluna];
+            
+            if (valor === null || valor === undefined) valor = '';
+            
+            if (typeof valor === 'string') {
+                valor = valor.replace(/"/g, '""'); // Escapa para o Excel não quebrar as colunas
+            }
+            
+            return `"${valor}"`;
+        }).join(';');
+    });
+
+    // 3. Montar o texto final e baixar via Blob
+    const conteudoCSV = [cabecalho, ...linhas].join('\n');
+    const blob = new Blob(["\uFEFF" + conteudoCSV], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const linkInvisivel = document.createElement("a");
+    linkInvisivel.href = url;
+    linkInvisivel.download = nomeDoArquivo;
+    linkInvisivel.style.display = 'none';
+    document.body.appendChild(linkInvisivel);
+    linkInvisivel.click();
+    document.body.removeChild(linkInvisivel);
+    URL.revokeObjectURL(url);
+};

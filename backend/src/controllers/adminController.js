@@ -123,6 +123,37 @@ const adminController = {
             console.error("Erro ao listar logs:", error);
             res.status(500).json({ error: "Erro ao buscar a trilha de auditoria." });
         }
+    },
+
+    // 5. Dashboard de Estatísticas do Administrador
+    getDashboardStats: async (req, res) => {
+        try {
+            const [financeiro] = await db.execute(`
+                SELECT DATE_FORMAT(criado_em, '%Y-%m') as mes, SUM(valor_total) as gmv, SUM(taxa_plataforma) as receita
+                FROM transacoes
+                WHERE status = 'CONCLUIDO' AND criado_em >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                GROUP BY mes ORDER BY mes ASC
+            `);
+
+            const [usuarios] = await db.execute(`
+                SELECT DATE_FORMAT(criado_em, '%Y-%m') as mes, tipo, COUNT(id) as total
+                FROM usuarios
+                WHERE criado_em >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AND (tipo = 'cliente' OR tipo = 'prestador')
+                GROUP BY mes, tipo ORDER BY mes ASC
+            `);
+
+            const [categorias] = await db.execute(`
+                SELECT c.nome, COUNT(s.id) as total
+                FROM servicos s JOIN categorias c ON s.categoria_id = c.id GROUP BY c.nome
+            `);
+
+            const [pedidos] = await db.execute(`SELECT status, COUNT(id) as total FROM solicitacoes GROUP BY status`);
+
+            res.json({ financeiro, usuarios, categorias, pedidos });
+        } catch (error) {
+            console.error("Erro ao buscar estatísticas do dashboard:", error);
+            res.status(500).json({ error: "Erro ao buscar estatísticas." });
+        }
     }
 };
 
