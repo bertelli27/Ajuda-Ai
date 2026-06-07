@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     const tabsContainer = btnTabUsuarios.parentElement;
     if (!document.getElementById("btnTabDashboard")) {
         tabsContainer.insertAdjacentHTML('afterbegin', `<button id="btnTabDashboard" class="tab-btn active" style="margin-right: 10px;">📊 Visão Geral</button>`);
-        sectionUsuarios.parentElement.insertAdjacentHTML('afterbegin', `
+        sectionUsuarios.insertAdjacentHTML('beforebegin', `
             <div id="dashboard-section" class="aba-conteudo" style="display: block;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 30px; margin-top: 20px;">
                     <div style="background: #393E46; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
