@@ -115,12 +115,19 @@ document.addEventListener("DOMContentLoaded", function() {
                 servicosFiltrados = servicosFiltrados.filter(s => s.categoria === categoriaFiltro);
             }
 
-            // 2. Filtro de busca
+            // 2. Filtro de busca (aceita correspondência parcial por tokens)
             if (termoBusca) {
+                const termosBusca = termoBusca.toLowerCase().split(/\W+/).filter(Boolean);
                 servicosFiltrados = servicosFiltrados.filter(s => {
                     const prestador = usuarios.find(u => u.email === s.prestadorEmail);
                     const textoCard = `${s.titulo} ${s.categoria} ${s.descricao} ${prestador?.nome} ${prestador?.endereco.cidade}`.toLowerCase();
-                    return textoCard.includes(termoBusca);
+                    if (termosBusca.length === 0) return true;
+                    let matchCount = 0;
+                    for (const token of termosBusca) {
+                        if (textoCard.includes(token)) matchCount++;
+                    }
+                    // Aceita quando pelo menos um token bate com o cartão (menos rígido)
+                    return matchCount >= 1;
                 });
             }
 
@@ -313,35 +320,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
         let html = "";
 
-        const catalogo = analise.sugestoesCatalogo || [];
-        const mostrarCatalogo = catalogo.length > 0 &&
-            (analise.tipoCorrespondencia === "catalogo" || analise.tipoCorrespondencia === "misto" || analise.semPrestadoresDisponiveis);
-
-        if (mostrarCatalogo) {
-            html += `<li style="list-style: none; margin-bottom: 10px; font-size: 13px; color: #00ADB5; font-weight: 600;">Profissão sugerida (com base no que você escreveu)</li>`;
-            html += catalogo.map((prof) => `
-                <li style="background: rgba(0, 173, 181, 0.12); border: 1px solid rgba(0, 173, 181, 0.35); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
-                    <strong style="color: #EEEEEE;">${prof.nome}</strong>
-                    <span style="color: #ffc107; font-size: 12px; margin-left: 8px;">Perfil indicado · ${prof.confianca}%</span>
-                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.85;">${prof.descricao}</p>
-                    ${prof.termosRelevantes?.length ? `<p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.65;">Termos: ${prof.termosRelevantes.join(", ")}</p>` : ""}
-                </li>
-            `).join("");
-        }
-
         const prestadores = analise.profissionais || [];
         if (prestadores.length > 0) {
-            if (mostrarCatalogo) {
-                html += `<li style="list-style: none; margin: 14px 0 10px; font-size: 13px; color: #AAAAAA; font-weight: 600;">Prestadores cadastrados na plataforma</li>`;
-            }
+            html += `<li style="list-style: none; margin-bottom: 10px; font-size: 13px; color: #AAAAAA; font-weight: 600;">Prestadores cadastrados na plataforma</li>`;
             html += prestadores.map((prof) => `
                 <li style="background: rgba(34, 42, 49, 0.5); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;">
                     <strong style="color: #EEEEEE;">${prof.nome}</strong>
-                    <span style="color: #00ADB5; font-size: 12px; margin-left: 8px;">${prof.confianca}% de compatibilidade</span>
+                    <span style="color: #00ADB5; font-size: 12px; margin-left: 8px;">Categoria · ${prof.categoria || 'N/A'}</span>
                     ${prof.baixaCorrespondencia ? `<span style="color: #ffc107; font-size: 11px; margin-left: 6px;">(correspondência parcial)</span>` : ""}
                     <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.8;">${prof.descricao}</p>
                 </li>
             `).join("");
+        } else {
+            html += `<li style="list-style: none; padding: 12px 14px; background: rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 8px; color: #EEE; font-size: 14px;">Não encontramos prestadores cadastrados no momento. Refine sua descrição ou tente novamente mais tarde.</li>`;
         }
 
         if (!html) {
@@ -389,17 +380,46 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
+        function construirTermosBuscaDaAnalise(analise) {
+            const stopwords = new Set([
+                'com', 'para', 'por', 'em', 'de', 'no', 'na', 'os', 'as', 'o', 'a', 'e', 'um', 'uma',
+                'do', 'da', 'dos', 'das', 'que', 'se', 'não', 'mais', 'sou', 'está', 'está', 'esta', 'este'
+            ]);
+            const termos = new Set();
+
+            if (analise.categoriaPrincipal) {
+                analise.categoriaPrincipal.toLowerCase().split(/\W+/).filter(Boolean).forEach(t => termos.add(t));
+            }
+
+            (analise.profissionais || []).forEach((p) => {
+                if (p.nome) p.nome.toLowerCase().split(/\W+/).filter(Boolean).forEach(t => termos.add(t));
+                if (p.categoria) p.categoria.toLowerCase().split(/\W+/).filter(Boolean).forEach(t => termos.add(t));
+            });
+
+            if (termos.size === 0 && analise.descricaoAnalisada) {
+                analise.descricaoAnalisada
+                    .toLowerCase()
+                    .split(/\W+/)
+                    .filter(Boolean)
+                    .forEach(t => termos.add(t));
+            }
+
+            const termosFiltrados = Array.from(termos)
+                .filter(t => t.length > 2 && !stopwords.has(t))
+                .slice(0, 8);
+
+            return termosFiltrados.join(' ');
+        }
+
         btnUsarSugestao?.addEventListener("click", () => {
             if (!ultimaAnaliseIA) return;
 
-            const categoriaSugerida = ultimaAnaliseIA.categoriaPrincipal;
-            const fonteBusca = (ultimaAnaliseIA.tipoCorrespondencia === "catalogo" || !ultimaAnaliseIA.profissionais?.length)
-                ? (ultimaAnaliseIA.sugestoesCatalogo || [])
-                : ultimaAnaliseIA.profissionais;
-            const termosBusca = fonteBusca
-                .map((p) => p.nome.split(" ")[0].toLowerCase())
-                .join(" ");
-            const nomesProfissionais = fonteBusca.map((p) => p.nome).join(", ");
+            const categoriaSugerida = ultimaAnaliseIA.categoriaPrincipal || 'Todos';
+            const termosBusca = construirTermosBuscaDaAnalise(ultimaAnaliseIA);
+            const nomesProfissionais = (ultimaAnaliseIA.profissionais || [])
+                .map((p) => p.nome)
+                .filter(Boolean)
+                .join(", ");
 
             document.querySelectorAll('.btn-categoria').forEach(b => {
                 b.classList.remove('active');
@@ -417,7 +437,7 @@ document.addEventListener("DOMContentLoaded", function() {
             inputDescricao.value = "";
             ultimaAnaliseIA = null;
 
-            mostrarToast(`Exibindo: ${nomesProfissionais} (${categoriaSugerida})`, "success");
+            mostrarToast(`Exibindo resultados compatíveis${nomesProfissionais ? `: ${nomesProfissionais}` : ''}`, "success");
         });
     }
 
