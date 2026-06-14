@@ -254,8 +254,27 @@ function configurarBotoes() {
 // ================= BUSCA =================
 
 function configurarBusca() {
-    // A busca completa será implementada na página servicos.html
-    // Na home, o link de "Serviços" leva para a página com a busca funcional.
+    const btn = document.getElementById("searchBtn");
+    const searchInput = document.getElementById("searchInput");
+    if (!btn || !searchInput) return;
+
+    function redirecionarBusca() {
+        const termo = searchInput.value.trim();
+        if (!termo) {
+            window.location.href = "servicos.html";
+            return;
+        }
+        const query = new URLSearchParams({ q: termo }).toString();
+        window.location.href = `servicos.html?${query}`;
+    }
+
+    btn.addEventListener("click", redirecionarBusca);
+    searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            redirecionarBusca();
+        }
+    });
 }
 
 // ================= ACESSIBILIDADE PARA CARDS CLICÁVEIS =================

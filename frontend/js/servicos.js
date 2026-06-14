@@ -65,6 +65,13 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentPage = 1;
     const ITEMS_PER_PAGE = 6;
 
+    function obterParametroBusca() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("q")?.trim() || "";
+    }
+
+    const termoBuscaInicial = obterParametroBusca();
+
     // ================= CARREGAR SERVIÇOS =================
     async function carregarServicos(categoriaFiltro = "Todos", termoBusca = "") {
         const grid = document.querySelector(".services-grid");
@@ -416,9 +423,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // ================= INICIALIZAÇÃO =================
     setupHeader();
-    carregarServicos();
+    carregarServicos("Todos", termoBuscaInicial);
     configurarBotoesSolicitacao();
     configurarBusca();
     configurarFiltrosCategoria();
     configurarIA();
+
+    if (termoBuscaInicial) {
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) searchInput.value = termoBuscaInicial;
+    }
 });
